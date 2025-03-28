@@ -7,6 +7,25 @@
 # Logs
 Logs/
 
+# JetBrains IDE Dateien
+*.iml
+*.ipr
+*.iws
+.idea_modules/
+
+# Nuget & Build Dateien
+*.nuget.cache
+project.nuget.cache
+*.AssemblyInfo.cs
+*.AssemblyInfoInputs.cache
+*.assets.cache
+*.csproj.AssemblyReference.cache
+*.csproj.nuget.*
+*.GeneratedMSBuildEditorConfig.editorconfig
+project.assets.json
+project.packagespec.json
+rider.project.restore.info
+
 # Generated files
 project.lock.json
 .vs/
