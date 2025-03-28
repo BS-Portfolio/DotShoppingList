@@ -1,4 +1,4 @@
-namespace ShoppingList.Server
+namespace ShoppingList.Server.Objects
 {
     public class WeatherForecast
     {
