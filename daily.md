@@ -1,3 +1,13 @@
+# Freitag, 28.03.25
+
+## Tasks:
+- Datenbank aufbauen
+- Research zum Frontend
+- Frontend aufbauen
+- Festlegung SCRUM Master etc.
+
+## Blocker:
+
 # Donnerstag, 27.03.25  
 
 ## Tasks:
@@ -6,6 +16,7 @@
 - Git Projekt anlegen  
 - Kanban Board anlegen  
 - Tasks anlegen  
+- ER-Diagramm erstellen
 
 ## Blocker:
-- Beratung bei Themen und Programmiersprachenwahl  
+- Beratung bei Themen und Programmiersprachenwahl
