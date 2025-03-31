@@ -1,4 +1,6 @@
-﻿namespace ShoppingList.Server.Model;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ShoppingList.Server.Model.Post;
 
 public class User
 {
@@ -6,9 +8,6 @@ public class User
     public string FirstName { get; set; }
     public string LastName { get; set; }
     public string EmailAddress { get; set; }
-    public string Password { get; set; }
+    public string PasswordHash { get; set; }
     public DateTime CreationDate { get; set; }
-        
-    // Navigation Properties
-    public virtual ICollection<CollaboratorList> CollaboratorLists { get; set; }
 }

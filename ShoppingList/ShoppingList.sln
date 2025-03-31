@@ -5,8 +5,6 @@ VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShoppingList.Server", "ShoppingList.Server\ShoppingList.Server.csproj", "{A0DE9E3F-3047-4AC9-BA5E-87FF28E6E198}"
 EndProject
-Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "shoppinglist.client", "shoppinglist.client\shoppinglist.client.esproj", "{5F31FEF4-0C96-4623-8026-D0AD4EB9E770}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,12 +15,6 @@ Global
 		{A0DE9E3F-3047-4AC9-BA5E-87FF28E6E198}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0DE9E3F-3047-4AC9-BA5E-87FF28E6E198}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A0DE9E3F-3047-4AC9-BA5E-87FF28E6E198}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5F31FEF4-0C96-4623-8026-D0AD4EB9E770}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5F31FEF4-0C96-4623-8026-D0AD4EB9E770}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5F31FEF4-0C96-4623-8026-D0AD4EB9E770}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
-		{5F31FEF4-0C96-4623-8026-D0AD4EB9E770}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5F31FEF4-0C96-4623-8026-D0AD4EB9E770}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5F31FEF4-0C96-4623-8026-D0AD4EB9E770}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
