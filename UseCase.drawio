@@ -1,0 +1,248 @@
+<mxfile host="Electron" modified="2025-03-31T10:54:48.423Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.2.5 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="4aCWcFZfxkqW7DUfDRMb" version="24.2.5" type="device">
+  <diagram name="Page-1" id="9KPNc-bPWhqVJSaAEpT1">
+    <mxGraphModel dx="1430" dy="826" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-46" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="240" y="80" width="920" height="1100" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-2" value="Nutzer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" parent="1" vertex="1">
+          <mxGeometry x="120" y="420" width="80" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-3" value="Admin" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" parent="1" vertex="1">
+          <mxGeometry x="1200" y="415" width="90" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-6" value="Konto erstellen" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="390" y="90" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-7" value="Liste erstellen" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="370" y="470" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-8" value="Liste löschen" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="690" y="1000" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-9" value="Liste verwalten" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="450" y="540" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-10" value="Authentifizieren" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="1010" y="90" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-11" value="Nutzer löschen" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="890" y="320" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-12" value="Shooping List Application" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="548" y="30" width="305" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-13" value="Das löschen des Kontos beantragen" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="280" y="410" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-14" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-2" target="XLSFp5xPjXhfsMlLs0ep-6" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="120" y="300" as="sourcePoint" />
+            <mxPoint x="170" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-15" value="Einloggen" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="720" y="90" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-17" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-2" target="XLSFp5xPjXhfsMlLs0ep-15" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="30" y="690" as="sourcePoint" />
+            <mxPoint x="80" y="640" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-18" value="Ausloggen" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="370" y="1000" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-19" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-2" target="XLSFp5xPjXhfsMlLs0ep-18" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="180" y="800" as="sourcePoint" />
+            <mxPoint x="230" y="750" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-20" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-11" target="XLSFp5xPjXhfsMlLs0ep-3" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1200" y="300" as="sourcePoint" />
+            <mxPoint x="1250" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-21" value="Nutzerdaten verwalten" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="890" y="560" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-22" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-21" target="XLSFp5xPjXhfsMlLs0ep-3" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1220" y="780" as="sourcePoint" />
+            <mxPoint x="1270" y="730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-23" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-8" target="XLSFp5xPjXhfsMlLs0ep-2" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="190" y="780" as="sourcePoint" />
+            <mxPoint x="240" y="730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-24" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-2" target="XLSFp5xPjXhfsMlLs0ep-9" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-150" y="490" as="sourcePoint" />
+            <mxPoint x="-100" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-26" value="Nutzerrolle herausfinden" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="1020" y="720" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-27" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-2" target="XLSFp5xPjXhfsMlLs0ep-13" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-180" y="610" as="sourcePoint" />
+            <mxPoint x="-130" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-28" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-2" target="XLSFp5xPjXhfsMlLs0ep-7" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="30" y="650" as="sourcePoint" />
+            <mxPoint x="80" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-29" value="" style="endArrow=classic;rounded=0;dashed=1;dashPattern=8 8;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-8" target="XLSFp5xPjXhfsMlLs0ep-26" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="620" y="820" as="sourcePoint" />
+            <mxPoint x="670" y="770" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-30" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="XLSFp5xPjXhfsMlLs0ep-29" vertex="1" connectable="0">
+          <mxGeometry x="-0.106" y="-4" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-31" value="" style="endArrow=classic;rounded=0;dashed=1;dashPattern=8 8;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-15" target="XLSFp5xPjXhfsMlLs0ep-10" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="550" y="770" as="sourcePoint" />
+            <mxPoint x="698" y="710" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-32" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="XLSFp5xPjXhfsMlLs0ep-31" vertex="1" connectable="0">
+          <mxGeometry x="-0.106" y="-4" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-33" value="" style="endArrow=classic;rounded=0;dashed=1;dashPattern=8 8;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-7" target="XLSFp5xPjXhfsMlLs0ep-15" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="560" y="780" as="sourcePoint" />
+            <mxPoint x="708" y="720" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-34" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="XLSFp5xPjXhfsMlLs0ep-33" vertex="1" connectable="0">
+          <mxGeometry x="-0.106" y="-4" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-35" value="" style="endArrow=classic;rounded=0;dashed=1;dashPattern=8 8;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-9" target="XLSFp5xPjXhfsMlLs0ep-15" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="748" y="420" as="sourcePoint" />
+            <mxPoint x="748" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-36" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="XLSFp5xPjXhfsMlLs0ep-35" vertex="1" connectable="0">
+          <mxGeometry x="-0.106" y="-4" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-37" value="" style="endArrow=classic;rounded=0;dashed=1;dashPattern=8 8;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-8" target="XLSFp5xPjXhfsMlLs0ep-15" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="628" y="780" as="sourcePoint" />
+            <mxPoint x="628" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-38" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="XLSFp5xPjXhfsMlLs0ep-37" vertex="1" connectable="0">
+          <mxGeometry x="-0.106" y="-4" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-39" value="" style="endArrow=classic;rounded=0;dashed=1;dashPattern=8 8;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-13" target="XLSFp5xPjXhfsMlLs0ep-15" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="491" y="441" as="sourcePoint" />
+            <mxPoint x="547" y="239" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-40" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="XLSFp5xPjXhfsMlLs0ep-39" vertex="1" connectable="0">
+          <mxGeometry x="-0.106" y="-4" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-41" value="Listennutzer verwalten" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="510" y="650" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-42" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-2" target="XLSFp5xPjXhfsMlLs0ep-41" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="380" y="750" as="sourcePoint" />
+            <mxPoint x="430" y="700" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-43" value="" style="endArrow=classic;rounded=0;dashed=1;dashPattern=8 8;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-41" target="XLSFp5xPjXhfsMlLs0ep-15" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="566" y="560" as="sourcePoint" />
+            <mxPoint x="612" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-44" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="XLSFp5xPjXhfsMlLs0ep-43" vertex="1" connectable="0">
+          <mxGeometry x="-0.106" y="-4" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-47" value="sich aus einer Liste entfernen" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="600" y="810" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-48" value="" style="endArrow=none;html=1;rounded=0;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-47" target="XLSFp5xPjXhfsMlLs0ep-2" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-110" y="710" as="sourcePoint" />
+            <mxPoint x="-60" y="660" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-49" value="" style="endArrow=classic;rounded=0;dashed=1;dashPattern=8 8;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="585" y="651" as="sourcePoint" />
+            <mxPoint x="765" y="169" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-50" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="XLSFp5xPjXhfsMlLs0ep-49" vertex="1" connectable="0">
+          <mxGeometry x="-0.106" y="-4" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-51" value="" style="endArrow=classic;rounded=0;dashed=1;dashPattern=8 8;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-47" target="XLSFp5xPjXhfsMlLs0ep-15" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="655" y="671" as="sourcePoint" />
+            <mxPoint x="835" y="189" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-52" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="XLSFp5xPjXhfsMlLs0ep-51" vertex="1" connectable="0">
+          <mxGeometry x="-0.106" y="-4" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-53" value="" style="endArrow=classic;rounded=0;dashed=1;dashPattern=8 8;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-41" target="XLSFp5xPjXhfsMlLs0ep-26" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="790" y="869" as="sourcePoint" />
+            <mxPoint x="1046" y="651" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-54" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="XLSFp5xPjXhfsMlLs0ep-53" vertex="1" connectable="0">
+          <mxGeometry x="-0.106" y="-4" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-55" value="" style="endArrow=classic;rounded=0;dashed=1;dashPattern=8 8;" parent="1" source="XLSFp5xPjXhfsMlLs0ep-47" target="XLSFp5xPjXhfsMlLs0ep-26" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="807" y="1029" as="sourcePoint" />
+            <mxPoint x="1063" y="811" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="XLSFp5xPjXhfsMlLs0ep-56" value="&amp;lt;&amp;lt;include&amp;gt;&amp;gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="XLSFp5xPjXhfsMlLs0ep-55" vertex="1" connectable="0">
+          <mxGeometry x="-0.106" y="-4" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -2,12 +2,16 @@
 
 namespace ShoppingList.Server.Model.Post;
 
-public class User
+public class UserPost
 {
-    public int UserID { get; set; }
     public string FirstName { get; set; }
     public string LastName { get; set; }
     public string EmailAddress { get; set; }
     public string PasswordHash { get; set; }
-    public DateTime CreationDate { get; set; }
+    public DateTimeOffset CreationDate { get; private set; }
+
+    public UserPost()
+    {    
+        CreationDate = DateTimeOffset.UtcNow;
+    }
 }
