@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using ShoppingList.Server.Objects;
+using ShoppingList.Server.Model;
 
 namespace ShoppingList.Server.Controllers
 {
