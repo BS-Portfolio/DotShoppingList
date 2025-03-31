@@ -16,11 +16,4 @@ public class ShoppingListController : Controller
     }
     
     
-    [HttpGet(Name = "GetShoppingListItems")]
-    public ActionResult Index()
-    {
-        var items = _shoppingListService.GetAllItems();
-        return View(items);
-    }
-    
 }
