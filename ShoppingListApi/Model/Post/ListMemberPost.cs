@@ -2,6 +2,12 @@
 
 public class ListMemberPost
 {
-    public string userEmailAddress { get; set; }
-    public Guid UserRoleID { get; set; }
+    public string UserEmailAddress { get; set; }
+    public Guid UserRoleId { get; set; }
+
+    public ListMemberPost(string userEmailAddress, Guid userRoleId)
+    {
+        UserEmailAddress = userEmailAddress;
+        UserRoleId = userRoleId;
+    }
 }

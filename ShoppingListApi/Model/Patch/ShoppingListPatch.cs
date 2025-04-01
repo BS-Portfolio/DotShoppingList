@@ -1,6 +1,14 @@
-﻿namespace ShoppingListApi.Model.Patch;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ShoppingListApi.Model.Patch;
 
 public class ShoppingListPatch
 {
-    public string ShoppingListName { get; set; }
+    [Required]
+    public string NewShoppingListName { get; set; }
+
+    public ShoppingListPatch(string newShoppingListName)
+    {
+        NewShoppingListName = newShoppingListName;
+    }
 }

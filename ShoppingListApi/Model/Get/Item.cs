@@ -5,5 +5,13 @@ public class Item
     public Guid ItemID { get; set; }
     public string ItemName { get; set; }
     public string ItemUnit { get; set; }
-    public decimal ItemAmount { get; set; }      
+    public decimal ItemAmount { get; set; }
+
+    public Item(Guid itemId, string itemName, string itemUnit, decimal itemAmount)
+    {
+        ItemID = itemId;
+        ItemName = itemName;
+        ItemUnit = itemUnit;
+        ItemAmount = itemAmount;
+    }
 }

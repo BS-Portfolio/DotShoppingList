@@ -6,4 +6,9 @@ public class ShoppingListPost
 {
     [Required]
     public string ShoppingListName { get; set; }
+
+    public ShoppingListPost(string shoppingListName)
+    {
+        ShoppingListName = shoppingListName;
+    }
 }

@@ -2,6 +2,12 @@
 
 public class UserRole
 {
-    public Guid UserRoleID { get; set; }
+    public Guid UserRoleId { get; set; }
     public string UserRoleTitle { get; set; }
+
+    public UserRole(Guid userRoleId, string userRoleTitle)
+    {
+        UserRoleId = userRoleId;
+        UserRoleTitle = userRoleTitle;
+    }
 }

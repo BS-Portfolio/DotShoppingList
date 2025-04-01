@@ -1,6 +1,14 @@
-﻿namespace ShoppingListApi.Model.Patch;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ShoppingListApi.Model.Patch;
 
 public class UserRolePatch
 {
-    public string UserRoleTitle { get; set; }
+    [Required]
+    public string NewUserRoleTitle { get; set; }
+
+    public UserRolePatch(string newUserRoleTitle)
+    {
+        NewUserRoleTitle = newUserRoleTitle;
+    }
 }

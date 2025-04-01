@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-
+using BCrypt.Net;
 namespace ShoppingListApi.Model.Post;
 
 public class ListUserPost
@@ -10,8 +10,12 @@ public class ListUserPost
     public string PasswordHash { get; set; }
     public DateTimeOffset CreationDate { get; private set; }
 
-    public ListUserPost()
-    {    
+    public ListUserPost(string firstName, string lastName, string emailAddress, string password, DateTimeOffset creationDate)
+    {
+        FirstName = firstName;
+        LastName = lastName;
+        EmailAddress = emailAddress;
+        PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(password, 13);
         CreationDate = DateTimeOffset.UtcNow;
     }
 }

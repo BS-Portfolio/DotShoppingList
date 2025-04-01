@@ -2,7 +2,14 @@
 
 public class ItemPatch
 {
-    public string? ItemName { get; set; }
-    public string? ItemUnit { get; set; }
-    public decimal? ItemAmount { get; set; }      
+    public string? NewItemName { get; set; }
+    public string? NewItemUnit { get; set; }
+    public decimal? NewItemAmount { get; set; }
+
+    public ItemPatch(string? newItemName, string? newItemUnit, decimal? newItemAmount)
+    {
+        NewItemName = newItemName;
+        NewItemUnit = newItemUnit;
+        NewItemAmount = newItemAmount;
+    }
 } 
