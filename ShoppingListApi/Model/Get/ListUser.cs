@@ -2,7 +2,7 @@
 
 namespace ShoppingListApi.Model.Get;
 
-public class User
+public class ListUser
 {
     public Guid UserID { get; set; }
     public string FirstName { get; set; }

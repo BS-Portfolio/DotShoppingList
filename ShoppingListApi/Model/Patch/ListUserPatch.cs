@@ -2,7 +2,7 @@
 
 namespace ShoppingListApi.Model.Patch;
 
-public class UserPatch
+public class ListUserPatch
 {
     public string? FirstName { get; set; }
     public string? LastName { get; set; }

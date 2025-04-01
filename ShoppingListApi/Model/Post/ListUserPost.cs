@@ -2,7 +2,7 @@
 
 namespace ShoppingListApi.Model.Post;
 
-public class UserPost
+public class ListUserPost
 {
     public string FirstName { get; set; }
     public string LastName { get; set; }
@@ -10,7 +10,7 @@ public class UserPost
     public string PasswordHash { get; set; }
     public DateTimeOffset CreationDate { get; private set; }
 
-    public UserPost()
+    public ListUserPost()
     {    
         CreationDate = DateTimeOffset.UtcNow;
     }

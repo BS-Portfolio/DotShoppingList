@@ -2,6 +2,6 @@
 
 public class ListMember
 {
-    public User User { get; set; }
+    public ListUser ListUser { get; set; }
     public UserRole UserRole { get; set; }
 }
