@@ -1,3 +1,13 @@
+# Dienstag, 01.04.25
+
+## Tasks:
+- Klassendiagramm
+- Datenbank Prozedur schreiben
+- Vue Frontend anfangen
+  
+## Blocker:
+-
+
 # Montag, 31.03.25
 
 ## Tasks:
