@@ -16,17 +16,14 @@ public class UnitTests
     [Fact]
     public void Check_Database_Connection()
     {
-        // Arrange
         var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json")
             .Build();
             
-        // Du kannst hier wählen, welche Verbindung getestet werden soll
         var connectionString = configuration.GetConnectionString("Milad");
         var canConnect = false;
         
-        // Act
         try
         {
             using var connection = new SqlConnection(connectionString);
@@ -36,11 +33,9 @@ public class UnitTests
         }
         catch (Exception ex)
         {
-            // Fehler bei der Verbindung - Test wird fehlschlagen
-            _testOutputHelper.WriteLine($"Verbindungsfehler: {ex.Message}");
+            _testOutputHelper.WriteLine($"Connection error: {ex.Message}");
         }
         
-        // Assert
-        Assert.True(canConnect, "Die Verbindung zur Datenbank konnte nicht hergestellt werden");
+        Assert.True(canConnect, "The connection to the database was successfully established!");
     }
 }

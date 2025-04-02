@@ -11,8 +11,10 @@ public class ConnectionStringService
         _logger = serviceprovider.GetRequiredService<ILogger<ConnectionStringService>>();
     }
 
-    public string GetConnectionString(string user)
+    public string GetConnectionString()
     {
+        var user = "Milad";
+        
         try
         {
             var connectionString = _configuration.GetConnectionString(user);
