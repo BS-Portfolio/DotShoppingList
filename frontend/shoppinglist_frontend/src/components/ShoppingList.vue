@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import {onMounted, ref} from 'vue'
+import { onMounted, ref } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
+
+const authStore = useAuthStore()
+const router = useRouter()
 
 const newItem = ref('')
 const items = ref<string[]>([])
@@ -28,11 +33,17 @@ const removeItem = (index: number) => {
   saveItems()
 }
 
+const logout = () => {
+  authStore.logout()
+  router.push('/login')
+}
+
 onMounted(loadItems)
 </script>
 
 <template>
   <div>
+    <button @click="logout" class="logout-button">Abmelden</button>
     <h1>Shopping List</h1>
     <input v-model="newItem" @keyup.enter="addItem" placeholder="Add a new item &#9166"/>
     <ul>
@@ -49,6 +60,7 @@ div {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 }
 
 h1 {
@@ -97,5 +109,18 @@ li:nth-child(even) {
   border: none;
   cursor: pointer;
   font-size: 1.5em;
+}
+
+.logout-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 5px;
 }
 </style>
