@@ -2,6 +2,6 @@
 
 public enum UserRoleEnum
 {
-    ListAdmin = 0x00000001,
-    Collaborator = 0x00000002,
+    ListAdmin = 1,
+    Collaborator = 2,
 };

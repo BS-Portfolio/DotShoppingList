@@ -1,13 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using ShoppingListApi.Enums;
 
 namespace ShoppingListApi.Model.Post;
 
 public class UserRolePost
 {
     [Required] public string UserRoleTitle { get; }
-    public P.UserRoleEnum UserRoleEnum { get; }
+    public UserRoleEnum UserRoleEnum { get; }
 
-    public UserRolePost(string userRoleTitle, P.UserRoleEnum userRoleEnum)
+    public UserRolePost(string userRoleTitle, UserRoleEnum userRoleEnum)
     {
         UserRoleTitle = userRoleTitle;
         UserRoleEnum = userRoleEnum;
