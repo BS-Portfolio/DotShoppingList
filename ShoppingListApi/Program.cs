@@ -1,4 +1,10 @@
+using NLog;
+using NLog.Extensions.Logging;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.AddNLog();
 
 // Add services to the container.
 
