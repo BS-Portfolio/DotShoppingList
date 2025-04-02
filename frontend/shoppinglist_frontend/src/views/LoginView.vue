@@ -19,10 +19,12 @@ const login = () => {
 
 <template>
   <div class="login">
-    <h1>Login</h1>
-    <input v-model="username" placeholder="Username" />
-    <input v-model="password" type="password" placeholder="Password" />
-    <button @click="login">Login</button>
+    <div class="card">
+      <h1>Login</h1>
+      <input v-model="username" placeholder="Username" />
+      <input v-model="password" type="password" placeholder="Password" />
+      <button @click="login">Login</button>
+    </div>
   </div>
 </template>
 
@@ -31,9 +33,19 @@ const login = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start; /* Ändern Sie dies von center zu flex-start */
+  justify-content: flex-start;
   height: 100vh;
-  margin-top: 2rem; /* Fügen Sie dies hinzu, um den Abstand von oben zu erhöhen */
+  margin-top: 2rem;
+}
+
+.card {
+  padding: 2rem;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 input {
