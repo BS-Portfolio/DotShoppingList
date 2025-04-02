@@ -1,3 +1,14 @@
+# Mittwoch, 02.04.25
+
+## Tasks:
+- login page
+- shoppinglist
+- API/Datenbank
+- Klassendiagramm
+
+## Blocker:
+-
+
 # Dienstag, 01.04.25
 
 ## Tasks:
