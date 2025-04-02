@@ -37,6 +37,8 @@ BEGIN
 			DELETE FROM Item 
 			WHERE Item.ShoppingListID = @shoppingListIDasAdmin;
 
+			IF @@ROWCOUNT
+
 			DELETE FROM ListMember
 			WHERE ListMember.ShoppingListID = @shoppingListIDasAdmin;
 

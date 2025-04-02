@@ -4,11 +4,13 @@ namespace ShoppingListApi.Model.Post;
 
 public class ListUserPost
 {
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public string EmailAddress { get; set; }
-    public string PasswordHash { get; set; }
+    public string FirstName { get; private set; }
+    public string LastName { get; private set; }
+    public string EmailAddress { get; private set; }
+    public string PasswordHash { get; private set; }
     public DateTimeOffset CreationDate { get; private set; }
+    public string ApiKey { get; private set; }
+    public DateTimeOffset ApiKeyExpirationDateTime{ get; private set; }
 
     public ListUserPost(string firstName, string lastName, string emailAddress, string password, DateTimeOffset creationDate)
     {
@@ -17,5 +19,7 @@ public class ListUserPost
         EmailAddress = emailAddress;
         PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(password, 13);
         CreationDate = DateTimeOffset.UtcNow;
+        ApiKey = HM.GenerateApiKey();
+        ApiKeyExpirationDateTime = creationDate + TimeSpan.FromHours(6);
     }
 }
