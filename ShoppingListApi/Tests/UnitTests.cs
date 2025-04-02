@@ -1,14 +1,18 @@
-﻿using System;
-using System.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
-using System.IO;
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace ShoppingListApi.Tests;
 
 public class UnitTests
 {
+    private readonly ITestOutputHelper _testOutputHelper;
+
+    public UnitTests(ITestOutputHelper testOutputHelper)
+    {
+        _testOutputHelper = testOutputHelper;
+    }
+
     [Fact]
     public void Check_Database_Connection()
     {
@@ -33,7 +37,7 @@ public class UnitTests
         catch (Exception ex)
         {
             // Fehler bei der Verbindung - Test wird fehlschlagen
-            Console.WriteLine($"Verbindungsfehler: {ex.Message}");
+            _testOutputHelper.WriteLine($"Verbindungsfehler: {ex.Message}");
         }
         
         // Assert
