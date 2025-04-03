@@ -142,27 +142,30 @@ public class DatabaseService
     // public async Task<ListUser> GetUser<T>(T identifier, string whereClasue, SqlConnection sqlConnection)
     // {
     // }
-    
+
     public async Task<ListUser?> GetUser<T>(T identifier, string whereClause, SqlConnection sqlConnection)
     {
-        var query = "SELECT UserID, FirstName, LastName, EmailAddress, CreationDateTime FROM ListUser WHERE " + whereClause;
-    
+        var query = "SELECT UserID, FirstName, LastName, EmailAddress, CreationDateTime FROM ListUser WHERE " +
+                    whereClause;
+
         await using SqlCommand sqlCommand = new(query, sqlConnection);
-    
+
         if (identifier != null)
         {
             sqlCommand.Parameters.Add(new SqlParameter("@Identifier", identifier));
         }
-    
+
+        // ListUser? user = null;
+        
         try
         {
             if (sqlConnection.State != ConnectionState.Open)
             {
                 await sqlConnection.OpenAsync();
             }
-        
+
             await using SqlDataReader sqlReader = await sqlCommand.ExecuteReaderAsync();
-        
+
             if (sqlReader.HasRows && await sqlReader.ReadAsync())
             {
                 var user = new ListUser(
@@ -170,12 +173,12 @@ public class DatabaseService
                     sqlReader.GetString(1),
                     sqlReader.GetString(2),
                     sqlReader.GetString(3),
-                    sqlReader.GetDateTime(4)
+                    sqlReader.GetDateTime(4) // ToDo: change the type to DateTimeOffset
                 );
-            
-                return user;
+
+                return user; // ToDo: take return out of the if statement and close the sqlReader before returning!
             }
-        
+
             return null;
         }
         catch (NumberedException)
@@ -195,9 +198,10 @@ public class DatabaseService
     // public async Task<ListUser> GetUserByEmailAddress(string emailAsdress, SqlConnection sqlConnection)
     // {
     // }
-    
+
     public async Task<ListUser?> GetUserByEmailAddress(string emailAddress, SqlConnection sqlConnection)
     {
+        // ToDo: add try catch blocks to catch exceptions and rethrow them to the controller
         return await GetUser(emailAddress, "EmailAddress = @Identifier", sqlConnection);
     }
 
@@ -207,6 +211,7 @@ public class DatabaseService
     // }
     public async Task<ListUser?> GetUserById(Guid userId, SqlConnection sqlConnection)
     {
+        // ToDo: add try catch blocks to catch exceptions and rethrow them to the controller
         return await GetUser(userId, "UserID = @Identifier", sqlConnection);
     }
 
@@ -214,7 +219,8 @@ public class DatabaseService
     // public async Task<ShoppingList> GetShoppingListById(Guid shoppingListId, SqlConnection sqlConnection)
     // {
     // }
-    
+
+    // ToDo: take enumindex out. it's not relevant here. Or add  it as parameter to the method. For that you'll need a new model object that has the list id and the enum as fields.
     // Get shopping list by ID
     public async Task<ShoppingList?> GetShoppingListById(Guid shoppingListId, SqlConnection sqlConnection)
     {
@@ -225,19 +231,19 @@ public class DatabaseService
         JOIN ListUser lu ON lm.UserID = lu.UserID
         JOIN UserRole ur ON lm.UserRoleID = ur.UserRoleID
         WHERE sl.ShoppingListID = @ShoppingListID AND ur.EnumIndex = 1"; // ListAdmin Role
-    
+
         await using SqlCommand sqlCommand = new(query, sqlConnection);
         sqlCommand.Parameters.Add(new SqlParameter("@ShoppingListID", shoppingListId));
-    
+
         try
         {
             if (sqlConnection.State != ConnectionState.Open)
             {
                 await sqlConnection.OpenAsync();
             }
-        
+
             await using SqlDataReader sqlReader = await sqlCommand.ExecuteReaderAsync();
-        
+
             if (sqlReader.HasRows && await sqlReader.ReadAsync())
             {
                 var listOwner = new ListUser(
@@ -247,16 +253,16 @@ public class DatabaseService
                     sqlReader.GetString(5),
                     sqlReader.GetDateTime(6)
                 );
-            
+
                 var shoppingList = new ShoppingList(
                     sqlReader.GetGuid(0),
                     sqlReader.GetString(1),
                     listOwner
                 );
-            
+
                 return shoppingList;
             }
-        
+
             return null;
         }
         catch (NumberedException)
@@ -271,7 +277,7 @@ public class DatabaseService
             throw numberedException;
         }
     }
-    
+
     // only get the name and id of the shopping lists
     // public async Task<List<ShoppingList>> GetShoppingListsForUser(Guid UserId, SqlConnection sqlConnection)
     // {
@@ -280,26 +286,26 @@ public class DatabaseService
     public async Task<List<ShoppingList>> GetShoppingListsForUser(Guid userId, SqlConnection sqlConnection)
     {
         var shoppingLists = new List<ShoppingList>();
-    
+
         var query = @"
         SELECT sl.ShoppingListID, sl.ShoppingListName, lu.UserID, lu.FirstName, lu.LastName, lu.EmailAddress, lu.CreationDateTime
         FROM ShoppingList sl
         JOIN ListMember lm ON sl.ShoppingListID = lm.ShoppingListID
         JOIN ListUser lu ON lm.UserID = lu.UserID
         WHERE lm.UserID = @UserID";
-    
+
         await using SqlCommand sqlCommand = new(query, sqlConnection);
         sqlCommand.Parameters.Add(new SqlParameter("@UserID", userId));
-    
+
         try
         {
             if (sqlConnection.State != ConnectionState.Open)
             {
                 await sqlConnection.OpenAsync();
             }
-        
+
             await using SqlDataReader sqlReader = await sqlCommand.ExecuteReaderAsync();
-        
+
             if (sqlReader.HasRows)
             {
                 while (await sqlReader.ReadAsync())
@@ -311,17 +317,17 @@ public class DatabaseService
                         sqlReader.GetString(5),
                         sqlReader.GetDateTime(6)
                     );
-                
+
                     var shoppingList = new ShoppingList(
                         sqlReader.GetGuid(0),
                         sqlReader.GetString(1),
                         listOwner
                     );
-                
+
                     shoppingLists.Add(shoppingList);
                 }
             }
-        
+
             return shoppingLists;
         }
         catch (NumberedException)
@@ -336,30 +342,31 @@ public class DatabaseService
             throw numberedException;
         }
     }
-    
+
     // public async Task<List<Item>> GetItemsForShoppingList(Guid ShoppingListId, SqlConnection sqlConnection)
     // {
     //     
     // }
-    
+
+    // ToDo: ItemUnit rausnehmen. ItemAmount als string lesen.
     public async Task<List<Item>> GetItemsForShoppingList(Guid shoppingListId, SqlConnection sqlConnection)
     {
         var items = new List<Item>();
-    
+
         string query = "SELECT ItemID, ItemName, ItemUnit, ItemAmount FROM Item WHERE ShoppingListID = @ShoppingListID";
-    
+
         await using SqlCommand sqlCommand = new(query, sqlConnection);
         sqlCommand.Parameters.Add(new SqlParameter("@ShoppingListID", shoppingListId));
-    
+
         try
         {
             if (sqlConnection.State != ConnectionState.Open)
             {
                 await sqlConnection.OpenAsync();
             }
-        
+
             await using SqlDataReader sqlReader = await sqlCommand.ExecuteReaderAsync();
-        
+
             if (sqlReader.HasRows)
             {
                 while (await sqlReader.ReadAsync())
@@ -370,11 +377,11 @@ public class DatabaseService
                         sqlReader.GetString(2),
                         sqlReader.GetString(3)
                     );
-                
+
                     items.Add(item);
                 }
             }
-        
+
             return items;
         }
         catch (NumberedException)
@@ -389,7 +396,7 @@ public class DatabaseService
             throw numberedException;
         }
     }
-    
+
     #endregion
 
 
