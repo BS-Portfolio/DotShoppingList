@@ -35,6 +35,7 @@ const removeItem = (index: number) => {
 
 const logout = () => {
   authStore.logout()
+  localStorage.removeItem('isAuthenticated')
   router.push('/login')
 }
 

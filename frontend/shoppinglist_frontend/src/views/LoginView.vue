@@ -12,6 +12,7 @@ const password = ref('')
 const login = () => {
   authStore.login(username.value, password.value)
   if (authStore.isAuthenticated) {
+    localStorage.setItem('isAuthenticated', 'true')
     router.push('/')
   }
 }
@@ -22,7 +23,7 @@ const login = () => {
     <div class="card">
       <h1>Login</h1>
       <input v-model="username" placeholder="Username" />
-      <input v-model="password" type="password" placeholder="Password" />
+      <input v-model="password" type="password" placeholder="Password" @keyup.enter="login" />
       <button @click="login">Login</button>
     </div>
   </div>
@@ -50,6 +51,11 @@ const login = () => {
   width: 400px;
 }
 
+h1 {
+  color: var(--color-primary);
+  margin-top: 0.05rem;
+}
+
 input {
   width: 30%;
   height: 5vh;
@@ -61,6 +67,11 @@ input {
   margin-bottom: 1rem;
 }
 
+input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
 button {
   padding: 10px 20px;
   font-size: 16px;
@@ -68,5 +79,6 @@ button {
   margin-top: 2rem;
   background-color: #fff8dc;
   border: 2px solid var(--color-primary);
+  color: var(--color-primary);
 }
 </style>
