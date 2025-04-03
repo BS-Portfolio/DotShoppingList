@@ -698,9 +698,469 @@ public class DatabaseService
 
     #region Data-Modifier
 
+    // Aktualisieren eines Benutzers
+    public async Task<bool> UpdateUser(Guid userId, Model.Patch.ListUserPatch userPatch, SqlConnection sqlConnection)
+    {
+        try
+        {
+            var updateParts = new List<string>();
+            var parameters = new List<SqlParameter>
+            {
+                new() { ParameterName = "@UserID", Value = userId, SqlDbType = SqlDbType.UniqueIdentifier }
+            };
+            
+            if (!string.IsNullOrEmpty(userPatch.NewFirstName))
+            {
+                updateParts.Add("FirstName = @FirstName");
+                parameters.Add(new SqlParameter("@FirstName", userPatch.NewFirstName));
+            }
+            
+            if (!string.IsNullOrEmpty(userPatch.NewLastName))
+            {
+                updateParts.Add("LastName = @LastName");
+                parameters.Add(new SqlParameter("@LastName", userPatch.NewLastName));
+            }
+            
+            if (!string.IsNullOrEmpty(userPatch.NewEmailAddress))
+            {
+                updateParts.Add("EmailAddress = @EmailAddress");
+                parameters.Add(new SqlParameter("@EmailAddress", userPatch.NewEmailAddress));
+            }
+            
+            if (updateParts.Count == 0)
+            {
+                return true; // Nichts zu aktualisieren
+            }
+            
+            var query = $"UPDATE ListUser SET {string.Join(", ", updateParts)} WHERE UserID = @UserID";
+            
+            await using SqlCommand sqlCommand = new(query, sqlConnection);
+            sqlCommand.Parameters.AddRange(parameters.ToArray());
+            
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+            
+            var result = await sqlCommand.ExecuteNonQueryAsync();
+            
+            return result > 0;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(UpdateUser));
+            throw numberedException;
+        }
+    }
+
+    // Aktualisieren einer Einkaufsliste
+    public async Task<bool> UpdateShoppingList(Guid listId, Model.Patch.ShoppingListPatch listPatch, SqlConnection sqlConnection)
+    {
+        var query = "UPDATE ShoppingList SET ShoppingListName = @ShoppingListName WHERE ShoppingListID = @ShoppingListID";
+        
+        List<SqlParameter> parameters =
+        [
+            new SqlParameter() { ParameterName = "@ShoppingListID", Value = listId, SqlDbType = SqlDbType.UniqueIdentifier },
+            new SqlParameter() { ParameterName = "@ShoppingListName", Value = listPatch.NewShoppingListName }
+        ];
+        
+        try
+        {
+            await using SqlCommand sqlCommand = new(query, sqlConnection);
+            sqlCommand.Parameters.AddRange(parameters.ToArray());
+            
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+            
+            var result = await sqlCommand.ExecuteNonQueryAsync();
+            
+            return result > 0;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(UpdateShoppingList));
+            throw numberedException;
+        }
+    }
+
+    // Aktualisieren eines Artikels
+    public async Task<bool> UpdateItem(Guid itemId, Model.Patch.ItemPatch itemPatch, SqlConnection sqlConnection)
+    {
+        try
+        {
+            var updateParts = new List<string>();
+            var parameters = new List<SqlParameter>
+            {
+                new() { ParameterName = "@ItemID", Value = itemId, SqlDbType = SqlDbType.UniqueIdentifier }
+            };
+            
+            if (!string.IsNullOrEmpty(itemPatch.NewItemName))
+            {
+                updateParts.Add("ItemName = @ItemName");
+                parameters.Add(new SqlParameter("@ItemName", itemPatch.NewItemName));
+            }
+            
+            if (!string.IsNullOrEmpty(itemPatch.NewItemAmount))
+            {
+                updateParts.Add("ItemAmount = @ItemAmount");
+                parameters.Add(new SqlParameter("@ItemAmount", itemPatch.NewItemAmount));
+            }
+            
+            if (updateParts.Count == 0)
+            {
+                return true; // Nichts zu aktualisieren
+            }
+            
+            var query = $"UPDATE Item SET {string.Join(", ", updateParts)} WHERE ItemID = @ItemID";
+            
+            await using SqlCommand sqlCommand = new(query, sqlConnection);
+            sqlCommand.Parameters.AddRange(parameters.ToArray());
+            
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+            
+            var result = await sqlCommand.ExecuteNonQueryAsync();
+            
+            return result > 0;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(UpdateItem));
+            throw numberedException;
+        }
+    }
+
+    // Markieren eines Artikels als gekauft
+    public async Task<bool> MarkItemAsPurchased(Guid itemId, bool isPurchased, SqlConnection sqlConnection)
+    {
+        var query = "UPDATE Item SET IsPurchased = @IsPurchased WHERE ItemID = @ItemID";
+        
+        List<SqlParameter> parameters =
+        [
+            new SqlParameter() { ParameterName = "@ItemID", Value = itemId, SqlDbType = SqlDbType.UniqueIdentifier },
+            new SqlParameter() { ParameterName = "@IsPurchased", Value = isPurchased, SqlDbType = SqlDbType.Bit }
+        ];
+        
+        try
+        {
+            await using SqlCommand sqlCommand = new(query, sqlConnection);
+            sqlCommand.Parameters.AddRange(parameters.ToArray());
+            
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+            
+            var result = await sqlCommand.ExecuteNonQueryAsync();
+            
+            return result > 0;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(MarkItemAsPurchased));
+            throw numberedException;
+        }
+    }
+
+    // Aktualisieren einer Benutzerrolle in einer Einkaufsliste
+    public async Task<bool> UpdateUserRoleInShoppingList(Guid listId, Guid userId, Guid newRoleId, SqlConnection sqlConnection)
+    {
+        var query = "UPDATE ListMember SET UserRoleID = @UserRoleID WHERE ShoppingListID = @ShoppingListID AND UserID = @UserID";
+        
+        List<SqlParameter> parameters =
+        [
+            new SqlParameter() { ParameterName = "@ShoppingListID", Value = listId, SqlDbType = SqlDbType.UniqueIdentifier },
+            new SqlParameter() { ParameterName = "@UserID", Value = userId, SqlDbType = SqlDbType.UniqueIdentifier },
+            new SqlParameter() { ParameterName = "@UserRoleID", Value = newRoleId, SqlDbType = SqlDbType.UniqueIdentifier }
+        ];
+        
+        try
+        {
+            await using SqlCommand sqlCommand = new(query, sqlConnection);
+            sqlCommand.Parameters.AddRange(parameters.ToArray());
+            
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+            
+            var result = await sqlCommand.ExecuteNonQueryAsync();
+            
+            return result > 0;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(UpdateUserRoleInShoppingList));
+            throw numberedException;
+        }
+    }
+
     #endregion
 
     #region Data-Remover
+
+    // Löschen eines Benutzers
+    public async Task<bool> DeleteUser(Guid userId, SqlConnection sqlConnection)
+    {
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+            
+            // Beginne eine Transaktion, um sicherzustellen, dass alle Löschvorgänge erfolgreich sind
+            await using SqlTransaction transaction = (SqlTransaction)await sqlConnection.BeginTransactionAsync();
+            
+            try
+            {
+                var deleteListMemberQuery = "DELETE FROM ListMember WHERE UserID = @UserID";
+                
+                await using SqlCommand listMemberCommand = new(deleteListMemberQuery, sqlConnection, transaction);
+                listMemberCommand.Parameters.Add(new SqlParameter("@UserID", userId) { SqlDbType = SqlDbType.UniqueIdentifier });
+                
+                await listMemberCommand.ExecuteNonQueryAsync();
+                
+                // Lösche den Benutzer
+                var deleteUserQuery = "DELETE FROM ListUser WHERE UserID = @UserID";
+                
+                await using SqlCommand userCommand = new(deleteUserQuery, sqlConnection, transaction);
+                userCommand.Parameters.Add(new SqlParameter("@UserID", userId) { SqlDbType = SqlDbType.UniqueIdentifier });
+                
+                int result = await userCommand.ExecuteNonQueryAsync();
+                
+                await transaction.CommitAsync();
+                
+                return result > 0;
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(DeleteUser));
+            throw numberedException;
+        }
+    }
+
+    // Löschen einer Einkaufsliste
+    public async Task<bool> DeleteShoppingList(Guid listId, SqlConnection sqlConnection)
+    {
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+            
+            // Beginne eine Transaktion, um sicherzustellen, dass alle Löschvorgänge erfolgreich sind
+            await using SqlTransaction transaction = (SqlTransaction)await sqlConnection.BeginTransactionAsync();
+            
+            try
+            {
+                var deleteItemsQuery = "DELETE FROM Item WHERE ShoppingListID = @ShoppingListID";
+                
+                await using SqlCommand itemsCommand = new(deleteItemsQuery, sqlConnection, transaction);
+                itemsCommand.Parameters.Add(new SqlParameter("@ShoppingListID", listId) { SqlDbType = SqlDbType.UniqueIdentifier });
+                
+                await itemsCommand.ExecuteNonQueryAsync();
+                
+                // Lösche alle Benutzer-Einkaufslisten-Verknüpfungen
+                var deleteListMembersQuery = "DELETE FROM ListMember WHERE ShoppingListID = @ShoppingListID";
+                
+                await using SqlCommand listMembersCommand = new(deleteListMembersQuery, sqlConnection, transaction);
+                listMembersCommand.Parameters.Add(new SqlParameter("@ShoppingListID", listId) { SqlDbType = SqlDbType.UniqueIdentifier });
+                
+                await listMembersCommand.ExecuteNonQueryAsync();
+                
+                var deleteListQuery = "DELETE FROM ShoppingList WHERE ShoppingListID = @ShoppingListID";
+                
+                await using SqlCommand listCommand = new(deleteListQuery, sqlConnection, transaction);
+                listCommand.Parameters.Add(new SqlParameter("@ShoppingListID", listId) { SqlDbType = SqlDbType.UniqueIdentifier });
+                
+                var result = await listCommand.ExecuteNonQueryAsync();
+                
+                await transaction.CommitAsync();
+                
+                return result > 0;
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(DeleteShoppingList));
+            throw numberedException;
+        }
+    }
+
+    public async Task<bool> DeleteItem(Guid itemId, SqlConnection sqlConnection)
+    {
+        var query = "DELETE FROM Item WHERE ItemID = @ItemID";
+        
+        List<SqlParameter> parameters =
+        [
+            new SqlParameter() { ParameterName = "@ItemID", Value = itemId, SqlDbType = SqlDbType.UniqueIdentifier }
+        ];
+        
+        try
+        {
+            await using SqlCommand sqlCommand = new(query, sqlConnection);
+            sqlCommand.Parameters.AddRange(parameters.ToArray());
+            
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+            
+            var result = await sqlCommand.ExecuteNonQueryAsync();
+            
+            return result > 0;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(DeleteItem));
+            throw numberedException;
+        }
+    }
+
+    public async Task<bool> DeleteUserRole(Guid roleId, SqlConnection sqlConnection)
+    {
+        try
+        {
+            var checkQuery = "SELECT COUNT(1) FROM ListMember WHERE UserRoleID = @UserRoleID";
+            
+            await using SqlCommand checkCommand = new(checkQuery, sqlConnection);
+            checkCommand.Parameters.Add(new SqlParameter("@UserRoleID", roleId) { SqlDbType = SqlDbType.UniqueIdentifier });
+            
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+            
+            var count = Convert.ToInt32(await checkCommand.ExecuteScalarAsync());
+            
+            if (count > 0)
+            {
+                throw new NumberedException("Die Benutzerrolle wird von einem oder mehreren Benutzern verwendet und kann nicht gelöscht werden.");
+            }
+            
+            var deleteQuery = "DELETE FROM UserRole WHERE UserRoleID = @UserRoleID";
+            
+            await using SqlCommand deleteCommand = new(deleteQuery, sqlConnection);
+            deleteCommand.Parameters.Add(new SqlParameter("@UserRoleID", roleId) { SqlDbType = SqlDbType.UniqueIdentifier });
+            
+            var result = await deleteCommand.ExecuteNonQueryAsync();
+            
+            return result > 0;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(DeleteUserRole));
+            throw numberedException;
+        }
+    }
+
+    public async Task<bool> RemoveUserFromShoppingList(Guid listId, Guid userId, SqlConnection sqlConnection)
+    {
+        var query = "DELETE FROM ListMember WHERE ShoppingListID = @ShoppingListID AND UserID = @UserID";
+        
+        List<SqlParameter> parameters =
+        [
+            new SqlParameter() { ParameterName = "@ShoppingListID", Value = listId, SqlDbType = SqlDbType.UniqueIdentifier },
+            new SqlParameter() { ParameterName = "@UserID", Value = userId, SqlDbType = SqlDbType.UniqueIdentifier }
+        ];
+        
+        try
+        {
+            await using SqlCommand sqlCommand = new(query, sqlConnection);
+            sqlCommand.Parameters.AddRange(parameters.ToArray());
+            
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+            
+            var result = await sqlCommand.ExecuteNonQueryAsync();
+            
+            return result > 0;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(RemoveUserFromShoppingList));
+            throw numberedException;
+        }
+    }
 
     #endregion
 }

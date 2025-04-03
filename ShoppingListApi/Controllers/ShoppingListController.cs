@@ -262,4 +262,358 @@ public class ShoppingListController : ControllerBase
                 "Due to an internal error, your request could not be processed.");
         }
     }
+    
+    // PATCH-Methoden
+    [HttpPatch]
+    [Route("ShoppingList/{listId:guid}")]
+    public async Task<ActionResult> UpdateShoppingList(Guid listId, [FromBody] Model.Patch.ShoppingListPatch listPatch)
+    {
+        try
+        {
+            bool success = await _databaseService.SqlConnectionHandler<(Guid, Model.Patch.ShoppingListPatch), bool>(
+                (input, connection) => _databaseService.UpdateShoppingList(input.Item1, input.Item2, connection),
+                (listId, listPatch)
+            );
+            
+            if (!success)
+            {
+                return NotFound($"Einkaufsliste mit ID {listId} nicht gefunden");
+            }
+            
+            return NoContent();
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(UpdateShoppingList));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(UpdateShoppingList));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+    }
+
+    [HttpPatch]
+    [Route("Item/{itemId:guid}")]
+    public async Task<ActionResult> UpdateItem(Guid itemId, [FromBody] Model.Patch.ItemPatch itemPatch)
+    {
+        try
+        {
+            bool success = await _databaseService.SqlConnectionHandler<(Guid, Model.Patch.ItemPatch), bool>(
+                (input, connection) => _databaseService.UpdateItem(input.Item1, input.Item2, connection),
+                (itemId, itemPatch)
+            );
+            
+            if (!success)
+            {
+                return NotFound($"Artikel mit ID {itemId} nicht gefunden");
+            }
+            
+            return NoContent();
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(UpdateItem));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(UpdateItem));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+    }
+
+    [HttpPatch]
+    [Route("Item/{itemId:guid}/purchase")]
+    public async Task<ActionResult> MarkItemAsPurchased(Guid itemId, [FromBody] bool isPurchased)
+    {
+        try
+        {
+            bool success = await _databaseService.SqlConnectionHandler<(Guid, bool), bool>(
+                (input, connection) => _databaseService.MarkItemAsPurchased(input.Item1, input.Item2, connection),
+                (itemId, isPurchased)
+            );
+            
+            if (!success)
+            {
+                return NotFound($"Artikel mit ID {itemId} nicht gefunden");
+            }
+            
+            return NoContent();
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(MarkItemAsPurchased));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(MarkItemAsPurchased));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+    }
+
+    [HttpPatch]
+    [Route("User/{userId:guid}/role")]
+    public async Task<ActionResult> UpdateUserRoleInShoppingList(Guid userId, [FromQuery] Guid listId, [FromQuery] Guid roleId)
+    {
+        try
+        {
+            bool success = await _databaseService.SqlConnectionHandler<(Guid, Guid, Guid), bool>(
+                (input, connection) => _databaseService.UpdateUserRoleInShoppingList(input.Item1, input.Item2, input.Item3, connection),
+                (listId, userId, roleId)
+            );
+            
+            if (!success)
+            {
+                return NotFound($"Benutzer mit ID {userId} in der Einkaufsliste mit ID {listId} nicht gefunden");
+            }
+            
+            return NoContent();
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(UpdateUserRoleInShoppingList));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(UpdateUserRoleInShoppingList));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+    }
+
+    // DELETE-Methoden
+    [HttpDelete]
+    [Route("ShoppingList/{listId:guid}")]
+    public async Task<ActionResult> DeleteShoppingList(Guid listId)
+    {
+        try
+        {
+            bool success = await _databaseService.SqlConnectionHandler<Guid, bool>(
+                (input, connection) => _databaseService.DeleteShoppingList(input, connection),
+                listId
+            );
+            
+            if (!success)
+            {
+                return NotFound($"Einkaufsliste mit ID {listId} nicht gefunden");
+            }
+            
+            return NoContent();
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(DeleteShoppingList));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(DeleteShoppingList));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+    }
+
+    [HttpDelete]
+    [Route("Item/{itemId:guid}")]
+    public async Task<ActionResult> DeleteItem(Guid itemId)
+    {
+        try
+        {
+            bool success = await _databaseService.SqlConnectionHandler<Guid, bool>(
+                (input, connection) => _databaseService.DeleteItem(input, connection),
+                itemId
+            );
+            
+            if (!success)
+            {
+                return NotFound($"Artikel mit ID {itemId} nicht gefunden");
+            }
+            
+            return NoContent();
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(DeleteItem));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(DeleteItem));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+    }
+
+    [HttpDelete]
+    [Route("UserRole/{roleId:guid}")]
+    public async Task<ActionResult> DeleteUserRole(Guid roleId)
+    {
+        try
+        {
+            bool success = await _databaseService.SqlConnectionHandler<Guid, bool>(
+                (input, connection) => _databaseService.DeleteUserRole(input, connection),
+                roleId
+            );
+            
+            if (!success)
+            {
+                return NotFound($"Benutzerrolle mit ID {roleId} nicht gefunden");
+            }
+            
+            return NoContent();
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(DeleteUserRole));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(DeleteUserRole));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+    }
+
+    [HttpDelete]
+    [Route("ShoppingList/{listId:guid}/user/{userId:guid}")]
+    public async Task<ActionResult> RemoveUserFromShoppingList(Guid listId, Guid userId)
+    {
+        try
+        {
+            bool success = await _databaseService.SqlConnectionHandler<(Guid, Guid), bool>(
+                (input, connection) => _databaseService.RemoveUserFromShoppingList(input.Item1, input.Item2, connection),
+                (listId, userId)
+            );
+            
+            if (!success)
+            {
+                return NotFound($"Benutzer mit ID {userId} in der Einkaufsliste mit ID {listId} nicht gefunden");
+            }
+            
+            return NoContent();
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(RemoveUserFromShoppingList));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(RemoveUserFromShoppingList));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+    }
+
+    // UserController.cs
+
+    [HttpPatch]
+    [Route("{userId:guid}")]
+    public async Task<ActionResult> UpdateUser(Guid userId, [FromBody] Model.Patch.ListUserPatch userPatch)
+    {
+        try
+        {
+            bool success = await _databaseService.SqlConnectionHandler<(Guid, Model.Patch.ListUserPatch), bool>(
+                (input, connection) => _databaseService.UpdateUser(input.Item1, input.Item2, connection),
+                (userId, userPatch)
+            );
+            
+            if (!success)
+            {
+                return NotFound($"Benutzer mit ID {userId} nicht gefunden");
+            }
+            
+            return NoContent();
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(UpdateUser));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(UpdateUser));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+    }
+
+    [HttpDelete]
+    [Route("{userId:guid}")]
+    public async Task<ActionResult> DeleteUser(Guid userId)
+    {
+        try
+        {
+            bool success = await _databaseService.SqlConnectionHandler<Guid, bool>(
+                (input, connection) => _databaseService.DeleteUser(input, connection),
+                userId
+            );
+            
+            if (!success)
+            {
+                return NotFound($"Benutzer mit ID {userId} nicht gefunden");
+            }
+            
+            return NoContent();
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(DeleteUser));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(DeleteUser));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
+        }
+    }
 }
