@@ -74,14 +74,54 @@ public class DatabaseService
 
     #region Data-Reader
 
-//     public async Task<bool> checkUserExistence(string email)
-//     {
-//         string checkQuery = "SELECT UserId FROM ListUser WHERE EmailAddress = @EmailAddress";
-//         
-//     }
+    public async Task<bool> CheckUserExistence(string emailAddress, SqlConnection sqlConnection)
+    {
+        bool existenceCheck = true;
+
+        string checkQuery = "SELECT UserId FROM ListUser WHERE EmailAddress = @EmailAddress";
+
+        await using SqlCommand checkCommand = new(checkQuery, sqlConnection);
+
+        checkCommand.Parameters.Add(new SqlParameter { ParameterName = "@EmailAddress", Value = emailAddress });
+
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+
+            await using SqlDataReader sqlReader = await checkCommand.ExecuteReaderAsync();
+
+            if (sqlReader.HasRows)
+            {
+                existenceCheck = true;
+            }
+            else
+            {
+                existenceCheck = false;
+            }
+            
+            sqlReader.Close();
+            
+            return existenceCheck;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(CheckUserExistence));
+            throw numberedException;
+        }
+    }
 // /*
 //     public async Task<bool> checkShoppingListExistence()
 //     {
+
 //
 //     }
 //
