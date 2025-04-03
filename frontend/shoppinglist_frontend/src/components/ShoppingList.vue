@@ -43,8 +43,7 @@ onMounted(loadItems)
 
 <template>
   <div>
-    <button @click="logout" class="logout-button">Abmelden</button>
-    <h1>Shopping List</h1>
+    <h1 class="caveat-brush-regular">Shopping List</h1>
     <input v-model="newItem" @keyup.enter="addItem" placeholder="Add a new item &#9166"/>
     <ul>
       <li v-for="(item, index) in items" :key="index">
@@ -52,10 +51,13 @@ onMounted(loadItems)
         <button @click="removeItem(index)" class="remove-button">&times;</button>
       </li>
     </ul>
+    <button @click="logout" class="logout-button">Logout</button>
   </div>
 </template>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Caveat+Brush&display=swap');
+
 div {
   display: flex;
   flex-direction: column;
@@ -63,21 +65,36 @@ div {
   position: relative;
 }
 
+.caveat-brush-regular {
+  font-family: "Caveat Brush", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
 h1 {
-  font-size: 2em;
-  margin: 0.5em 0;
+  font-size: 3em;
   text-align: center;
+  color: var(--color-primary);
+  margin: 0 0 1rem;
 }
 
 input {
-  margin: 0.5em 0;
   width: 90%;
   height: 5vh;
   font-size: 25px;
   text-align: center;
-  border: 2px solid var(--primary-color);
+  border: 2px solid var(--color-primary);
   background: transparent;
-  color: var(--color-text);
+  color: var(--color-primary);
+}
+
+input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+input:focus::placeholder {
+  opacity: 0;
 }
 
 button {
@@ -100,7 +117,7 @@ li {
 }
 
 li:nth-child(even) {
-  background-color: var(--color-background-soft);
+  background-color: #fff8dc;
 }
 
 .remove-button {

@@ -40,23 +40,33 @@ const login = () => {
 
 .card {
   padding: 2rem;
-  background: white;
+  background-color: #fff8dc;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid var(--color-primary);
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 400px;
 }
 
 input {
-  margin: 0.5em 0;
-  padding: 0.5em;
-  font-size: 16px;
+  width: 30%;
+  height: 5vh;
+  font-size: 18px;
+  text-align: center;
+  border: 2px solid var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
+  margin-bottom: 1rem;
 }
 
 button {
   padding: 10px 20px;
   font-size: 16px;
   cursor: pointer;
+  margin-top: 2rem;
+  background-color: #fff8dc;
+  border: 2px solid var(--color-primary);
 }
 </style>
