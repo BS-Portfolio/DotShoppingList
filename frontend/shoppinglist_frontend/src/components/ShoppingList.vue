@@ -131,8 +131,9 @@ li:nth-child(even) {
 
 .logout-button {
   position: absolute;
-  top: 10px;
+  top: 1%;
   right: 10px;
+  transform: translateY(-50%);
   padding: 10px 20px;
   font-size: 16px;
   cursor: pointer;
