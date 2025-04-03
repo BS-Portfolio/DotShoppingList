@@ -8,9 +8,9 @@ public class ListUser
     public string FirstName { get; set; }
     public string LastName { get; set; }
     public string EmailAddress { get; set; }
-    public DateTime CreationDate { get; set; }
+    public DateTimeOffset CreationDate { get; set; }
 
-    public ListUser(Guid userId, string firstName, string lastName, string emailAddress, DateTime creationDate)
+    public ListUser(Guid userId, string firstName, string lastName, string emailAddress, DateTimeOffset creationDate)
     {
         UserID = userId;
         FirstName = firstName;
