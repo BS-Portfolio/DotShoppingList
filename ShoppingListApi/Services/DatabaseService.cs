@@ -1,5 +1,6 @@
 using System.Data;
 using ShoppingListApi.Configs;
+using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.Database;
 using ShoppingListApi.Model.Get;
@@ -101,9 +102,9 @@ public class DatabaseService
             {
                 existenceCheck = false;
             }
-            
+
             sqlReader.Close();
-            
+
             return existenceCheck;
         }
         catch (NumberedException)
@@ -118,12 +119,88 @@ public class DatabaseService
             throw numberedException;
         }
     }
-// /*
-//     public async Task<bool> checkShoppingListExistence()
-//     {
 
-//
-//     }
+    public async Task<bool> CheckShoppingListExistence(ShoppingListExistenceCheckData data, SqlConnection sqlConnection)
+    {
+        string existenceCheckQuery = "SELECT SL.ShoppingListID " +
+                                     "FROM ShoppingList AS SL " +
+                                     "JOIN MemberList AS ML ON SL.ShoppingListID = ML.ShoppingListID " +
+                                     "WHERE SL.ShoppingListName = @ShoppingListName AND " +
+                                     "ML.UserID = @UserID AND " +
+                                     "ML.UserRoleID IN (SELECT UserRoleID FROM UserRole WHERE UserRole.EnumIndex = @AdminEnumIndex)";
+
+        await using SqlCommand checkCommand = new(existenceCheckQuery, sqlConnection);
+
+        checkCommand.Parameters.AddRange([
+            new SqlParameter() { ParameterName = "@ShoppingListName", Value = data.ShoppingListName },
+            new SqlParameter() { ParameterName = "@UserID", Value = data.UserId },
+            new SqlParameter() { ParameterName = "@AdminEnumIndex", Value = (int)UserRoleEnum.ListAdmin },
+        ]);
+
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+
+            await using SqlDataReader sqlReader = await checkCommand.ExecuteReaderAsync();
+
+            var existenceCheck = sqlReader.HasRows;
+
+            sqlReader.Close();
+
+            return existenceCheck;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(CheckShoppingListExistence));
+            throw numberedException;
+        }
+    }
+
+    public async Task<bool> CheckUserRoleExistence(int enumIndex, SqlConnection sqlConnection)
+    {
+        string checkQuery = "SELECT UserRoleID FROM UserRole WHERE UserRole.EnumIndex = @EnumIndex";
+
+        await using SqlCommand checkCommand = new(checkQuery, sqlConnection);
+
+        checkCommand.Parameters.Add(new SqlParameter { ParameterName = "@EnumIndex", Value = enumIndex });
+        
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+            
+            await using SqlDataReader sqlReader = await checkCommand.ExecuteReaderAsync();
+            
+            var existenceCheck = sqlReader.HasRows;
+            
+            sqlReader.Close();
+            
+            return existenceCheck;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(CheckShoppingListExistence));
+            throw numberedException;
+        }
+    }
+// /*
 //
 //     public async Task<bool> checkItemExistence()
 //     {
