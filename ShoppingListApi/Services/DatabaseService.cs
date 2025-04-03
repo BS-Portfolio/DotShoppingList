@@ -142,32 +142,254 @@ public class DatabaseService
     // public async Task<ListUser> GetUser<T>(T identifier, string whereClasue, SqlConnection sqlConnection)
     // {
     // }
+    
+    public async Task<ListUser?> GetUser<T>(T identifier, string whereClause, SqlConnection sqlConnection)
+    {
+        var query = "SELECT UserID, FirstName, LastName, EmailAddress, CreationDateTime FROM ListUser WHERE " + whereClause;
+    
+        await using SqlCommand sqlCommand = new(query, sqlConnection);
+    
+        if (identifier != null)
+        {
+            sqlCommand.Parameters.Add(new SqlParameter("@Identifier", identifier));
+        }
+    
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+        
+            await using SqlDataReader sqlReader = await sqlCommand.ExecuteReaderAsync();
+        
+            if (sqlReader.HasRows && await sqlReader.ReadAsync())
+            {
+                var user = new ListUser(
+                    sqlReader.GetGuid(0),
+                    sqlReader.GetString(1),
+                    sqlReader.GetString(2),
+                    sqlReader.GetString(3),
+                    sqlReader.GetDateTime(4)
+                );
+            
+                return user;
+            }
+        
+            return null;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(GetUser));
+            throw numberedException;
+        }
+    }
 
     // call GetUser<T> as GetUser<string> with email address a identifier
     // public async Task<ListUser> GetUserByEmailAddress(string emailAsdress, SqlConnection sqlConnection)
     // {
     // }
+    
+    public async Task<ListUser?> GetUserByEmailAddress(string emailAddress, SqlConnection sqlConnection)
+    {
+        return await GetUser(emailAddress, "EmailAddress = @Identifier", sqlConnection);
+    }
 
     // call GetUser<T> as GetUser<Guid> with userId a identifier
     // public async Task<ListUser> GetUserById(Guid userId, SqlConnection sqlConnection)
     // {
     // }
+    public async Task<ListUser?> GetUserById(Guid userId, SqlConnection sqlConnection)
+    {
+        return await GetUser(userId, "UserID = @Identifier", sqlConnection);
+    }
 
     // only get the id and the name of the hopping list
     // public async Task<ShoppingList> GetShoppingListById(Guid shoppingListId, SqlConnection sqlConnection)
     // {
     // }
-
+    
+    // Get shopping list by ID
+    public async Task<ShoppingList?> GetShoppingListById(Guid shoppingListId, SqlConnection sqlConnection)
+    {
+        string query = @"
+        SELECT sl.ShoppingListID, sl.ShoppingListName, lu.UserID, lu.FirstName, lu.LastName, lu.EmailAddress, lu.CreationDateTime
+        FROM ShoppingList sl
+        JOIN ListMember lm ON sl.ShoppingListID = lm.ShoppingListID
+        JOIN ListUser lu ON lm.UserID = lu.UserID
+        JOIN UserRole ur ON lm.UserRoleID = ur.UserRoleID
+        WHERE sl.ShoppingListID = @ShoppingListID AND ur.EnumIndex = 1"; // ListAdmin Role
+    
+        await using SqlCommand sqlCommand = new(query, sqlConnection);
+        sqlCommand.Parameters.Add(new SqlParameter("@ShoppingListID", shoppingListId));
+    
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+        
+            await using SqlDataReader sqlReader = await sqlCommand.ExecuteReaderAsync();
+        
+            if (sqlReader.HasRows && await sqlReader.ReadAsync())
+            {
+                var listOwner = new ListUser(
+                    sqlReader.GetGuid(2),
+                    sqlReader.GetString(3),
+                    sqlReader.GetString(4),
+                    sqlReader.GetString(5),
+                    sqlReader.GetDateTime(6)
+                );
+            
+                var shoppingList = new ShoppingList(
+                    sqlReader.GetGuid(0),
+                    sqlReader.GetString(1),
+                    listOwner
+                );
+            
+                return shoppingList;
+            }
+        
+            return null;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(GetShoppingListById));
+            throw numberedException;
+        }
+    }
+    
     // only get the name and id of the shopping lists
     // public async Task<List<ShoppingList>> GetShoppingListsForUser(Guid UserId, SqlConnection sqlConnection)
     // {
     // }
 
+    public async Task<List<ShoppingList>> GetShoppingListsForUser(Guid userId, SqlConnection sqlConnection)
+    {
+        var shoppingLists = new List<ShoppingList>();
+    
+        var query = @"
+        SELECT sl.ShoppingListID, sl.ShoppingListName, lu.UserID, lu.FirstName, lu.LastName, lu.EmailAddress, lu.CreationDateTime
+        FROM ShoppingList sl
+        JOIN ListMember lm ON sl.ShoppingListID = lm.ShoppingListID
+        JOIN ListUser lu ON lm.UserID = lu.UserID
+        WHERE lm.UserID = @UserID";
+    
+        await using SqlCommand sqlCommand = new(query, sqlConnection);
+        sqlCommand.Parameters.Add(new SqlParameter("@UserID", userId));
+    
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+        
+            await using SqlDataReader sqlReader = await sqlCommand.ExecuteReaderAsync();
+        
+            if (sqlReader.HasRows)
+            {
+                while (await sqlReader.ReadAsync())
+                {
+                    var listOwner = new ListUser(
+                        sqlReader.GetGuid(2),
+                        sqlReader.GetString(3),
+                        sqlReader.GetString(4),
+                        sqlReader.GetString(5),
+                        sqlReader.GetDateTime(6)
+                    );
+                
+                    var shoppingList = new ShoppingList(
+                        sqlReader.GetGuid(0),
+                        sqlReader.GetString(1),
+                        listOwner
+                    );
+                
+                    shoppingLists.Add(shoppingList);
+                }
+            }
+        
+            return shoppingLists;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(GetShoppingListsForUser));
+            throw numberedException;
+        }
+    }
+    
     // public async Task<List<Item>> GetItemsForShoppingList(Guid ShoppingListId, SqlConnection sqlConnection)
     // {
     //     
     // }
-
+    
+    public async Task<List<Item>> GetItemsForShoppingList(Guid shoppingListId, SqlConnection sqlConnection)
+    {
+        var items = new List<Item>();
+    
+        string query = "SELECT ItemID, ItemName, ItemUnit, ItemAmount FROM Item WHERE ShoppingListID = @ShoppingListID";
+    
+        await using SqlCommand sqlCommand = new(query, sqlConnection);
+        sqlCommand.Parameters.Add(new SqlParameter("@ShoppingListID", shoppingListId));
+    
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+        
+            await using SqlDataReader sqlReader = await sqlCommand.ExecuteReaderAsync();
+        
+            if (sqlReader.HasRows)
+            {
+                while (await sqlReader.ReadAsync())
+                {
+                    var item = new Item(
+                        sqlReader.GetGuid(0),
+                        sqlReader.GetString(1),
+                        sqlReader.GetString(2),
+                        sqlReader.GetString(3)
+                    );
+                
+                    items.Add(item);
+                }
+            }
+        
+            return items;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(GetItemsForShoppingList));
+            throw numberedException;
+        }
+    }
+    
     #endregion
 
 
