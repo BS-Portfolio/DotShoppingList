@@ -158,7 +158,7 @@ public class DatabaseService
         }
     }
 
-    public async Task<(bool success, Guid? id)> AddUserRole(SqlConnection sqlConnection, UserRolePost userRolePost)
+    public async Task<(bool success, Guid? userRoleId)> AddUserRole(SqlConnection sqlConnection, UserRolePost userRolePost)
     {
         string addQuery = "INSERT INTO UserRole (UserRoleID, UserRoleTitle, EnumIndex)"
                           + " VALUES (@UserRoleID, @UserRoleTitle, @EnumIndex)";
@@ -366,7 +366,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(AddItemToShoppingList));
+                nameof(DatabaseService), nameof(AssignUserToShoppingList));
             throw numberedException;
         }
     }
