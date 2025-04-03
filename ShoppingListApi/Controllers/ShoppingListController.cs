@@ -544,9 +544,7 @@ public class ShoppingListController : ControllerBase
                 "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
         }
     }
-
-    // UserController.cs
-
+    
     [HttpPatch]
     [Route("{userId:guid}")]
     public async Task<ActionResult> UpdateUser(Guid userId, [FromBody] Model.Patch.ListUserPatch userPatch)
