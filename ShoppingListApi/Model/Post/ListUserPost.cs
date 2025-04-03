@@ -8,7 +8,7 @@ public class ListUserPost
     public string LastName { get; private set; }
     public string EmailAddress { get; private set; }
     public string PasswordHash { get; private set; }
-    public DateTimeOffset CreationDate { get; private set; }
+    public DateTimeOffset CreationDateTime { get; private set; }
     public string ApiKey { get; private set; }
     public DateTimeOffset ApiKeyExpirationDateTime{ get; private set; }
 
@@ -18,7 +18,7 @@ public class ListUserPost
         LastName = lastName;
         EmailAddress = emailAddress;
         PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(password, 13);
-        CreationDate = DateTimeOffset.UtcNow;
+        CreationDateTime = DateTimeOffset.UtcNow;
         ApiKey = HM.GenerateApiKey();
         ApiKeyExpirationDateTime = creationDate + TimeSpan.FromHours(6);
     }
