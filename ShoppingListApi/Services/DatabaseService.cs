@@ -172,21 +172,77 @@ public class DatabaseService
         await using SqlCommand checkCommand = new(checkQuery, sqlConnection);
 
         checkCommand.Parameters.Add(new SqlParameter { ParameterName = "@EnumIndex", Value = enumIndex });
-        
+
         try
         {
             if (sqlConnection.State != ConnectionState.Open)
             {
                 await sqlConnection.OpenAsync();
             }
-            
+
             await using SqlDataReader sqlReader = await checkCommand.ExecuteReaderAsync();
-            
+
             var existenceCheck = sqlReader.HasRows;
-            
+
             sqlReader.Close();
-            
+
             return existenceCheck;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(CheckShoppingListExistence));
+            throw numberedException;
+        }
+    }
+
+    public async Task<UserRoleEnum?> CheckUsersRoleInList(CheckUsersRoleData data, SqlConnection sqlConnection)
+    {
+        int targetIndex = 0;
+
+        string checkQuery = "SELECT UR.EnumIndex FROM ListMember AS LM " +
+                            "JOIN UserRole AS UR ON UserRole.UserRoleID = ListMember.UserRoleID " +
+                            "WHERE LM.UserID = @UserID AND LM.ShoppingListID = @ShoppingListID";
+
+        await using SqlCommand checkCommand = new(checkQuery, sqlConnection);
+
+        checkCommand.Parameters.AddRange([
+            new SqlParameter { ParameterName = "@UserID", Value = data.UserId },
+            new SqlParameter { ParameterName = "@ShoppingListID", Value = data.ShoppingListId },
+        ]);
+
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+
+            await using SqlDataReader sqlReader = await checkCommand.ExecuteReaderAsync();
+
+            if (!sqlReader.HasRows)
+            {
+                return null;
+            }
+
+            while (await sqlReader.ReadAsync())
+            {
+                targetIndex = sqlReader.GetInt32(sqlReader.GetOrdinal("UR.EnumIndex"));
+            }
+
+            sqlReader.Close();
+
+            if (!Enum.IsDefined(typeof(UserRoleEnum), targetIndex))
+            {
+                return null;
+            }
+
+            return (UserRoleEnum)targetIndex;
         }
         catch (NumberedException)
         {
