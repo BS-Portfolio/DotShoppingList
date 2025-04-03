@@ -1,3 +1,13 @@
+# Donnerstag, 03.04.25
+
+## Tasks:
+- login API
+- frontend dashboard
+- styling
+
+## Blocker:
+-
+
 # Mittwoch, 02.04.25
 
 ## Tasks:
