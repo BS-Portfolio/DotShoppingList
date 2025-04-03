@@ -6,7 +6,7 @@ public class Item
     public string ItemName { get; set; }
     public string ItemAmount { get; set; }
 
-    public Item(Guid itemId, string itemName, string itemUnit, string itemAmount)
+    public Item(Guid itemId, string itemName, string itemAmount)
     {
         ItemID = itemId;
         ItemName = itemName;
