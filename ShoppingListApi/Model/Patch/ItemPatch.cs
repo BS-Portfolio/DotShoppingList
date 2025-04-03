@@ -3,13 +3,11 @@
 public class ItemPatch
 {
     public string? NewItemName { get; set; }
-    public string? NewItemUnit { get; set; }
-    public decimal? NewItemAmount { get; set; }
+    public string? NewItemAmount { get; set; }
 
-    public ItemPatch(string? newItemName, string? newItemUnit, decimal? newItemAmount)
+    public ItemPatch(string? newItemName, string? newItemAmount)
     {
         NewItemName = newItemName;
-        NewItemUnit = newItemUnit;
         NewItemAmount = newItemAmount;
     }
 } 

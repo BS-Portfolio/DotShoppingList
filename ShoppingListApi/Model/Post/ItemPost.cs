@@ -7,14 +7,11 @@ public class ItemPost
     [Required]
     public string ItemName { get; set; }
     [Required]
-    public string ItemUnit { get; set; }
-    [Required]
-    public decimal ItemAmount { get; set; }
+    public string ItemAmount { get; set; }
 
-    public ItemPost(string itemName, string itemUnit, decimal itemAmount)
+    public ItemPost(string itemName, string itemUnit, string itemAmount)
     {
         ItemName = itemName;
-        ItemUnit = itemUnit;
         ItemAmount = itemAmount;
     }
 }

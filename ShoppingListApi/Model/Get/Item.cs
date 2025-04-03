@@ -4,14 +4,12 @@ public class Item
 {
     public Guid ItemID { get; set; }
     public string ItemName { get; set; }
-    public string ItemUnit { get; set; }
-    public decimal ItemAmount { get; set; }
+    public string ItemAmount { get; set; }
 
-    public Item(Guid itemId, string itemName, string itemUnit, decimal itemAmount)
+    public Item(Guid itemId, string itemName, string itemUnit, string itemAmount)
     {
         ItemID = itemId;
         ItemName = itemName;
-        ItemUnit = itemUnit;
         ItemAmount = itemAmount;
     }
 }

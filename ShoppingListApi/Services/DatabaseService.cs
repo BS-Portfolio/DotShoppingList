@@ -74,25 +74,26 @@ public class DatabaseService
 
     #region Data-Reader
 
-    /*public async Task<bool> checkUserExistence(string email)
-    {
-
-    }
-
-    public async Task<bool> checkShoppingListExistence()
-    {
-
-    }
-
-    public async Task<bool> checkItemExistence()
-    {
-
-    }
-
-    public async Task<bool> userRoleExistence()
-    {
-
-    }*/
+//     public async Task<bool> checkUserExistence(string email)
+//     {
+//         string checkQuery = "SELECT UserId FROM ListUser WHERE EmailAddress = @EmailAddress";
+//         
+//     }
+// /*
+//     public async Task<bool> checkShoppingListExistence()
+//     {
+//
+//     }
+//
+//     public async Task<bool> checkItemExistence()
+//     {
+//
+//     }
+//
+//     public async Task<bool> userRoleExistence()
+//     {
+//
+//     }*/
 
     public async Task<List<UserRole>> GetUserRoles(SqlConnection sqlConnection)
     {
@@ -156,7 +157,7 @@ public class DatabaseService
     // public async Task<ShoppingList> GetShoppingListById(Guid shoppingListId, SqlConnection sqlConnection)
     // {
     // }
-    
+
     // only get the name and id of the shopping lists
     // public async Task<List<ShoppingList>> GetShoppingListsForUser(Guid UserId, SqlConnection sqlConnection)
     // {
@@ -166,8 +167,7 @@ public class DatabaseService
     // {
     //     
     // }
-    
-    
+
     #endregion
 
 
@@ -338,8 +338,8 @@ public class DatabaseService
         SqlConnection sqlConnection)
     {
         string addQuery =
-            "INSERT INTO Item (ItemID, ShoppingListID, ItemName, ItemUnit, ItemAmount) "
-            + "VALUES (@ItemID, @ShoppingListID, @ItemName, @ItemUnit, @ItemAmount)";
+            "INSERT INTO Item (ItemID, ShoppingListID, ItemName, ItemAmount) "
+            + "VALUES (@ItemID, @ShoppingListID, @ItemName, @ItemAmount)";
 
         Guid itemId = Guid.NewGuid();
 
@@ -352,8 +352,7 @@ public class DatabaseService
                 SqlDbType = SqlDbType.UniqueIdentifier
             },
             new SqlParameter() { ParameterName = "@ItemName", Value = newItemData.itemPost.ItemName },
-            new SqlParameter() { ParameterName = "@ItemUnit", Value = newItemData.itemPost.ItemUnit },
-            new SqlParameter() { ParameterName = "@ItemAmount", Value = newItemData.itemPost.ItemAmount },
+            new SqlParameter() { ParameterName = "@ItemAmount", Value = newItemData.itemPost.ItemAmount }
         ];
 
         try
