@@ -5,7 +5,8 @@ using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.Database;
 using ShoppingListApi.Model.Get;
 using ShoppingListApi.Model.Post;
-using SqlParameter = Microsoft.Data.SqlClient.SqlParameter;
+using ShoppingListApi.Model.Patch;
+using Microsoft.Data.SqlClient;
 
 namespace ShoppingListApi.Services;
 
@@ -933,44 +934,44 @@ public class DatabaseService
     #region Data-Modifier
 
     // Aktualisieren eines Benutzers
-    public async Task<bool> UpdateUser(Guid userId, Model.Patch.ListUserPatch userPatch, SqlConnection sqlConnection)
+    public async Task<bool> UpdateUser(Guid userId, ListUserPatch userPatch, SqlConnection sqlConnection)
     {
+        var updateParts = new List<string>();
+        var parameters = new List<SqlParameter>
+        {
+            new() { ParameterName = "@UserID", Value = userId, SqlDbType = SqlDbType.UniqueIdentifier }
+        };
+
+        if (!string.IsNullOrEmpty(userPatch.NewFirstName))
+        {
+            updateParts.Add("FirstName = @FirstName");
+            parameters.Add(new SqlParameter("@FirstName", userPatch.NewFirstName));
+        }
+
+        if (!string.IsNullOrEmpty(userPatch.NewLastName))
+        {
+            updateParts.Add("LastName = @LastName");
+            parameters.Add(new SqlParameter("@LastName", userPatch.NewLastName));
+        }
+
+        if (!string.IsNullOrEmpty(userPatch.NewEmailAddress))
+        {
+            updateParts.Add("EmailAddress = @EmailAddress");
+            parameters.Add(new SqlParameter("@EmailAddress", userPatch.NewEmailAddress));
+        }
+
+        if (updateParts.Count == 0)
+        {
+            return true; // Nichts zu aktualisieren
+        }
+
+        var query = $"UPDATE ListUser SET {string.Join(", ", updateParts)} WHERE UserID = @UserID";
+
+        await using SqlCommand sqlCommand = new(query, sqlConnection);
+        sqlCommand.Parameters.AddRange(parameters.ToArray());
+
         try
         {
-            var updateParts = new List<string>();
-            var parameters = new List<SqlParameter>
-            {
-                new() { ParameterName = "@UserID", Value = userId, SqlDbType = SqlDbType.UniqueIdentifier }
-            };
-
-            if (!string.IsNullOrEmpty(userPatch.NewFirstName))
-            {
-                updateParts.Add("FirstName = @FirstName");
-                parameters.Add(new SqlParameter("@FirstName", userPatch.NewFirstName));
-            }
-
-            if (!string.IsNullOrEmpty(userPatch.NewLastName))
-            {
-                updateParts.Add("LastName = @LastName");
-                parameters.Add(new SqlParameter("@LastName", userPatch.NewLastName));
-            }
-
-            if (!string.IsNullOrEmpty(userPatch.NewEmailAddress))
-            {
-                updateParts.Add("EmailAddress = @EmailAddress");
-                parameters.Add(new SqlParameter("@EmailAddress", userPatch.NewEmailAddress));
-            }
-
-            if (updateParts.Count == 0)
-            {
-                return true; // Nichts zu aktualisieren
-            }
-
-            var query = $"UPDATE ListUser SET {string.Join(", ", updateParts)} WHERE UserID = @UserID";
-
-            await using SqlCommand sqlCommand = new(query, sqlConnection);
-            sqlCommand.Parameters.AddRange(parameters.ToArray());
-
             if (sqlConnection.State != ConnectionState.Open)
             {
                 await sqlConnection.OpenAsync();
@@ -994,7 +995,7 @@ public class DatabaseService
     }
 
     // Aktualisieren einer Einkaufsliste
-    public async Task<bool> UpdateShoppingList(Guid listId, Model.Patch.ShoppingListPatch listPatch,
+    public async Task<bool> UpdateShoppingList(Guid listId, ShoppingListPatch listPatch,
         SqlConnection sqlConnection)
     {
         var query =
@@ -1007,11 +1008,11 @@ public class DatabaseService
             new SqlParameter() { ParameterName = "@ShoppingListName", Value = listPatch.NewShoppingListName }
         ];
 
+        await using SqlCommand sqlCommand = new(query, sqlConnection);
+        sqlCommand.Parameters.AddRange(parameters.ToArray());
+
         try
         {
-            await using SqlCommand sqlCommand = new(query, sqlConnection);
-            sqlCommand.Parameters.AddRange(parameters.ToArray());
-
             if (sqlConnection.State != ConnectionState.Open)
             {
                 await sqlConnection.OpenAsync();
@@ -1035,7 +1036,7 @@ public class DatabaseService
     }
 
     // Aktualisieren eines Artikels
-    public async Task<bool> UpdateItem(Guid itemId, Model.Patch.ItemPatch itemPatch, SqlConnection sqlConnection)
+    public async Task<bool> UpdateItem(Guid itemId, ItemPatch itemPatch, SqlConnection sqlConnection)
     {
         try
         {
@@ -1089,46 +1090,9 @@ public class DatabaseService
         }
     }
 
-    // Markieren eines Artikels als gekauft
-    public async Task<bool> MarkItemAsPurchased(Guid itemId, bool isPurchased, SqlConnection sqlConnection)
-    {
-        var query = "UPDATE Item SET IsPurchased = @IsPurchased WHERE ItemID = @ItemID";
-
-        List<SqlParameter> parameters =
-        [
-            new SqlParameter() { ParameterName = "@ItemID", Value = itemId, SqlDbType = SqlDbType.UniqueIdentifier },
-            new SqlParameter() { ParameterName = "@IsPurchased", Value = isPurchased, SqlDbType = SqlDbType.Bit }
-        ];
-
-        try
-        {
-            await using SqlCommand sqlCommand = new(query, sqlConnection);
-            sqlCommand.Parameters.AddRange(parameters.ToArray());
-
-            if (sqlConnection.State != ConnectionState.Open)
-            {
-                await sqlConnection.OpenAsync();
-            }
-
-            var result = await sqlCommand.ExecuteNonQueryAsync();
-
-            return result > 0;
-        }
-        catch (NumberedException)
-        {
-            throw;
-        }
-        catch (Exception e)
-        {
-            var numberedException = new NumberedException(e);
-            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(MarkItemAsPurchased));
-            throw numberedException;
-        }
-    }
-
+    // nicht erwuenscht!
     // Aktualisieren einer Benutzerrolle in einer Einkaufsliste
-    public async Task<bool> UpdateUserRoleInShoppingList(Guid listId, Guid userId, Guid newRoleId,
+    /*public async Task<bool> UpdateUserRoleInShoppingList(Guid listId, Guid userId, Guid newRoleId,
         SqlConnection sqlConnection)
     {
         var query =
@@ -1168,14 +1132,15 @@ public class DatabaseService
                 nameof(DatabaseService), nameof(UpdateUserRoleInShoppingList));
             throw numberedException;
         }
-    }
+    }*/
 
     #endregion
 
     #region Data-Remover
 
     // Löschen eines Benutzers
-    public async Task<bool> DeleteUser(Guid userId, SqlConnection sqlConnection)
+    // klappt nicht! die Listen und ihre items muessen auch geloescht werden. Wie gesagt -> Procedures!
+    /*public async Task<bool> DeleteUser(Guid userId, SqlConnection sqlConnection)
     {
         try
         {
@@ -1227,10 +1192,11 @@ public class DatabaseService
                 nameof(DatabaseService), nameof(DeleteUser));
             throw numberedException;
         }
-    }
+    }*/
 
     // Löschen einer Einkaufsliste
-    public async Task<bool> DeleteShoppingList(Guid listId, SqlConnection sqlConnection)
+    // -> Procedures! Ich bin schon dran!
+    /*public async Task<bool> DeleteShoppingList(Guid listId, SqlConnection sqlConnection)
     {
         try
         {
@@ -1290,7 +1256,7 @@ public class DatabaseService
                 nameof(DatabaseService), nameof(DeleteShoppingList));
             throw numberedException;
         }
-    }
+    }*/
 
     public async Task<bool> DeleteItem(Guid itemId, SqlConnection sqlConnection)
     {
@@ -1328,7 +1294,8 @@ public class DatabaseService
         }
     }
 
-    public async Task<bool> DeleteUserRole(Guid roleId, SqlConnection sqlConnection)
+    // nicht erwuenscht, weil die Datensaetze koennen in anderen Listen erwaehnt sein!
+    /*public async Task<bool> DeleteUserRole(Guid roleId, SqlConnection sqlConnection)
     {
         try
         {
@@ -1372,9 +1339,11 @@ public class DatabaseService
                 nameof(DatabaseService), nameof(DeleteUserRole));
             throw numberedException;
         }
-    }
+    }*/
 
-    public async Task<bool> RemoveUserFromShoppingList(Guid listId, Guid userId, SqlConnection sqlConnection)
+    // ToDo: add collaborator check!
+    // List Admin cannot be removed from the list!
+    public async Task<bool> RemoveCollaboraterFromShoppingList(Guid listId, Guid userId, SqlConnection sqlConnection)
     {
         var query = "DELETE FROM ListMember WHERE ShoppingListID = @ShoppingListID AND UserID = @UserID";
 
@@ -1407,7 +1376,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(RemoveUserFromShoppingList));
+                nameof(DatabaseService), nameof(RemoveCollaboraterFromShoppingList));
             throw numberedException;
         }
     }
