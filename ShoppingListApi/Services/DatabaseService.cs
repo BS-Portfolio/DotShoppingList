@@ -5,6 +5,7 @@ using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.Database;
 using ShoppingListApi.Model.Get;
 using ShoppingListApi.Model.Post;
+using SqlParameter = Microsoft.Data.SqlClient.SqlParameter;
 
 namespace ShoppingListApi.Services;
 
@@ -72,8 +73,7 @@ public class DatabaseService
 
     #endregion
 
-
-    #region Data-Reader
+    #region Checkers
 
     public async Task<bool> CheckUserExistence(string emailAddress, SqlConnection sqlConnection)
     {
@@ -196,7 +196,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(CheckShoppingListExistence));
+                nameof(DatabaseService), nameof(CheckUserRoleExistence));
             throw numberedException;
         }
     }
@@ -252,21 +252,14 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(CheckShoppingListExistence));
+                nameof(DatabaseService), nameof(CheckUsersRoleInList));
             throw numberedException;
         }
     }
-// /*
-//
-//     public async Task<bool> checkItemExistence()
-//     {
-//
-//     }
-//
-//     public async Task<bool> userRoleExistence()
-//     {
-//
-//     }*/
+
+    #endregion
+
+    #region Data-Reader
 
     public async Task<List<UserRole>> GetUserRoles(SqlConnection sqlConnection)
     {
@@ -310,31 +303,21 @@ public class DatabaseService
         }
     }
 
-    // generic method to get user
-    // write the select pat of the quer and put the input where clasue at the end of it
-    // public async Task<ListUser> GetUser<T>(T identifier, string whereClasue, SqlConnection sqlConnection)
-    // {
-    // }
-
     public async Task<ListUser?> GetUser<T>(T identifier, string whereClause, SqlConnection sqlConnection)
     {
-        var query = "SELECT UserID, FirstName, LastName, EmailAddress, CreationDateTime FROM ListUser WHERE " +
-                    whereClause;
+        var query =
+            "SELECT UserID, FirstName, LastName, EmailAddress, CreationDateTime, ApiKey, ApiKeyExpirationDateTime FROM ListUser WHERE " +
+            whereClause;
 
         await using SqlCommand sqlCommand = new(query, sqlConnection);
 
-        // Parameter als Liste für besseren SQL-Injection-Schutz
-        List<SqlParameter> parameters = [];
-    
         if (identifier != null)
         {
-            parameters.Add(new SqlParameter("@Identifier", identifier));
+            sqlCommand.Parameters.Add(new SqlParameter() { ParameterName = "@Identifier", Value = identifier });
         }
-    
-        sqlCommand.Parameters.AddRange(parameters.ToArray());
-    
+
         ListUser? user = null;
-    
+
         try
         {
             if (sqlConnection.State != ConnectionState.Open)
@@ -344,20 +327,25 @@ public class DatabaseService
 
             await using SqlDataReader sqlReader = await sqlCommand.ExecuteReaderAsync();
 
-            if (sqlReader.HasRows && await sqlReader.ReadAsync())
+            if (sqlReader.HasRows)
             {
-                // Verwendung von DateTimeOffset statt DateTime
-                user = new ListUser(
-                    sqlReader.GetGuid(0),
-                    sqlReader.GetString(1),
-                    sqlReader.GetString(2),
-                    sqlReader.GetString(3),
-                    DateTimeOffset.Parse(sqlReader.GetDateTime(4).ToString()) // Konvertierung zu DateTimeOffset
-                );
+                while (await sqlReader.ReadAsync())
+                {
+                    user = new ListUser(
+                        sqlReader.GetGuid(0),
+                        sqlReader.GetString(1),
+                        sqlReader.GetString(2),
+                        sqlReader.GetString(3),
+                        sqlReader.GetDateTimeOffset(4),
+                        sqlReader.GetString(5),
+                        sqlReader.GetDateTimeOffset(6)
+                    );
+                }
             }
-        
-            // SqlReader ist bereits geschlossen durch "await using"
-            return user; // Return außerhalb der if-Anweisung
+
+            sqlReader.Close();
+
+            return user;
         }
         catch (NumberedException)
         {
@@ -371,11 +359,6 @@ public class DatabaseService
             throw numberedException;
         }
     }
-
-    // call GetUser<T> as GetUser<string> with email address a identifier
-    // public async Task<ListUser> GetUserByEmailAddress(string emailAsdress, SqlConnection sqlConnection)
-    // {
-    // }
 
     public async Task<ListUser?> GetUserByEmailAddress(string emailAddress, SqlConnection sqlConnection)
     {
@@ -396,10 +379,6 @@ public class DatabaseService
         }
     }
 
-    // call GetUser<T> as GetUser<Guid> with userId a identifier
-    // public async Task<ListUser> GetUserById(Guid userId, SqlConnection sqlConnection)
-    // {
-    // }
     public async Task<ListUser?> GetUserById(Guid userId, SqlConnection sqlConnection)
     {
         try
@@ -419,30 +398,23 @@ public class DatabaseService
         }
     }
 
-    // only get the id and the name of the hopping list
-    // public async Task<ShoppingList> GetShoppingListById(Guid shoppingListId, SqlConnection sqlConnection)
-    // {
-    // }
-
     public async Task<ShoppingList?> GetShoppingListById(Guid shoppingListId, SqlConnection sqlConnection)
     {
-        var query = @"
-        SELECT sl.ShoppingListID, sl.ShoppingListName, lu.UserID, lu.FirstName, lu.LastName, lu.EmailAddress, lu.CreationDateTime
-        FROM ShoppingList sl
-        JOIN ListMember lm ON sl.ShoppingListID = lm.ShoppingListID
-        JOIN ListUser lu ON lm.UserID = lu.UserID
-        JOIN UserRole ur ON lm.UserRoleID = ur.UserRoleID
-        WHERE sl.ShoppingListID = @ShoppingListID";
+        var query =
+            "SELECT sl.ShoppingListName, lu.UserID, lu.FirstName, lu.LastName, lu.EmailAddress " +
+            "FROM ShoppingList AS sl " +
+            "JOIN ListMember AS lm ON sl.ShoppingListID = lm.ShoppingListID " +
+            "JOIN ListUser AS lu ON lm.UserID = lu.UserID " +
+            "JOIN UserRole AS ur ON lm.UserRoleID = ur.UserRoleID " +
+            "WHERE sl.ShoppingListID = @ShoppingListID AND ur.EnumIndex = @AdminEnumIndex";
 
         await using SqlCommand sqlCommand = new(query, sqlConnection);
-        
-        // Parameter als Liste für besseren SQL-Injection-Schutz
-        List<SqlParameter> parameters =
-        [
-            new SqlParameter("@ShoppingListID", shoppingListId) { SqlDbType = SqlDbType.UniqueIdentifier }
-        ];
-        
-        sqlCommand.Parameters.AddRange(parameters.ToArray());
+
+        sqlCommand.Parameters.AddRange([
+            new SqlParameter()
+                { ParameterName = "@ShoppingListID", Value = shoppingListId, SqlDbType = SqlDbType.UniqueIdentifier },
+            new SqlParameter() { ParameterName = "AdminEnumIndex", Value = (int)UserRoleEnum.ListAdmin }
+        ]);
 
         try
         {
@@ -455,17 +427,16 @@ public class DatabaseService
 
             if (sqlReader.HasRows && await sqlReader.ReadAsync())
             {
-                var listOwner = new ListUser(
-                    sqlReader.GetGuid(2),
+                var listOwner = new ListUserMinimal(
+                    sqlReader.GetGuid(1),
+                    sqlReader.GetString(2),
                     sqlReader.GetString(3),
-                    sqlReader.GetString(4),
-                    sqlReader.GetString(5),
-                    DateTimeOffset.Parse(sqlReader.GetDateTime(6).ToString()) // Konvertierung zu DateTimeOffset
+                    sqlReader.GetString(4)
                 );
 
                 var shoppingList = new ShoppingList(
-                    sqlReader.GetGuid(0),
-                    sqlReader.GetString(1),
+                    shoppingListId,
+                    sqlReader.GetString(0),
                     listOwner
                 );
 
@@ -487,24 +458,28 @@ public class DatabaseService
         }
     }
 
-    // only get the name and id of the shopping lists
-    // public async Task<List<ShoppingList>> GetShoppingListsForUser(Guid UserId, SqlConnection sqlConnection)
-    // {
-    // }
-
     public async Task<List<ShoppingList>> GetShoppingListsForUser(Guid userId, SqlConnection sqlConnection)
     {
         var shoppingLists = new List<ShoppingList>();
 
-        var query = @"
-        SELECT sl.ShoppingListID, sl.ShoppingListName, lu.UserID, lu.FirstName, lu.LastName, lu.EmailAddress, lu.CreationDateTime
-        FROM ShoppingList sl
-        JOIN ListMember lm ON sl.ShoppingListID = lm.ShoppingListID
-        JOIN ListUser lu ON lm.UserID = lu.UserID
-        WHERE lm.UserID = @UserID";
+        var query =
+            "SELECT sl.ShoppingListID, sl.ShoppingListName, lu.UserID, lu.FirstName, lu.LastName, lu.EmailAddress " +
+            "FROM ShoppingList AS sl " +
+            "JOIN ListMember AS lm ON sl.ShoppingListID = lm.ShoppingListID " +
+            "JOIN ListUser AS lu ON lm.UserID = lu.UserID " +
+            "JOIN UserRole AS ur ON lm.UserRoleID = ur.UserRoleID " +
+            "WHERE ur.EnumIndex = @AdminEnumIndex AND sl.ShoppingListID IN " +
+            "(SELECT sl.ShoppingListID " +
+            "FROM ShoppingList AS sl " +
+            "JOIN ListMember AS lm ON sl.ShoppingListID = lm.ShoppingListID " +
+            "JOIN ListUser AS lu ON lm.UserID = lu.UserID " +
+            "WHERE lm.UserID = @UserID)";
 
         await using SqlCommand sqlCommand = new(query, sqlConnection);
-        sqlCommand.Parameters.Add(new SqlParameter("@UserID", userId));
+        sqlCommand.Parameters.AddRange([
+            new SqlParameter() { ParameterName = "@UserID", Value = userId },
+            new SqlParameter() { ParameterName = "@AdminEnumIndex", Value = (int)UserRoleEnum.ListAdmin },
+        ]);
 
         try
         {
@@ -519,12 +494,11 @@ public class DatabaseService
             {
                 while (await sqlReader.ReadAsync())
                 {
-                    var listOwner = new ListUser(
+                    var listOwner = new ListUserMinimal(
                         sqlReader.GetGuid(2),
                         sqlReader.GetString(3),
                         sqlReader.GetString(4),
-                        sqlReader.GetString(5),
-                        sqlReader.GetDateTime(6)
+                        sqlReader.GetString(5)
                     );
 
                     var shoppingList = new ShoppingList(
@@ -552,26 +526,16 @@ public class DatabaseService
         }
     }
 
-    // public async Task<List<Item>> GetItemsForShoppingList(Guid ShoppingListId, SqlConnection sqlConnection)
-    // {
-    //     
-    // }
-
     public async Task<List<Item>> GetItemsForShoppingList(Guid shoppingListId, SqlConnection sqlConnection)
     {
         var items = new List<Item>();
 
-        // ItemUnit aus der Abfrage entfernt
         var query = "SELECT ItemID, ItemName, ItemAmount FROM Item WHERE ShoppingListID = @ShoppingListID";
 
         await using SqlCommand sqlCommand = new(query, sqlConnection);
-    
-        List<SqlParameter> parameters =
-        [
-            new SqlParameter("@ShoppingListID", shoppingListId) { SqlDbType = SqlDbType.UniqueIdentifier }
-        ];
-    
-        sqlCommand.Parameters.AddRange(parameters.ToArray());
+
+        sqlCommand.Parameters.Add(new SqlParameter()
+            { ParameterName = "@ShoppingListID", Value = shoppingListId, SqlDbType = SqlDbType.UniqueIdentifier });
 
         try
         {
@@ -589,7 +553,6 @@ public class DatabaseService
                     var item = new Item(
                         sqlReader.GetGuid(0),
                         sqlReader.GetString(1),
-                        "", // Leerer string für ItemUnit
                         sqlReader.GetString(2)
                     );
 
@@ -608,6 +571,99 @@ public class DatabaseService
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(DatabaseService), nameof(GetItemsForShoppingList));
+            throw numberedException;
+        }
+    }
+
+    public async Task<List<ListUserMinimal>> GetSoppingListCollaborators(Guid shoppingListId,
+        SqlConnection sqlConnection)
+    {
+        List<ListUserMinimal> collaborators = [];
+
+        string getQuery = "SELECT LU.UserID, LU.FirstName, LU.LastName, LU.EmailAddress " +
+                          "FROM ListUser AS LU " +
+                          "JOIN ListMember AS LM ON ListUser.UserID = ListMember.UserID " +
+                          "JOIN UserRole AS UR ON UserRole.UserRoleID = ListMember.UserRoleID " +
+                          "WHERE LM.ShoppingListID = @ShoppingListID AND LM.UserRoleID IN " +
+                          "(SELECT UserRoleID FROM UserRole WHERE UserRole.EnumIndex = @CollaboratorEnumIndex)";
+
+        SqlCommand sqlCommand = new(getQuery, sqlConnection);
+
+        sqlCommand.Parameters.AddRange([
+            new SqlParameter()
+                { ParameterName = "@ShoppingListID", Value = shoppingListId, SqlDbType = SqlDbType.UniqueIdentifier },
+            new SqlParameter() { ParameterName = "@CollaboratorEnumIndex", Value = (int)UserRoleEnum.Collaborator },
+        ]);
+
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+
+            await using SqlDataReader sqlReader = await sqlCommand.ExecuteReaderAsync();
+
+            if (!sqlReader.HasRows)
+            {
+                return collaborators;
+            }
+
+            if (sqlReader.HasRows)
+            {
+                while (await sqlReader.ReadAsync())
+                {
+                    collaborators.Add(new ListUserMinimal(
+                        sqlReader.GetGuid(0),
+                        sqlReader.GetString(1),
+                        sqlReader.GetString(2),
+                        sqlReader.GetString(3)
+                    ));
+                }
+            }
+
+            return collaborators;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(GetSoppingListCollaborators));
+            throw numberedException;
+        }
+    }
+
+
+    public async Task<List<ShoppingList>> HandleShoppingListsFetchForUser(Guid userId, SqlConnection sqlConnection)
+    {
+        try
+        {
+            var shoppingLists = await GetShoppingListsForUser(userId, sqlConnection);
+
+            foreach (var shoppingList in shoppingLists)
+            {
+                var items = await GetItemsForShoppingList(shoppingList.ShoppingListId, sqlConnection);
+                shoppingList.AddItemsToShoppingList(items);
+
+                var collaborators = await GetSoppingListCollaborators(shoppingList.ShoppingListId, sqlConnection);
+                shoppingList.AddCollaboratorsToShoppingList(collaborators);
+            }
+
+            return shoppingLists;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(HandleShoppingListsFetchForUser));
             throw numberedException;
         }
     }
@@ -750,7 +806,8 @@ public class DatabaseService
 
         List<SqlParameter> parameters =
         [
-            new SqlParameter() { ParameterName = "@ShoppingListID", Value = shoppingListId, SqlDbType = SqlDbType.UniqueIdentifier },
+            new SqlParameter()
+                { ParameterName = "@ShoppingListID", Value = shoppingListId, SqlDbType = SqlDbType.UniqueIdentifier },
             new SqlParameter() { ParameterName = "@ShoppingListName", Value = shoppingListPost.ShoppingListName }
         ];
 
@@ -777,7 +834,7 @@ public class DatabaseService
             throw numberedException;
         }
     }
-    
+
     public async Task<(bool success, Guid? itemId)> AddItemToShoppingList(NewItemData newItemData,
         SqlConnection sqlConnection)
     {
@@ -791,10 +848,11 @@ public class DatabaseService
         List<SqlParameter> parameters =
         [
             new SqlParameter() { ParameterName = "@ItemID", Value = itemId, SqlDbType = SqlDbType.UniqueIdentifier },
-            new SqlParameter() { 
-                ParameterName = "@ShoppingListID", 
+            new SqlParameter()
+            {
+                ParameterName = "@ShoppingListID",
                 Value = newItemData.ShoppingListId,
-                SqlDbType = SqlDbType.UniqueIdentifier 
+                SqlDbType = SqlDbType.UniqueIdentifier
             },
             new SqlParameter() { ParameterName = "@ItemName", Value = newItemData.itemPost.ItemName },
             new SqlParameter() { ParameterName = "@ItemAmount", Value = newItemData.itemPost.ItemAmount }
@@ -832,20 +890,23 @@ public class DatabaseService
 
         List<SqlParameter> parameters =
         [
-            new SqlParameter() { 
-                ParameterName = "@ShoppingListID", 
+            new SqlParameter()
+            {
+                ParameterName = "@ShoppingListID",
                 Value = userListAssignmentData.ShoppingListId,
-                SqlDbType = SqlDbType.UniqueIdentifier 
+                SqlDbType = SqlDbType.UniqueIdentifier
             },
-            new SqlParameter() { 
-                ParameterName = "@UserID", 
+            new SqlParameter()
+            {
+                ParameterName = "@UserID",
                 Value = userListAssignmentData.UserId,
-                SqlDbType = SqlDbType.UniqueIdentifier 
+                SqlDbType = SqlDbType.UniqueIdentifier
             },
-            new SqlParameter() { 
-                ParameterName = "@UserRoleID",  // Korrigiert von "@UserID" zu "@UserRoleID"
+            new SqlParameter()
+            {
+                ParameterName = "@UserRoleID", // Korrigiert von "@UserID" zu "@UserRoleID"
                 Value = userListAssignmentData.UserRoleId,
-                SqlDbType = SqlDbType.UniqueIdentifier 
+                SqlDbType = SqlDbType.UniqueIdentifier
             }
         ];
 
@@ -881,42 +942,42 @@ public class DatabaseService
             {
                 new() { ParameterName = "@UserID", Value = userId, SqlDbType = SqlDbType.UniqueIdentifier }
             };
-            
+
             if (!string.IsNullOrEmpty(userPatch.NewFirstName))
             {
                 updateParts.Add("FirstName = @FirstName");
                 parameters.Add(new SqlParameter("@FirstName", userPatch.NewFirstName));
             }
-            
+
             if (!string.IsNullOrEmpty(userPatch.NewLastName))
             {
                 updateParts.Add("LastName = @LastName");
                 parameters.Add(new SqlParameter("@LastName", userPatch.NewLastName));
             }
-            
+
             if (!string.IsNullOrEmpty(userPatch.NewEmailAddress))
             {
                 updateParts.Add("EmailAddress = @EmailAddress");
                 parameters.Add(new SqlParameter("@EmailAddress", userPatch.NewEmailAddress));
             }
-            
+
             if (updateParts.Count == 0)
             {
                 return true; // Nichts zu aktualisieren
             }
-            
+
             var query = $"UPDATE ListUser SET {string.Join(", ", updateParts)} WHERE UserID = @UserID";
-            
+
             await using SqlCommand sqlCommand = new(query, sqlConnection);
             sqlCommand.Parameters.AddRange(parameters.ToArray());
-            
+
             if (sqlConnection.State != ConnectionState.Open)
             {
                 await sqlConnection.OpenAsync();
             }
-            
+
             var result = await sqlCommand.ExecuteNonQueryAsync();
-            
+
             return result > 0;
         }
         catch (NumberedException)
@@ -933,28 +994,31 @@ public class DatabaseService
     }
 
     // Aktualisieren einer Einkaufsliste
-    public async Task<bool> UpdateShoppingList(Guid listId, Model.Patch.ShoppingListPatch listPatch, SqlConnection sqlConnection)
+    public async Task<bool> UpdateShoppingList(Guid listId, Model.Patch.ShoppingListPatch listPatch,
+        SqlConnection sqlConnection)
     {
-        var query = "UPDATE ShoppingList SET ShoppingListName = @ShoppingListName WHERE ShoppingListID = @ShoppingListID";
-        
+        var query =
+            "UPDATE ShoppingList SET ShoppingListName = @ShoppingListName WHERE ShoppingListID = @ShoppingListID";
+
         List<SqlParameter> parameters =
         [
-            new SqlParameter() { ParameterName = "@ShoppingListID", Value = listId, SqlDbType = SqlDbType.UniqueIdentifier },
+            new SqlParameter()
+                { ParameterName = "@ShoppingListID", Value = listId, SqlDbType = SqlDbType.UniqueIdentifier },
             new SqlParameter() { ParameterName = "@ShoppingListName", Value = listPatch.NewShoppingListName }
         ];
-        
+
         try
         {
             await using SqlCommand sqlCommand = new(query, sqlConnection);
             sqlCommand.Parameters.AddRange(parameters.ToArray());
-            
+
             if (sqlConnection.State != ConnectionState.Open)
             {
                 await sqlConnection.OpenAsync();
             }
-            
+
             var result = await sqlCommand.ExecuteNonQueryAsync();
-            
+
             return result > 0;
         }
         catch (NumberedException)
@@ -980,36 +1044,36 @@ public class DatabaseService
             {
                 new() { ParameterName = "@ItemID", Value = itemId, SqlDbType = SqlDbType.UniqueIdentifier }
             };
-            
+
             if (!string.IsNullOrEmpty(itemPatch.NewItemName))
             {
                 updateParts.Add("ItemName = @ItemName");
                 parameters.Add(new SqlParameter("@ItemName", itemPatch.NewItemName));
             }
-            
+
             if (!string.IsNullOrEmpty(itemPatch.NewItemAmount))
             {
                 updateParts.Add("ItemAmount = @ItemAmount");
                 parameters.Add(new SqlParameter("@ItemAmount", itemPatch.NewItemAmount));
             }
-            
+
             if (updateParts.Count == 0)
             {
                 return true; // Nichts zu aktualisieren
             }
-            
+
             var query = $"UPDATE Item SET {string.Join(", ", updateParts)} WHERE ItemID = @ItemID";
-            
+
             await using SqlCommand sqlCommand = new(query, sqlConnection);
             sqlCommand.Parameters.AddRange(parameters.ToArray());
-            
+
             if (sqlConnection.State != ConnectionState.Open)
             {
                 await sqlConnection.OpenAsync();
             }
-            
+
             var result = await sqlCommand.ExecuteNonQueryAsync();
-            
+
             return result > 0;
         }
         catch (NumberedException)
@@ -1029,25 +1093,25 @@ public class DatabaseService
     public async Task<bool> MarkItemAsPurchased(Guid itemId, bool isPurchased, SqlConnection sqlConnection)
     {
         var query = "UPDATE Item SET IsPurchased = @IsPurchased WHERE ItemID = @ItemID";
-        
+
         List<SqlParameter> parameters =
         [
             new SqlParameter() { ParameterName = "@ItemID", Value = itemId, SqlDbType = SqlDbType.UniqueIdentifier },
             new SqlParameter() { ParameterName = "@IsPurchased", Value = isPurchased, SqlDbType = SqlDbType.Bit }
         ];
-        
+
         try
         {
             await using SqlCommand sqlCommand = new(query, sqlConnection);
             sqlCommand.Parameters.AddRange(parameters.ToArray());
-            
+
             if (sqlConnection.State != ConnectionState.Open)
             {
                 await sqlConnection.OpenAsync();
             }
-            
+
             var result = await sqlCommand.ExecuteNonQueryAsync();
-            
+
             return result > 0;
         }
         catch (NumberedException)
@@ -1064,29 +1128,33 @@ public class DatabaseService
     }
 
     // Aktualisieren einer Benutzerrolle in einer Einkaufsliste
-    public async Task<bool> UpdateUserRoleInShoppingList(Guid listId, Guid userId, Guid newRoleId, SqlConnection sqlConnection)
+    public async Task<bool> UpdateUserRoleInShoppingList(Guid listId, Guid userId, Guid newRoleId,
+        SqlConnection sqlConnection)
     {
-        var query = "UPDATE ListMember SET UserRoleID = @UserRoleID WHERE ShoppingListID = @ShoppingListID AND UserID = @UserID";
-        
+        var query =
+            "UPDATE ListMember SET UserRoleID = @UserRoleID WHERE ShoppingListID = @ShoppingListID AND UserID = @UserID";
+
         List<SqlParameter> parameters =
         [
-            new SqlParameter() { ParameterName = "@ShoppingListID", Value = listId, SqlDbType = SqlDbType.UniqueIdentifier },
+            new SqlParameter()
+                { ParameterName = "@ShoppingListID", Value = listId, SqlDbType = SqlDbType.UniqueIdentifier },
             new SqlParameter() { ParameterName = "@UserID", Value = userId, SqlDbType = SqlDbType.UniqueIdentifier },
-            new SqlParameter() { ParameterName = "@UserRoleID", Value = newRoleId, SqlDbType = SqlDbType.UniqueIdentifier }
+            new SqlParameter()
+                { ParameterName = "@UserRoleID", Value = newRoleId, SqlDbType = SqlDbType.UniqueIdentifier }
         ];
-        
+
         try
         {
             await using SqlCommand sqlCommand = new(query, sqlConnection);
             sqlCommand.Parameters.AddRange(parameters.ToArray());
-            
+
             if (sqlConnection.State != ConnectionState.Open)
             {
                 await sqlConnection.OpenAsync();
             }
-            
+
             var result = await sqlCommand.ExecuteNonQueryAsync();
-            
+
             return result > 0;
         }
         catch (NumberedException)
@@ -1115,29 +1183,31 @@ public class DatabaseService
             {
                 await sqlConnection.OpenAsync();
             }
-            
+
             // Beginne eine Transaktion, um sicherzustellen, dass alle Löschvorgänge erfolgreich sind
             await using SqlTransaction transaction = (SqlTransaction)await sqlConnection.BeginTransactionAsync();
-            
+
             try
             {
                 var deleteListMemberQuery = "DELETE FROM ListMember WHERE UserID = @UserID";
-                
+
                 await using SqlCommand listMemberCommand = new(deleteListMemberQuery, sqlConnection, transaction);
-                listMemberCommand.Parameters.Add(new SqlParameter("@UserID", userId) { SqlDbType = SqlDbType.UniqueIdentifier });
-                
+                listMemberCommand.Parameters.Add(new SqlParameter("@UserID", userId)
+                    { SqlDbType = SqlDbType.UniqueIdentifier });
+
                 await listMemberCommand.ExecuteNonQueryAsync();
-                
+
                 // Lösche den Benutzer
                 var deleteUserQuery = "DELETE FROM ListUser WHERE UserID = @UserID";
-                
+
                 await using SqlCommand userCommand = new(deleteUserQuery, sqlConnection, transaction);
-                userCommand.Parameters.Add(new SqlParameter("@UserID", userId) { SqlDbType = SqlDbType.UniqueIdentifier });
-                
+                userCommand.Parameters.Add(new SqlParameter("@UserID", userId)
+                    { SqlDbType = SqlDbType.UniqueIdentifier });
+
                 int result = await userCommand.ExecuteNonQueryAsync();
-                
+
                 await transaction.CommitAsync();
-                
+
                 return result > 0;
             }
             catch (Exception)
@@ -1168,36 +1238,39 @@ public class DatabaseService
             {
                 await sqlConnection.OpenAsync();
             }
-            
+
             // Beginne eine Transaktion, um sicherzustellen, dass alle Löschvorgänge erfolgreich sind
             await using SqlTransaction transaction = (SqlTransaction)await sqlConnection.BeginTransactionAsync();
-            
+
             try
             {
                 var deleteItemsQuery = "DELETE FROM Item WHERE ShoppingListID = @ShoppingListID";
-                
+
                 await using SqlCommand itemsCommand = new(deleteItemsQuery, sqlConnection, transaction);
-                itemsCommand.Parameters.Add(new SqlParameter("@ShoppingListID", listId) { SqlDbType = SqlDbType.UniqueIdentifier });
-                
+                itemsCommand.Parameters.Add(new SqlParameter("@ShoppingListID", listId)
+                    { SqlDbType = SqlDbType.UniqueIdentifier });
+
                 await itemsCommand.ExecuteNonQueryAsync();
-                
+
                 // Lösche alle Benutzer-Einkaufslisten-Verknüpfungen
                 var deleteListMembersQuery = "DELETE FROM ListMember WHERE ShoppingListID = @ShoppingListID";
-                
+
                 await using SqlCommand listMembersCommand = new(deleteListMembersQuery, sqlConnection, transaction);
-                listMembersCommand.Parameters.Add(new SqlParameter("@ShoppingListID", listId) { SqlDbType = SqlDbType.UniqueIdentifier });
-                
+                listMembersCommand.Parameters.Add(new SqlParameter("@ShoppingListID", listId)
+                    { SqlDbType = SqlDbType.UniqueIdentifier });
+
                 await listMembersCommand.ExecuteNonQueryAsync();
-                
+
                 var deleteListQuery = "DELETE FROM ShoppingList WHERE ShoppingListID = @ShoppingListID";
-                
+
                 await using SqlCommand listCommand = new(deleteListQuery, sqlConnection, transaction);
-                listCommand.Parameters.Add(new SqlParameter("@ShoppingListID", listId) { SqlDbType = SqlDbType.UniqueIdentifier });
-                
+                listCommand.Parameters.Add(new SqlParameter("@ShoppingListID", listId)
+                    { SqlDbType = SqlDbType.UniqueIdentifier });
+
                 var result = await listCommand.ExecuteNonQueryAsync();
-                
+
                 await transaction.CommitAsync();
-                
+
                 return result > 0;
             }
             catch (Exception)
@@ -1222,24 +1295,24 @@ public class DatabaseService
     public async Task<bool> DeleteItem(Guid itemId, SqlConnection sqlConnection)
     {
         var query = "DELETE FROM Item WHERE ItemID = @ItemID";
-        
+
         List<SqlParameter> parameters =
         [
             new SqlParameter() { ParameterName = "@ItemID", Value = itemId, SqlDbType = SqlDbType.UniqueIdentifier }
         ];
-        
+
         try
         {
             await using SqlCommand sqlCommand = new(query, sqlConnection);
             sqlCommand.Parameters.AddRange(parameters.ToArray());
-            
+
             if (sqlConnection.State != ConnectionState.Open)
             {
                 await sqlConnection.OpenAsync();
             }
-            
+
             var result = await sqlCommand.ExecuteNonQueryAsync();
-            
+
             return result > 0;
         }
         catch (NumberedException)
@@ -1260,29 +1333,32 @@ public class DatabaseService
         try
         {
             var checkQuery = "SELECT COUNT(1) FROM ListMember WHERE UserRoleID = @UserRoleID";
-            
+
             await using SqlCommand checkCommand = new(checkQuery, sqlConnection);
-            checkCommand.Parameters.Add(new SqlParameter("@UserRoleID", roleId) { SqlDbType = SqlDbType.UniqueIdentifier });
-            
+            checkCommand.Parameters.Add(new SqlParameter("@UserRoleID", roleId)
+                { SqlDbType = SqlDbType.UniqueIdentifier });
+
             if (sqlConnection.State != ConnectionState.Open)
             {
                 await sqlConnection.OpenAsync();
             }
-            
+
             var count = Convert.ToInt32(await checkCommand.ExecuteScalarAsync());
-            
+
             if (count > 0)
             {
-                throw new NumberedException("Die Benutzerrolle wird von einem oder mehreren Benutzern verwendet und kann nicht gelöscht werden.");
+                throw new NumberedException(
+                    "Die Benutzerrolle wird von einem oder mehreren Benutzern verwendet und kann nicht gelöscht werden.");
             }
-            
+
             var deleteQuery = "DELETE FROM UserRole WHERE UserRoleID = @UserRoleID";
-            
+
             await using SqlCommand deleteCommand = new(deleteQuery, sqlConnection);
-            deleteCommand.Parameters.Add(new SqlParameter("@UserRoleID", roleId) { SqlDbType = SqlDbType.UniqueIdentifier });
-            
+            deleteCommand.Parameters.Add(new SqlParameter("@UserRoleID", roleId)
+                { SqlDbType = SqlDbType.UniqueIdentifier });
+
             var result = await deleteCommand.ExecuteNonQueryAsync();
-            
+
             return result > 0;
         }
         catch (NumberedException)
@@ -1301,25 +1377,26 @@ public class DatabaseService
     public async Task<bool> RemoveUserFromShoppingList(Guid listId, Guid userId, SqlConnection sqlConnection)
     {
         var query = "DELETE FROM ListMember WHERE ShoppingListID = @ShoppingListID AND UserID = @UserID";
-        
+
         List<SqlParameter> parameters =
         [
-            new SqlParameter() { ParameterName = "@ShoppingListID", Value = listId, SqlDbType = SqlDbType.UniqueIdentifier },
+            new SqlParameter()
+                { ParameterName = "@ShoppingListID", Value = listId, SqlDbType = SqlDbType.UniqueIdentifier },
             new SqlParameter() { ParameterName = "@UserID", Value = userId, SqlDbType = SqlDbType.UniqueIdentifier }
         ];
-        
+
         try
         {
             await using SqlCommand sqlCommand = new(query, sqlConnection);
             sqlCommand.Parameters.AddRange(parameters.ToArray());
-            
+
             if (sqlConnection.State != ConnectionState.Open)
             {
                 await sqlConnection.OpenAsync();
             }
-            
+
             var result = await sqlCommand.ExecuteNonQueryAsync();
-            
+
             return result > 0;
         }
         catch (NumberedException)
