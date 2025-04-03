@@ -20,10 +20,12 @@ public class DatabaseService
         _connectionString = _connectionStringService.GetConnectionString();
     }
 
+    #region Connection-Handler
+
     public async Task<T2> SqlConnectionHandler<T1, T2>(Func<T1, SqlConnection, Task<T2>> action,
         T1 parameter)
     {
-        using SqlConnection sqlConnection = new(_connectionString);
+        await using SqlConnection sqlConnection = new(_connectionString);
 
         try
         {
@@ -43,8 +45,6 @@ public class DatabaseService
             await sqlConnection.CloseAsync();
         }
     }
-
-    #region Connection-Handler
 
     public async Task<T2> SqlConnectionHandler<T2>(Func<SqlConnection, Task<T2>> action)
     {
@@ -73,6 +73,26 @@ public class DatabaseService
 
 
     #region Data-Reader
+
+    /*public async Task<bool> checkUserExistence(string email)
+    {
+
+    }
+
+    public async Task<bool> checkShoppingListExistence()
+    {
+
+    }
+
+    public async Task<bool> checkItemExistence()
+    {
+
+    }
+
+    public async Task<bool> userRoleExistence()
+    {
+
+    }*/
 
     public async Task<List<UserRole>> GetUserRoles(SqlConnection sqlConnection)
     {
@@ -116,6 +136,38 @@ public class DatabaseService
         }
     }
 
+    // generic method to get user
+    // write the select pat of the quer and put the input where clasue at the end of it
+    // public async Task<ListUser> GetUser<T>(T identifier, string whereClasue, SqlConnection sqlConnection)
+    // {
+    // }
+
+    // call GetUser<T> as GetUser<string> with email address a identifier
+    // public async Task<ListUser> GetUserByEmailAddress(string emailAsdress, SqlConnection sqlConnection)
+    // {
+    // }
+
+    // call GetUser<T> as GetUser<Guid> with userId a identifier
+    // public async Task<ListUser> GetUserById(Guid userId, SqlConnection sqlConnection)
+    // {
+    // }
+
+    // only get the id and the name of the hopping list
+    // public async Task<ShoppingList> GetShoppingListById(Guid shoppingListId, SqlConnection sqlConnection)
+    // {
+    // }
+    
+    // only get the name and id of the shopping lists
+    // public async Task<List<ShoppingList>> GetShoppingListsForUser(Guid UserId, SqlConnection sqlConnection)
+    // {
+    // }
+
+    // public async Task<List<Item>> GetItemsForShoppingList(Guid ShoppingListId, SqlConnection sqlConnection)
+    // {
+    //     
+    // }
+    
+    
     #endregion
 
 
@@ -158,7 +210,8 @@ public class DatabaseService
         }
     }
 
-    public async Task<(bool success, Guid? userRoleId)> AddUserRole(SqlConnection sqlConnection, UserRolePost userRolePost)
+    public async Task<(bool success, Guid? userRoleId)> AddUserRole(SqlConnection sqlConnection,
+        UserRolePost userRolePost)
     {
         string addQuery = "INSERT INTO UserRole (UserRoleID, UserRoleTitle, EnumIndex)"
                           + " VALUES (@UserRoleID, @UserRoleTitle, @EnumIndex)";
