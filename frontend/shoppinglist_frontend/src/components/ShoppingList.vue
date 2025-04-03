@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 
-const authStore = useAuthStore();
 const router = useRouter();
 
 const newItem = ref('');
 const items = ref<string[]>([]);
 const quantities = ref<string[]>([]);
-const isEditing = ref<number | null>(null);
+const editingState = ref<{ itemIndex: number | null, quantityIndex: number | null }>({ itemIndex: null, quantityIndex: null });
 
 const loadFromSession = (key: string) => JSON.parse(sessionStorage.getItem(key) || '[]');
 const saveToSession = (key: string, value: any) => sessionStorage.setItem(key, JSON.stringify(value));
@@ -40,22 +38,29 @@ const removeItem = (index: number) => {
 };
 
 const updateQuantity = (index: number, event: KeyboardEvent) => {
-  if (event.key === 'Enter') {
+  if (event.key === 'Enter' && editingState.value.quantityIndex === index) {
     const target = event.target as HTMLInputElement;
     quantities.value[index] = target.value.trim() || '1';
-    isEditing.value = null;
+    editingState.value.quantityIndex = null;
     saveItems();
   }
 };
 
-const enableEditing = (index: number) => {
-  isEditing.value = index;
+const updateItem = (index: number, event: KeyboardEvent) => {
+  if (event.key === 'Enter' && editingState.value.itemIndex === index) {
+    const target = event.target as HTMLInputElement;
+    items.value[index] = target.value.trim();
+    editingState.value.itemIndex = null;
+    saveItems();
+  }
 };
 
-const logout = () => {
-  authStore.logout();
-  localStorage.removeItem('isAuthenticated');
-  router.push('/login');
+const enableEditing = (index: number, type: 'item' | 'quantity') => {
+  if (type === 'item') {
+    editingState.value.itemIndex = index;
+  } else if (type === 'quantity') {
+    editingState.value.quantityIndex = index;
+  }
 };
 
 onMounted(loadItems);
@@ -67,13 +72,13 @@ onMounted(loadItems);
     <input v-model="newItem" @keyup.enter="addItem" placeholder="Add a new item &#9166"/>
     <ul>
       <li v-for="(item, index) in items" :key="index">
-        <span class="item-name">{{ item }}</span>
-        <input v-if="isEditing === index" type="text" v-model="quantities[index]" @keyup.enter="updateQuantity(index, $event)" class="quantity-input" />
-        <span v-else @click="enableEditing(index)">{{ quantities[index] }}</span>
+        <input v-if="editingState.itemIndex === index" type="text" v-model="items[index]" @keyup.enter="updateItem(index, $event)" class="item-input" />
+        <span v-else @click="enableEditing(index, 'item')" class="item-name">{{ item }}</span>
+        <input v-if="editingState.quantityIndex === index" type="text" v-model="quantities[index]" @keyup.enter="updateQuantity(index, $event)" class="quantity-input" />
+        <span v-else @click="enableEditing(index, 'quantity')">{{ quantities[index] }}</span>
         <button @click="removeItem(index)" class="remove-button">&times;</button>
       </li>
     </ul>
-    <button @click="logout" class="logout-button">Logout</button>
   </div>
 </template>
 
@@ -139,9 +144,11 @@ li:nth-child(even) {
   background-color: #fff8dc;
 }
 
-.quantity-input {
-  width: 35%;
-  margin-left: 1em;
+.item-input, .quantity-input {
+  width: 60%;
+  height: auto;
+  font-size: inherit;
+  margin: 0;
 }
 
 .remove-button {
@@ -150,12 +157,5 @@ li:nth-child(even) {
   border: none;
   cursor: pointer;
   font-size: 1.5em;
-}
-
-.logout-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 10px 20px;
 }
 </style>
