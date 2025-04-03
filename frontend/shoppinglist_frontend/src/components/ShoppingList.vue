@@ -1,28 +1,37 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import { useRouter } from 'vue-router'
+import {onMounted, ref} from 'vue'
+import {useAuthStore} from '@/stores/auth'
+import {useRouter} from 'vue-router'
 
 const authStore = useAuthStore()
 const router = useRouter()
 
 const newItem = ref('')
 const items = ref<string[]>([])
+const quantities = ref<string[]>([])
+const isEditing = ref<number | null>(null)
 
 const loadItems = () => {
   const storedItems = sessionStorage.getItem('shopping-list')
+  const storedQuantities = sessionStorage.getItem('shopping-list-quantities')
   if (storedItems) {
     items.value = JSON.parse(storedItems)
+  }
+  if (storedQuantities) {
+    quantities.value = JSON.parse(storedQuantities)
   }
 }
 
 const saveItems = () => {
   sessionStorage.setItem('shopping-list', JSON.stringify(items.value))
+  sessionStorage.setItem('shopping-list-quantities', JSON.stringify(quantities.value))
 }
 
 const addItem = () => {
   if (newItem.value.trim()) {
-    items.value.push(newItem.value.trim())
+    const [item, quantity] = newItem.value.split(',').map(part => part.trim())
+    items.value.push(item)
+    quantities.value.push(quantity || '1')
     newItem.value = ''
     saveItems()
   }
@@ -30,7 +39,21 @@ const addItem = () => {
 
 const removeItem = (index: number) => {
   items.value.splice(index, 1)
+  quantities.value.splice(index, 1)
   saveItems()
+}
+
+const updateQuantity = (index: number, event: KeyboardEvent) => {
+  if (event.key === 'Enter') {
+    const target = event.target as HTMLInputElement
+    quantities.value[index] = target.value.trim() || '1'
+    isEditing.value = null
+    saveItems()
+  }
+}
+
+const enableEditing = (index: number) => {
+  isEditing.value = index
 }
 
 const logout = () => {
@@ -49,6 +72,14 @@ onMounted(loadItems)
     <ul>
       <li v-for="(item, index) in items" :key="index">
         {{ item }}
+        <input
+          v-if="isEditing === index"
+          type="text"
+          v-model="quantities[index]"
+          @keyup.enter="updateQuantity(index, $event)"
+          class="quantity-input"
+        />
+        <span v-else @click="enableEditing(index)">{{ quantities[index] }}</span>
         <button @click="removeItem(index)" class="remove-button">&times;</button>
       </li>
     </ul>
@@ -119,6 +150,27 @@ li {
 
 li:nth-child(even) {
   background-color: #fff8dc;
+}
+
+.quantity-input {
+  width: 35%;
+  height: 20px;
+  text-align: center;
+  margin-left: 1em;
+  font-size: 1em;
+}
+
+.quantity-input.no-arrows::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.quantity-input.no-arrows {
+  -moz-appearance: textfield;
+}
+
+span {
+  font-size: 1em;
 }
 
 .remove-button {
