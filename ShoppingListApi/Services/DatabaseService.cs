@@ -1,4 +1,5 @@
 using System.Data;
+using Microsoft.AspNetCore.Identity.Data;
 using ShoppingListApi.Configs;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
@@ -7,6 +8,7 @@ using ShoppingListApi.Model.Get;
 using ShoppingListApi.Model.Post;
 using ShoppingListApi.Model.Patch;
 using Microsoft.Data.SqlClient;
+using ShoppingListApi.Model.ReturnTypes;
 
 namespace ShoppingListApi.Services;
 
@@ -261,6 +263,47 @@ public class DatabaseService
     #endregion
 
     #region Data-Reader
+
+    // public async Task<LoginReturn> Login(LoginData loginData, SqlConnection sqlConnection)
+    // {
+    //     string loginQuery = "SELECT PasswordHash FROM ListUser WHERE ListUser.EmailAddress = @EmailAddress";
+    //
+    //     await using SqlCommand loginCommand = new(loginQuery, sqlConnection);
+    //     
+    //     loginCommand.Parameters.Add(new SqlParameter() {ParameterName = "@EmailAddress", Value = loginData.EmailAddress});
+    //     
+    //     try
+    //     {
+    //         if (sqlConnection.State != ConnectionState.Open)
+    //         {
+    //             await sqlConnection.OpenAsync();
+    //         }           
+    //         
+    //         await using SqlDataReader sqlReader = await loginCommand.ExecuteReaderAsync();
+    //
+    //         int rowCount = 0;
+    //         
+    //         if (!sqlReader.HasRows )
+    //         {
+    //             while (sqlReader.Read())
+    //             {
+    //                 
+    //             }
+    //         }
+    //
+    //     }
+    //     catch (NumberedException)
+    //     {
+    //         throw;
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         var numberedException = new NumberedException(e);
+    //         _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+    //             nameof(DatabaseService), nameof(Login));
+    //         throw numberedException;
+    //     }
+    // }
 
     public async Task<List<UserRole>> GetUserRoles(SqlConnection sqlConnection)
     {

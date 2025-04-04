@@ -88,6 +88,39 @@ public class ShoppingListController : ControllerBase
         }
     }
 
+    [HttpPost]
+    [Route("User")]
+    public async Task<ActionResult> AddNewUser(ListUserPost userPost)
+    {
+        try
+        {
+            var (success, addedUserId) = await _databaseService.SqlConnectionHandler<ListUserPost, (bool, Guid?)>(
+                (input, connection) => _databaseService.AddUser(input, connection), userPost);
+
+            if (success is false || addedUserId is null)
+            {
+                return Problem("Due to an internal error, you request could not be processed.");
+            }
+
+            return Ok(addedUserId);
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(AddUserRole));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Du to an internal error, your request could not be processed.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(AddNewUser));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Du to an internal error, your request could not be processed.");
+        }
+    }
+
     [HttpGet]
     [Route("by-email")]
     public async Task<ActionResult> GetUserByEmail([FromQuery] string email)
@@ -122,6 +155,7 @@ public class ShoppingListController : ControllerBase
                 "Due to an internal error, your request could not be processed.");
         }
     }
+    /*a
 
     [HttpGet]
     [Route("User/{userId:guid}")]
@@ -262,7 +296,7 @@ public class ShoppingListController : ControllerBase
                 "Due to an internal error, your request could not be processed.");
         }
     }
-    
+
     // PATCH-Methoden
     [HttpPatch]
     [Route("ShoppingList/{listId:guid}")]
@@ -274,12 +308,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.UpdateShoppingList(input.Item1, input.Item2, connection),
                 (listId, listPatch)
             );
-            
+
             if (!success)
             {
                 return NotFound($"Einkaufsliste mit ID {listId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -309,12 +343,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.UpdateItem(input.Item1, input.Item2, connection),
                 (itemId, itemPatch)
             );
-            
+
             if (!success)
             {
                 return NotFound($"Artikel mit ID {itemId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -344,12 +378,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.MarkItemAsPurchased(input.Item1, input.Item2, connection),
                 (itemId, isPurchased)
             );
-            
+
             if (!success)
             {
                 return NotFound($"Artikel mit ID {itemId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -379,12 +413,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.UpdateUserRoleInShoppingList(input.Item1, input.Item2, input.Item3, connection),
                 (listId, userId, roleId)
             );
-            
+
             if (!success)
             {
                 return NotFound($"Benutzer mit ID {userId} in der Einkaufsliste mit ID {listId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -415,12 +449,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.DeleteShoppingList(input, connection),
                 listId
             );
-            
+
             if (!success)
             {
                 return NotFound($"Einkaufsliste mit ID {listId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -450,12 +484,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.DeleteItem(input, connection),
                 itemId
             );
-            
+
             if (!success)
             {
                 return NotFound($"Artikel mit ID {itemId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -485,12 +519,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.DeleteUserRole(input, connection),
                 roleId
             );
-            
+
             if (!success)
             {
                 return NotFound($"Benutzerrolle mit ID {roleId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -520,12 +554,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.RemoveUserFromShoppingList(input.Item1, input.Item2, connection),
                 (listId, userId)
             );
-            
+
             if (!success)
             {
                 return NotFound($"Benutzer mit ID {userId} in der Einkaufsliste mit ID {listId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -544,7 +578,7 @@ public class ShoppingListController : ControllerBase
                 "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
         }
     }
-    
+
     [HttpPatch]
     [Route("{userId:guid}")]
     public async Task<ActionResult> UpdateUser(Guid userId, [FromBody] Model.Patch.ListUserPatch userPatch)
@@ -555,12 +589,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.UpdateUser(input.Item1, input.Item2, connection),
                 (userId, userPatch)
             );
-            
+
             if (!success)
             {
                 return NotFound($"Benutzer mit ID {userId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -590,12 +624,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.DeleteUser(input, connection),
                 userId
             );
-            
+
             if (!success)
             {
                 return NotFound($"Benutzer mit ID {userId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -614,4 +648,5 @@ public class ShoppingListController : ControllerBase
                 "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
         }
     }
+    */
 }
