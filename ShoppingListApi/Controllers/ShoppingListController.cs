@@ -103,9 +103,10 @@ public class ShoppingListController : ControllerBase
         try
         {
             var userPostExtended = new ListUserPostExtended(userPost);
-            
-            var (success, addedUserId) = await _databaseService.SqlConnectionHandler<ListUserPostExtended, (bool, Guid?)>(
-                (input, connection) => _databaseService.AddUser(input, connection), userPostExtended);
+
+            var (success, addedUserId) =
+                await _databaseService.SqlConnectionHandler<ListUserPostExtended, (bool, Guid?)>(
+                    (input, connection) => _databaseService.AddUser(input, connection), userPostExtended);
 
             if (success is false || addedUserId is null)
             {
@@ -132,6 +133,7 @@ public class ShoppingListController : ControllerBase
     }
 
     [HttpGet]
+    [AdminEndpoint]
     [Route("User/EmailAddress/{emailAddress}")]
     public async Task<ActionResult> GetUserByEmail([FromRoute] string emailAddress)
     {
@@ -215,7 +217,7 @@ public class ShoppingListController : ControllerBase
                 "Due to an internal error, your request could not be processed.");
         }
     }
-    
+
     /*[HttpPost]
     [Route("base64test")]
     public ActionResult Base64Test([FromBody] string base64String)
