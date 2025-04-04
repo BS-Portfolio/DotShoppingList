@@ -1,5 +1,19 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+const isAuthenticated = computed(() => authStore.isAuthenticated)
+
+const logout = () => {
+  authStore.isAuthenticated = false
+  localStorage.removeItem('isAuthenticated')
+  router.push('/login')
+}
+
 </script>
 
 <template>
@@ -9,6 +23,7 @@ import { RouterLink, RouterView } from 'vue-router'
       <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
+        <button v-if="isAuthenticated" @click="logout" class="logout-button">Logout</button>
       </nav>
     </div>
   </header>
@@ -54,6 +69,17 @@ nav a {
 
 nav a:first-of-type {
   border: 0;
+}
+
+.logout-button {
+  margin-left: 1rem;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 5px;
 }
 
 @media (min-width: 1024px) {
