@@ -1,9 +1,14 @@
+using System.Text;
+using Azure.Identity;
 using Microsoft.AspNetCore.Mvc;
+using ShoppingListApi.Attributes;
 using ShoppingListApi.Configs;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.Get;
 using ShoppingListApi.Model.Post;
+using ShoppingListApi.Model.ReturnTypes;
 using ShoppingListApi.Services;
+using Xunit.Sdk;
 
 namespace ShoppingListApi.Controllers;
 
@@ -21,6 +26,7 @@ public class ShoppingListController : ControllerBase
     }
 
     [HttpGet]
+    [AdminEndpoint]
     [Route("UserRole/all")]
     public async Task<ActionResult> GetUserRoles()
     {
@@ -55,6 +61,7 @@ public class ShoppingListController : ControllerBase
     }
 
     [HttpPost]
+    [AdminEndpoint]
     [Route("UserRole")]
     public async Task<ActionResult> AddUserRole([FromBody] UserRolePost userRolePost)
     {
@@ -88,20 +95,58 @@ public class ShoppingListController : ControllerBase
         }
     }
 
+    [HttpPost]
+    [PublicEndpoint]
+    [Route("User")]
+    public async Task<ActionResult> AddNewUser([FromBody] ListUserPost userPost)
+    {
+        try
+        {
+            var userPostExtended = new ListUserPostExtended(userPost);
+
+            var (success, addedUserId) =
+                await _databaseService.SqlConnectionHandler<ListUserPostExtended, (bool, Guid?)>(
+                    (input, connection) => _databaseService.AddUser(input, connection), userPostExtended);
+
+            if (success is false || addedUserId is null)
+            {
+                return Problem("Due to an internal error, you request could not be processed.");
+            }
+
+            return Ok(addedUserId);
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(AddUserRole));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Du to an internal error, your request could not be processed.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(AddNewUser));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Du to an internal error, your request could not be processed.");
+        }
+    }
+
     [HttpGet]
-    [Route("by-email")]
-    public async Task<ActionResult> GetUserByEmail([FromQuery] string email)
+    [AdminEndpoint]
+    [Route("User/EmailAddress/{emailAddress}")]
+    public async Task<ActionResult> GetUserByEmail([FromRoute] string emailAddress)
     {
         try
         {
             var user = await _databaseService.SqlConnectionHandler<string, ListUser?>(
                 (input, connection) => _databaseService.GetUserByEmailAddress(input, connection),
-                email
+                emailAddress
             );
 
-            if (user == null)
+            if (user is null)
             {
-                return NotFound($"User with email {email} not found");
+                return NotFound($"User with email {emailAddress} not found");
             }
 
             return Ok(user);
@@ -122,6 +167,89 @@ public class ShoppingListController : ControllerBase
                 "Due to an internal error, your request could not be processed.");
         }
     }
+
+    [HttpPost]
+    [Route("User/Login")]
+    [PublicEndpoint]
+    [ProducesResponseType<ListUser>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult> UserLogin([FromHeader] string emailAddress, [FromHeader] string password)
+    {
+        try
+        {
+            var user = await _databaseService.SqlConnectionHandler<LoginData, ListUser?>(
+                async (loginData, sqlConnection) => await _databaseService.HandleLogin(loginData, sqlConnection),
+                new LoginData(emailAddress, password));
+
+            if (user is null)
+            {
+                return Unauthorized("Your credentials are not valid!");
+            }
+
+            return Ok(user);
+        }
+        catch (NoContentFoundException<string> ncEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, ncEx, ncEx.ErrorNumber, ncEx.Message,
+                nameof(ShoppingListController), nameof(UserLogin));
+            return NotFound("Not user account found for the provided email address.");
+        }
+        catch (MultipleUsersForEmailException mEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, mEx, mEx.ErrorNumber, mEx.Message,
+                nameof(ShoppingListController), nameof(UserLogin));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed. Your email address has been registered under multiple users!");
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(UserLogin));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(UserLogin));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+    }
+
+    /*[HttpPost]
+    [Route("base64test")]
+    public ActionResult Base64Test([FromBody] string base64String)
+    {
+        byte[] decodedBytes = Convert.FromBase64String(base64String);
+
+        // Convert byte array to a readable string (assuming UTF-8 encoding)
+        string decodedString = Encoding.UTF8.GetString(decodedBytes);
+
+        return Ok(decodedString);
+    }
+
+    [HttpPost]
+    [Route("HashTest")]
+    public ActionResult HashTest([FromBody] string password)
+    {
+        string testHashedPass = BCrypt.Net.BCrypt.EnhancedHashPassword("testPass1", 13);
+
+        bool verified = BCrypt.Net.BCrypt.EnhancedVerify(password, testHashedPass);
+
+        if (verified)
+        {
+            return Ok();
+        }
+        else
+        {
+            return Unauthorized();
+        }
+
+    }*/
+
+    /*a
 
     [HttpGet]
     [Route("User/{userId:guid}")]
@@ -262,7 +390,7 @@ public class ShoppingListController : ControllerBase
                 "Due to an internal error, your request could not be processed.");
         }
     }
-    
+
     // PATCH-Methoden
     [HttpPatch]
     [Route("ShoppingList/{listId:guid}")]
@@ -274,12 +402,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.UpdateShoppingList(input.Item1, input.Item2, connection),
                 (listId, listPatch)
             );
-            
+
             if (!success)
             {
                 return NotFound($"Einkaufsliste mit ID {listId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -309,12 +437,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.UpdateItem(input.Item1, input.Item2, connection),
                 (itemId, itemPatch)
             );
-            
+
             if (!success)
             {
                 return NotFound($"Artikel mit ID {itemId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -344,12 +472,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.MarkItemAsPurchased(input.Item1, input.Item2, connection),
                 (itemId, isPurchased)
             );
-            
+
             if (!success)
             {
                 return NotFound($"Artikel mit ID {itemId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -379,12 +507,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.UpdateUserRoleInShoppingList(input.Item1, input.Item2, input.Item3, connection),
                 (listId, userId, roleId)
             );
-            
+
             if (!success)
             {
                 return NotFound($"Benutzer mit ID {userId} in der Einkaufsliste mit ID {listId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -415,12 +543,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.DeleteShoppingList(input, connection),
                 listId
             );
-            
+
             if (!success)
             {
                 return NotFound($"Einkaufsliste mit ID {listId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -450,12 +578,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.DeleteItem(input, connection),
                 itemId
             );
-            
+
             if (!success)
             {
                 return NotFound($"Artikel mit ID {itemId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -485,12 +613,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.DeleteUserRole(input, connection),
                 roleId
             );
-            
+
             if (!success)
             {
                 return NotFound($"Benutzerrolle mit ID {roleId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -520,12 +648,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.RemoveUserFromShoppingList(input.Item1, input.Item2, connection),
                 (listId, userId)
             );
-            
+
             if (!success)
             {
                 return NotFound($"Benutzer mit ID {userId} in der Einkaufsliste mit ID {listId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -544,7 +672,7 @@ public class ShoppingListController : ControllerBase
                 "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
         }
     }
-    
+
     [HttpPatch]
     [Route("{userId:guid}")]
     public async Task<ActionResult> UpdateUser(Guid userId, [FromBody] Model.Patch.ListUserPatch userPatch)
@@ -555,12 +683,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.UpdateUser(input.Item1, input.Item2, connection),
                 (userId, userPatch)
             );
-            
+
             if (!success)
             {
                 return NotFound($"Benutzer mit ID {userId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -590,12 +718,12 @@ public class ShoppingListController : ControllerBase
                 (input, connection) => _databaseService.DeleteUser(input, connection),
                 userId
             );
-            
+
             if (!success)
             {
                 return NotFound($"Benutzer mit ID {userId} nicht gefunden");
             }
-            
+
             return NoContent();
         }
         catch (NumberedException nEx)
@@ -614,4 +742,5 @@ public class ShoppingListController : ControllerBase
                 "Aufgrund eines internen Fehlers konnte deine Anfrage nicht verarbeitet werden.");
         }
     }
+    */
 }

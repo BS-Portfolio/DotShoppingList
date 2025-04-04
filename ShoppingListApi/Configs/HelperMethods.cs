@@ -1,4 +1,7 @@
 using System.Security.Cryptography;
+using System.Text;
+using Newtonsoft.Json;
+using ShoppingListApi.Model.ReturnTypes;
 
 namespace ShoppingListApi.Configs;
 
@@ -10,5 +13,16 @@ public class HelperMethods
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomBytes);
         return BitConverter.ToString(randomBytes).Replace("-", "");
+    }
+
+    internal static async Task HandleAuthenticationResponse(int httpResponseCode, int authenticationCode, string message, HttpContext context)
+    {
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = httpResponseCode;
+        string jsonResponse =
+            JsonConvert.SerializeObject(new AuthenticationErrorReturn(authenticationCode, message));
+        byte[] responseBytes = Encoding.UTF8.GetBytes(jsonResponse);
+
+        await context.Response.Body.WriteAsync(responseBytes);
     }
 }
