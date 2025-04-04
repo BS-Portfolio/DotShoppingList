@@ -46,7 +46,9 @@ public class UnitTests
             _testOutputHelper.WriteLine($"Connection error: {ex.Message}");
         }
         
-        Assert.True(canConnect, "The connection to the database was successfully established!");
+        var userMessage = canConnect ? "Connection successful!" : "Connection failed!";
+        
+        Assert.True(canConnect, userMessage);
     }
 
     [Fact]
