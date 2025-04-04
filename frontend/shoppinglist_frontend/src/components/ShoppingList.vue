@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import {onMounted, ref} from 'vue';
+import {useRouter} from 'vue-router';
 
 const router = useRouter();
 
 const newItem = ref('');
 const items = ref<string[]>([]);
 const quantities = ref<string[]>([]);
-const editingState = ref<{ itemIndex: number | null, quantityIndex: number | null }>({ itemIndex: null, quantityIndex: null });
+const editingState = ref<{
+  itemIndex: number | null,
+  quantityIndex: number | null
+}>({itemIndex: null, quantityIndex: null});
 
 const loadFromSession = (key: string) => JSON.parse(sessionStorage.getItem(key) || '[]');
 const saveToSession = (key: string, value: any) => sessionStorage.setItem(key, JSON.stringify(value));
@@ -69,12 +72,15 @@ onMounted(loadItems);
 <template>
   <div>
     <h1 class="caveat-brush-regular">Shopping List</h1>
-    <input v-model="newItem" @keyup.enter="addItem" placeholder="Add a new item &#9166"/>
+    <input v-model="newItem" @keyup.enter="addItem"
+           placeholder="Add a new item (e.g., 'Apples, 2 kg') &#9166"/>
     <ul>
       <li v-for="(item, index) in items" :key="index">
-        <input v-if="editingState.itemIndex === index" type="text" v-model="items[index]" @keyup.enter="updateItem(index, $event)" class="item-input" />
+        <input v-if="editingState.itemIndex === index" type="text" v-model="items[index]"
+               @keyup.enter="updateItem(index, $event)" class="item-input"/>
         <span v-else @click="enableEditing(index, 'item')" class="item-name">{{ item }}</span>
-        <input v-if="editingState.quantityIndex === index" type="text" v-model="quantities[index]" @keyup.enter="updateQuantity(index, $event)" class="quantity-input" />
+        <input v-if="editingState.quantityIndex === index" type="text" v-model="quantities[index]"
+               @keyup.enter="updateQuantity(index, $event)" class="quantity-input"/>
         <span v-else @click="enableEditing(index, 'quantity')">{{ quantities[index] }}</span>
         <button @click="removeItem(index)" class="remove-button">&times;</button>
       </li>
@@ -113,6 +119,15 @@ input {
   border: 2px solid var(--color-primary);
   background: transparent;
   color: var(--color-primary);
+}
+
+input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+input:focus::placeholder {
+  color: transparent;
 }
 
 button {
