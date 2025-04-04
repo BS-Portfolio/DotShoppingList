@@ -1,9 +1,13 @@
+using System.Text;
+using Azure.Identity;
 using Microsoft.AspNetCore.Mvc;
 using ShoppingListApi.Configs;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.Get;
 using ShoppingListApi.Model.Post;
+using ShoppingListApi.Model.ReturnTypes;
 using ShoppingListApi.Services;
+using Xunit.Sdk;
 
 namespace ShoppingListApi.Controllers;
 
@@ -90,12 +94,14 @@ public class ShoppingListController : ControllerBase
 
     [HttpPost]
     [Route("User")]
-    public async Task<ActionResult> AddNewUser(ListUserPost userPost)
+    public async Task<ActionResult> AddNewUser([FromBody] ListUserPost userPost)
     {
         try
         {
-            var (success, addedUserId) = await _databaseService.SqlConnectionHandler<ListUserPost, (bool, Guid?)>(
-                (input, connection) => _databaseService.AddUser(input, connection), userPost);
+            var userPostExtended = new ListUserPostExtended(userPost);
+            
+            var (success, addedUserId) = await _databaseService.SqlConnectionHandler<ListUserPostExtended, (bool, Guid?)>(
+                (input, connection) => _databaseService.AddUser(input, connection), userPostExtended);
 
             if (success is false || addedUserId is null)
             {
@@ -122,19 +128,19 @@ public class ShoppingListController : ControllerBase
     }
 
     [HttpGet]
-    [Route("by-email")]
-    public async Task<ActionResult> GetUserByEmail([FromQuery] string email)
+    [Route("User/EmailAddress/{emailAddress}")]
+    public async Task<ActionResult> GetUserByEmail([FromRoute] string emailAddress)
     {
         try
         {
             var user = await _databaseService.SqlConnectionHandler<string, ListUser?>(
                 (input, connection) => _databaseService.GetUserByEmailAddress(input, connection),
-                email
+                emailAddress
             );
 
-            if (user == null)
+            if (user is null)
             {
-                return NotFound($"User with email {email} not found");
+                return NotFound($"User with email {emailAddress} not found");
             }
 
             return Ok(user);
@@ -155,6 +161,87 @@ public class ShoppingListController : ControllerBase
                 "Due to an internal error, your request could not be processed.");
         }
     }
+
+    [HttpPost]
+    [Route("User/Login")]
+    [ProducesResponseType<ListUser>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult> UserLogin([FromHeader] string emailAddress, [FromHeader] string password)
+    {
+        try
+        {
+            var user = await _databaseService.SqlConnectionHandler<LoginData, ListUser?>(
+                async (loginData, sqlConnection) => await _databaseService.HandleLogin(loginData, sqlConnection),
+                new LoginData(emailAddress, password));
+
+            if (user is null)
+            {
+                return Unauthorized("Your credentials are not valid!");
+            }
+
+            return Ok(user);
+        }
+        catch (NoContentFoundException<string> ncEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, ncEx, ncEx.ErrorNumber, ncEx.Message,
+                nameof(ShoppingListController), nameof(UserLogin));
+            return NotFound("Not user account found for the provided email address.");
+        }
+        catch (MultipleUsersForEmailException mEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, mEx, mEx.ErrorNumber, mEx.Message,
+                nameof(ShoppingListController), nameof(UserLogin));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed. Your email address has been registered under multiple users!");
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(UserLogin));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(UserLogin));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+    }
+    
+    /*[HttpPost]
+    [Route("base64test")]
+    public ActionResult Base64Test([FromBody] string base64String)
+    {
+        byte[] decodedBytes = Convert.FromBase64String(base64String);
+
+        // Convert byte array to a readable string (assuming UTF-8 encoding)
+        string decodedString = Encoding.UTF8.GetString(decodedBytes);
+
+        return Ok(decodedString);
+    }
+
+    [HttpPost]
+    [Route("HashTest")]
+    public ActionResult HashTest([FromBody] string password)
+    {
+        string testHashedPass = BCrypt.Net.BCrypt.EnhancedHashPassword("testPass1", 13);
+
+        bool verified = BCrypt.Net.BCrypt.EnhancedVerify(password, testHashedPass);
+
+        if (verified)
+        {
+            return Ok();
+        }
+        else
+        {
+            return Unauthorized();
+        }
+
+    }*/
+
     /*a
 
     [HttpGet]

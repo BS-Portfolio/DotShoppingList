@@ -1,4 +1,5 @@
 using System.Data;
+using Azure.Core;
 using Microsoft.AspNetCore.Identity.Data;
 using ShoppingListApi.Configs;
 using ShoppingListApi.Enums;
@@ -264,46 +265,73 @@ public class DatabaseService
 
     #region Data-Reader
 
-    // public async Task<LoginReturn> Login(LoginData loginData, SqlConnection sqlConnection)
-    // {
-    //     string loginQuery = "SELECT PasswordHash FROM ListUser WHERE ListUser.EmailAddress = @EmailAddress";
-    //
-    //     await using SqlCommand loginCommand = new(loginQuery, sqlConnection);
-    //     
-    //     loginCommand.Parameters.Add(new SqlParameter() {ParameterName = "@EmailAddress", Value = loginData.EmailAddress});
-    //     
-    //     try
-    //     {
-    //         if (sqlConnection.State != ConnectionState.Open)
-    //         {
-    //             await sqlConnection.OpenAsync();
-    //         }           
-    //         
-    //         await using SqlDataReader sqlReader = await loginCommand.ExecuteReaderAsync();
-    //
-    //         int rowCount = 0;
-    //         
-    //         if (!sqlReader.HasRows )
-    //         {
-    //             while (sqlReader.Read())
-    //             {
-    //                 
-    //             }
-    //         }
-    //
-    //     }
-    //     catch (NumberedException)
-    //     {
-    //         throw;
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         var numberedException = new NumberedException(e);
-    //         _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-    //             nameof(DatabaseService), nameof(Login));
-    //         throw numberedException;
-    //     }
-    // }
+    public async Task<CredentialsCheckReturn> CheckCredentials(LoginData loginData, SqlConnection sqlConnection)
+    {
+        string loginQuery =
+            "SELECT UserID, PasswordHash FROM ListUser WHERE ListUser.EmailAddress = @EmailAddress";
+
+        await using SqlCommand loginCommand = new(loginQuery, sqlConnection);
+
+        loginCommand.Parameters.Add(new SqlParameter()
+            { ParameterName = "@EmailAddress", Value = loginData.EmailAddress });
+
+        List<Guid> loadedUserIdsForEmail = [];
+
+        string loadedPasswordHash = string.Empty;
+
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+
+            await using SqlDataReader sqlReader = await loginCommand.ExecuteReaderAsync();
+
+            if (sqlReader.HasRows)
+            {
+                while (sqlReader.Read())
+                {
+                    loadedUserIdsForEmail.Add(sqlReader.GetGuid(0));
+                    loadedPasswordHash = sqlReader.GetString(1);
+                }
+            }
+
+            if (loadedUserIdsForEmail.Count == 0)
+            {
+                throw new NoContentFoundException<string>("No user found for the provided email address.",
+                    loginData.EmailAddress);
+            }
+
+            if (loadedUserIdsForEmail.Count > 1)
+            {
+                throw new MultipleUsersForEmailException("The email address is registered for more than one user!",
+                    loginData.EmailAddress, loadedUserIdsForEmail);
+            }
+
+            bool verified = BCrypt.Net.BCrypt.EnhancedVerify(loginData.Password, loadedPasswordHash);
+
+            if (verified is false)
+            {
+                return new CredentialsCheckReturn(false);
+            }
+
+            var loadedUser = loadedUserIdsForEmail[0];
+
+            return new CredentialsCheckReturn(true, loadedUser);
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(CheckCredentials));
+            throw numberedException;
+        }
+    }
 
     public async Task<List<UserRole>> GetUserRoles(SqlConnection sqlConnection)
     {
@@ -619,7 +647,7 @@ public class DatabaseService
         }
     }
 
-    public async Task<List<ListUserMinimal>> GetSoppingListCollaborators(Guid shoppingListId,
+    public async Task<List<ListUserMinimal>> GetShoppingListCollaborators(Guid shoppingListId,
         SqlConnection sqlConnection)
     {
         List<ListUserMinimal> collaborators = [];
@@ -676,11 +704,10 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetSoppingListCollaborators));
+                nameof(DatabaseService), nameof(GetShoppingListCollaborators));
             throw numberedException;
         }
     }
-
 
     public async Task<List<ShoppingList>> HandleShoppingListsFetchForUser(Guid userId, SqlConnection sqlConnection)
     {
@@ -693,7 +720,7 @@ public class DatabaseService
                 var items = await GetItemsForShoppingList(shoppingList.ShoppingListId, sqlConnection);
                 shoppingList.AddItemsToShoppingList(items);
 
-                var collaborators = await GetSoppingListCollaborators(shoppingList.ShoppingListId, sqlConnection);
+                var collaborators = await GetShoppingListCollaborators(shoppingList.ShoppingListId, sqlConnection);
                 shoppingList.AddCollaboratorsToShoppingList(collaborators);
             }
 
@@ -708,6 +735,41 @@ public class DatabaseService
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(DatabaseService), nameof(HandleShoppingListsFetchForUser));
+            throw numberedException;
+        }
+    }
+
+    public async Task<ListUser?> HandleLogin(LoginData loginData, SqlConnection sqlConnection)
+    {
+        try
+        {
+            var credentialsCheckResult = await CheckCredentials(loginData, sqlConnection);
+
+            if (credentialsCheckResult.LoginSuccessful is false || credentialsCheckResult.UserId is null)
+            {
+                return null;
+            }
+
+            var apiKeyUpdateSuccessCheck = await UpdateApiKey((Guid)credentialsCheckResult.UserId, sqlConnection);
+
+            if (apiKeyUpdateSuccessCheck is false)
+            {
+                return null;
+            }
+
+            var user = await GetUserById((Guid)credentialsCheckResult.UserId, sqlConnection);
+
+            return user;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(HandleLogin));
             throw numberedException;
         }
     }
@@ -795,24 +857,24 @@ public class DatabaseService
         }
     }
 
-    public async Task<(bool succes, Guid? userId)> AddUser(ListUserPost userPost, SqlConnection sqlConnection)
+    public async Task<(bool succes, Guid? userId)> AddUser(ListUserPostExtended userPostExtended, SqlConnection sqlConnection)
     {
         var addQuery =
-            "INSERT INTO ListUser (UserID, FirstName, LastName, EmailAddress, PasswordHash, CreationDateTime, ApiKey, ApiKeyExpirationTime) "
-            + "VALUES (@UserID, @FirstName, @LastName, @EmailAddress, @PasswordHash, @CreationDateTime, @ApiKey, @ApiKeyExpirationTime)";
+            "INSERT INTO ListUser (UserID, FirstName, LastName, EmailAddress, PasswordHash, CreationDateTime, ApiKey, ApiKeyExpirationDateTime) "
+            + "VALUES (@UserID, @FirstName, @LastName, @EmailAddress, @PasswordHash, @CreationDateTime, @ApiKey, @ApiKeyExpirationDateTime)";
 
         Guid userId = Guid.NewGuid();
 
         List<SqlParameter> parameters =
         [
             new SqlParameter() { ParameterName = "@UserID", Value = userId, SqlDbType = SqlDbType.UniqueIdentifier },
-            new SqlParameter() { ParameterName = "@FirstName", Value = userPost.FirstName },
-            new SqlParameter() { ParameterName = "@LastName", Value = userPost.LastName },
-            new SqlParameter() { ParameterName = "@EmailAddress", Value = userPost.EmailAddress },
-            new SqlParameter() { ParameterName = "@PasswordHash", Value = userPost.PasswordHash },
-            new SqlParameter() { ParameterName = "@CreationDateTime", Value = userPost.CreationDateTime },
-            new SqlParameter() { ParameterName = "@ApiKey", Value = userPost.ApiKey },
-            new SqlParameter() { ParameterName = "@ApiKeyExpirationTime", Value = userPost.ApiKeyExpirationDateTime }
+            new SqlParameter() { ParameterName = "@FirstName", Value = userPostExtended.FirstName },
+            new SqlParameter() { ParameterName = "@LastName", Value = userPostExtended.LastName },
+            new SqlParameter() { ParameterName = "@EmailAddress", Value = userPostExtended.EmailAddress },
+            new SqlParameter() { ParameterName = "@PasswordHash", Value = userPostExtended.PasswordHash },
+            new SqlParameter() { ParameterName = "@CreationDateTime", Value = userPostExtended.CreationDateTime },
+            new SqlParameter() { ParameterName = "@ApiKey", Value = userPostExtended.ApiKey },
+            new SqlParameter() { ParameterName = "@ApiKeyExpirationDateTime", Value = userPostExtended.ApiKeyExpirationDateTime }
         ];
 
         try
@@ -1129,6 +1191,53 @@ public class DatabaseService
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(DatabaseService), nameof(UpdateItem));
+            throw numberedException;
+        }
+    }
+
+    public async Task<bool> UpdateApiKey(Guid userId, SqlConnection sqlConnectin)
+    {
+        const bool success = true;
+
+        string updateQuery = "UPDATE ListUser " +
+                             "SET ApiKey = @NewApiKey, ApiKeyExpirationDateTime = @NewExpirationDateTime " +
+                             "WHERE UserID = @UserID";
+
+        await using SqlCommand updateCommand = new(updateQuery, sqlConnectin);
+
+        string newApiKey = HM.GenerateApiKey();
+
+        updateCommand.Parameters.AddRange([
+            new SqlParameter() { ParameterName = "@NewApiKey", Value = newApiKey },
+            new SqlParameter() { ParameterName = "@NewExpirationDateTime", Value = DateTimeOffset.UtcNow },
+            new SqlParameter() { ParameterName = "@UserID", Value = userId, SqlDbType = SqlDbType.UniqueIdentifier }
+        ]);
+
+        try
+        {
+            if (sqlConnectin.State != ConnectionState.Open)
+            {
+                await sqlConnectin.OpenAsync();
+            }
+
+            int checkResult = await updateCommand.ExecuteNonQueryAsync();
+
+            if (checkResult != 1)
+            {
+                return !success;
+            }
+
+            return success;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(UpdateApiKey));
             throw numberedException;
         }
     }

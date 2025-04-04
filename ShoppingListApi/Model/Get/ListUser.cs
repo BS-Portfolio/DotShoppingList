@@ -10,10 +10,10 @@ public class ListUser
     public string EmailAddress { get; }
     public DateTimeOffset CreationDate { get; }
     public string ApiKey { get; }
-    public DateTimeOffset ApiKeyExpirationDate { get; }
+    public DateTimeOffset ApiKeyExpirationDateTime { get; }
 
     public ListUser(Guid userId, string firstName, string lastName, string emailAddress, DateTimeOffset creationDate,
-        string apiKey, DateTimeOffset apiKeyExpirationDate)
+        string apiKey, DateTimeOffset apiKeyExpirationDateTime)
     {
         UserID = userId;
         FirstName = firstName;
@@ -21,6 +21,6 @@ public class ListUser
         EmailAddress = emailAddress;
         CreationDate = creationDate;
         ApiKey = apiKey;
-        ApiKeyExpirationDate = apiKeyExpirationDate;
+        ApiKeyExpirationDateTime = apiKeyExpirationDateTime;
     }
 }
