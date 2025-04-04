@@ -1,3 +1,14 @@
+# Freitag, 04.04.25'
+
+## Tasks:
+- Dashboard
+- Authentication Datenbank
+- Unit Tests
+- Github Workflow
+
+## Blocker:
+- 
+
 # Donnerstag, 03.04.25
 
 ## Tasks:
