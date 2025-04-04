@@ -13,6 +13,7 @@ const saveToSession = (key: string, value: any) => localStorage.setItem(key, JSO
 
 const handleLoginSuccess = () => {
   saveToSession('isAuthenticated', true);
+  authStore.isAuthenticated = true;
   router.push('/');
 };
 
