@@ -100,19 +100,6 @@ input {
   width: 90%;
   height: 5vh;
   font-size: 25px;
-  text-align: center;
-  border: 2px solid var(--color-primary);
-  background: transparent;
-  color: var(--color-primary);
-}
-
-input:focus {
-  border-color: var(--color-primary);
-  outline: none;
-}
-
-input:focus::placeholder {
-  color: transparent;
 }
 
 button {

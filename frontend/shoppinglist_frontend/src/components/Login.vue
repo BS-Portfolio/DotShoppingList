@@ -58,27 +58,14 @@ const login = () => {
 
 input {
   width: 30%;
-  height: 5vh;
+  height: 3vh;
   font-size: 18px;
-  text-align: center;
-  border: 2px solid var(--color-primary);
-  background: transparent;
-  color: var(--color-primary);
-  margin-bottom: 1rem;
-}
-
-input:focus {
-  border-color: var(--color-primary);
-  outline: none;
+  margin-bottom: 0.5rem;
 }
 
 button {
   padding: 10px 20px;
   font-size: 16px;
-  cursor: pointer;
-  margin-top: 2rem;
-  background-color: #fff8dc;
-  border: 2px solid var(--color-primary);
-  color: var(--color-primary);
+  margin-top: 0.5rem;
 }
 </style>

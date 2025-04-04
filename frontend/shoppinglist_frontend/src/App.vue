@@ -74,13 +74,9 @@ nav a:first-of-type {
 
 .logout-button {
   margin-left: 1rem;
-  padding: 10px 20px;
+  padding: 5px 10px;
   font-size: 16px;
   cursor: pointer;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 5px;
 }
 
 @media (min-width: 1024px) {

@@ -3,7 +3,8 @@
   --color-primary: #FF4875;
   --color-background: #FFF4CA;
   --color-text: #18171c;
-  --color-border: var(--color-primary)
+  --color-border: var(--color-primary);
+  --color-hover: #E54069;
 }
 
 body {

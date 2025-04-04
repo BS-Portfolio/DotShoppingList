@@ -44,3 +44,31 @@ h1 {
   font-weight: 400;
   font-style: normal;
 }
+
+input {
+  text-align: center;
+  border: 2px solid var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
+}
+
+input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+input:focus::placeholder {
+  color: transparent;
+}
+
+button {
+  cursor: pointer;
+  background-color: var(--color-primary);
+  border: none;
+  color: white;
+  border-radius: 5px;
+}
+
+button:hover {
+  background-color: var(--color-hover);
+}
