@@ -7,6 +7,7 @@ const authStore = useAuthStore();
 const router = useRouter();
 
 const username = ref('');
+const email = ref('');
 const password = ref('');
 
 const saveToSession = (key: string, value: any) => localStorage.setItem(key, JSON.stringify(value));
@@ -17,20 +18,30 @@ const handleLoginSuccess = () => {
   router.push('/');
 };
 
-const login = () => {
-  authStore.login(username.value, password.value);
+const register = () => {
+  const encodedUsername = btoa(username.value);
+  const encodedEmail = btoa(email.value);
+  const encodedPassword = btoa(password.value);
+
+  console.log("Username (Base64):", encodedUsername);
+  console.log("Email (Base64):", encodedEmail);
+  console.log("Password (Base64):", encodedPassword);
+
+  authStore.register(username.value, email.value, password.value);
   if (authStore.isAuthenticated) handleLoginSuccess();
 };
+
 </script>
 
 <template>
   <div class="login">
     <div class="card">
-      <h1 class="caveat-brush-regular">Login</h1>
+      <h1 class="caveat-brush-regular">Registrieren</h1>
+      <input v-model="email" type="email" placeholder="Email" />
       <input v-model="username" placeholder="Username" />
-      <input v-model="password" type="password" placeholder="Password" @keyup.enter="login" />
-      <button @click="login">Login</button>
-      <RouterLink to="/registration" class="registration-link">Noch keinen Account? Registrieren</RouterLink>
+      <input v-model="password" type="password" placeholder="Password" @keyup.enter="register" />
+      <button @click="register">Registrieren</button>
+      <RouterLink to="/login" class="login-link">Bereits einen Account? Login</RouterLink>
     </div>
   </div>
 </template>
@@ -59,21 +70,33 @@ const login = () => {
 
 input {
   width: 30%;
-  height: 3vh;
+  height: 5vh;
   font-size: 18px;
-  margin-bottom: 0.5rem;
+  text-align: center;
+  border: 2px solid var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
+  margin-bottom: 1rem;
+}
+
+input:focus {
+  border-color: var(--color-primary);
+  outline: none;
 }
 
 button {
   padding: 10px 20px;
   font-size: 16px;
-  margin-top: 0.5rem;
+  cursor: pointer;
+  margin-top: 2rem;
+  background-color: #fff8dc;
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
 }
 
-.registration-link {
+.login-link {
   margin-top: 1rem;
   text-decoration: none;
   font-size: 14px;
 }
-
 </style>
