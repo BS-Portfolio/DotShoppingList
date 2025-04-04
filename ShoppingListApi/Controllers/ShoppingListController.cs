@@ -1,6 +1,7 @@
 using System.Text;
 using Azure.Identity;
 using Microsoft.AspNetCore.Mvc;
+using ShoppingListApi.Attributes;
 using ShoppingListApi.Configs;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.Get;
@@ -25,6 +26,7 @@ public class ShoppingListController : ControllerBase
     }
 
     [HttpGet]
+    [AdminEndpoint]
     [Route("UserRole/all")]
     public async Task<ActionResult> GetUserRoles()
     {
@@ -59,6 +61,7 @@ public class ShoppingListController : ControllerBase
     }
 
     [HttpPost]
+    [AdminEndpoint]
     [Route("UserRole")]
     public async Task<ActionResult> AddUserRole([FromBody] UserRolePost userRolePost)
     {
@@ -93,6 +96,7 @@ public class ShoppingListController : ControllerBase
     }
 
     [HttpPost]
+    [PublicEndpoint]
     [Route("User")]
     public async Task<ActionResult> AddNewUser([FromBody] ListUserPost userPost)
     {
@@ -164,6 +168,7 @@ public class ShoppingListController : ControllerBase
 
     [HttpPost]
     [Route("User/Login")]
+    [PublicEndpoint]
     [ProducesResponseType<ListUser>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult> UserLogin([FromHeader] string emailAddress, [FromHeader] string password)

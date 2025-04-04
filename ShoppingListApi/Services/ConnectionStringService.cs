@@ -5,10 +5,10 @@ public class ConnectionStringService
     private readonly IConfiguration _configuration;
     private readonly ILogger<ConnectionStringService> _logger;
 
-    public ConnectionStringService(IServiceProvider serviceprovider)
+    public ConnectionStringService(IServiceProvider serviceProvider)
     {
-        _configuration = serviceprovider.GetRequiredService<IConfiguration>();
-        _logger = serviceprovider.GetRequiredService<ILogger<ConnectionStringService>>();
+        _configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        _logger = serviceProvider.GetRequiredService<ILogger<ConnectionStringService>>();
     }
 
     public string GetConnectionString()

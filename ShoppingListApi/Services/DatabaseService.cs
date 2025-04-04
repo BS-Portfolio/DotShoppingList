@@ -333,6 +333,7 @@ public class DatabaseService
         }
     }
 
+
     public async Task<List<UserRole>> GetUserRoles(SqlConnection sqlConnection)
     {
         List<UserRole> userRoles = [];
@@ -694,6 +695,8 @@ public class DatabaseService
                 }
             }
 
+            sqlReader.Close();
+
             return collaborators;
         }
         catch (NumberedException)
@@ -708,6 +711,74 @@ public class DatabaseService
             throw numberedException;
         }
     }
+
+    public async Task<AuthenticationReturn> Authenticate(Guid userId, string apiKey)
+    {
+        const bool isVerified = true;
+
+        string checkQuery = "SELECT ApiKey, ApiKeyExpirationDateTime " +
+                            "FROM ListUser " +
+                            "WHERE UserID = @UserID";
+
+        await using SqlConnection sqlConnection = new(_connectionString);
+
+        await using SqlCommand checkCommand = new(checkQuery, sqlConnection);
+        checkCommand.Parameters.Add(new SqlParameter() { ParameterName = "@UserID", Value = userId });
+
+        string loadedApiKey = string.Empty;
+        DateTimeOffset? loadedExpirationDateTime = null;
+
+        try
+        {
+            await sqlConnection.OpenAsync();
+            await using SqlDataReader sqlReader = await checkCommand.ExecuteReaderAsync();
+
+            if (sqlReader.HasRows is false)
+            {
+                return new AuthenticationReturn(false, !isVerified, false, false);
+            }
+
+            while (sqlReader.Read())
+            {
+                loadedApiKey = sqlReader.GetString(0);
+                loadedExpirationDateTime = sqlReader.GetDateTimeOffset(1);
+            }
+
+            sqlReader.Close();
+
+            if (String.IsNullOrEmpty(loadedApiKey) || loadedExpirationDateTime is null)
+            {
+                return new AuthenticationReturn(false, !isVerified, false, false);
+            }
+
+            if (loadedApiKey.Equals(apiKey, StringComparison.Ordinal) is false)
+            {
+                return new AuthenticationReturn(true, !isVerified, false, false);
+            }
+
+            if (loadedExpirationDateTime < DateTimeOffset.UtcNow)
+            {
+                return new AuthenticationReturn(true, !isVerified, true, false);
+            }
+
+            return new AuthenticationReturn(true, isVerified, true, true);
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(Authenticate));
+            throw numberedException;
+        }
+    }
+
+    #endregion
+
+    #region Multi-Handlers
 
     public async Task<List<ShoppingList>> HandleShoppingListsFetchForUser(Guid userId, SqlConnection sqlConnection)
     {
@@ -857,7 +928,8 @@ public class DatabaseService
         }
     }
 
-    public async Task<(bool succes, Guid? userId)> AddUser(ListUserPostExtended userPostExtended, SqlConnection sqlConnection)
+    public async Task<(bool succes, Guid? userId)> AddUser(ListUserPostExtended userPostExtended,
+        SqlConnection sqlConnection)
     {
         var addQuery =
             "INSERT INTO ListUser (UserID, FirstName, LastName, EmailAddress, PasswordHash, CreationDateTime, ApiKey, ApiKeyExpirationDateTime) "
@@ -874,7 +946,8 @@ public class DatabaseService
             new SqlParameter() { ParameterName = "@PasswordHash", Value = userPostExtended.PasswordHash },
             new SqlParameter() { ParameterName = "@CreationDateTime", Value = userPostExtended.CreationDateTime },
             new SqlParameter() { ParameterName = "@ApiKey", Value = userPostExtended.ApiKey },
-            new SqlParameter() { ParameterName = "@ApiKeyExpirationDateTime", Value = userPostExtended.ApiKeyExpirationDateTime }
+            new SqlParameter()
+                { ParameterName = "@ApiKeyExpirationDateTime", Value = userPostExtended.ApiKeyExpirationDateTime }
         ];
 
         try
