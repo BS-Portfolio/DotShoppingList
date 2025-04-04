@@ -117,7 +117,7 @@ li {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: var(--primary-color);
+  color: var(--color-primary);
 }
 
 .item-name {
@@ -139,7 +139,7 @@ li:nth-child(even) {
 }
 
 .remove-button {
-  color: var(--primary-color);
+  color: var(--color-primary);
   background: none;
   border: none;
   cursor: pointer;
