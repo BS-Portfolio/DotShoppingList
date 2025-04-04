@@ -25,7 +25,7 @@ const login = () => {
 <template>
   <div class="login">
     <div class="card">
-      <h1>Login</h1>
+      <h1 class="caveat-brush-regular">Login</h1>
       <input v-model="username" placeholder="Username" />
       <input v-model="password" type="password" placeholder="Password" @keyup.enter="login" />
       <button @click="login">Login</button>
@@ -53,11 +53,6 @@ const login = () => {
   flex-direction: column;
   align-items: center;
   width: 400px;
-}
-
-h1 {
-  color: var(--color-primary);
-  margin-top: 0.05rem;
 }
 
 input {

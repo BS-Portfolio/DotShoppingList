@@ -89,26 +89,11 @@ onMounted(loadItems);
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Caveat+Brush&display=swap');
-
 div {
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
-}
-
-.caveat-brush-regular {
-  font-family: "Caveat Brush", cursive;
-  font-weight: 400;
-  font-style: normal;
-}
-
-h1 {
-  font-size: 3em;
-  text-align: center;
-  color: var(--color-primary);
-  margin: 0 0 1rem;
 }
 
 input {

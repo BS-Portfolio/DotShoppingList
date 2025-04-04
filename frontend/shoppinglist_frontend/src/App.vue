@@ -23,6 +23,7 @@ const logout = () => {
       <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
+        <RouterLink to="/dashboard">Dashboard</RouterLink>
         <button v-if="isAuthenticated" @click="logout" class="logout-button">Logout</button>
       </nav>
     </div>
