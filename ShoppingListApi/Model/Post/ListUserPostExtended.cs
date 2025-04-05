@@ -30,17 +30,17 @@ public class ListUserPostExtended
     {
         FirstName = listUserPost.FirstName;
         LastName = listUserPost.LastName;
-        
+
         byte[] decodedEmail64StringBytes = Convert.FromBase64String(listUserPost.EmailAddress);
         string decodedEmailAddress = Encoding.UTF8.GetString(decodedEmail64StringBytes);
         EmailAddress = decodedEmailAddress;
-        
+
         byte[] decodedPassword64StringBytes = Convert.FromBase64String(listUserPost.Password64);
         string decodedPassword = Encoding.UTF8.GetString(decodedPassword64StringBytes);
         PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(decodedPassword, 13);
-        
+
         CreationDateTime = DateTimeOffset.UtcNow;
         ApiKey = HM.GenerateApiKey();
-        ApiKeyExpirationDateTime = CreationDateTime + TimeSpan.FromHours(6);
+        ApiKeyExpirationDateTime = CreationDateTime.AddHours(6);
     }
 }

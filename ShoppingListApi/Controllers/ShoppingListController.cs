@@ -3,9 +3,11 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Azure.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using ShoppingListApi.Attributes;
 using ShoppingListApi.Configs;
 using ShoppingListApi.Exceptions;
+using ShoppingListApi.Model.Database;
 using ShoppingListApi.Model.Get;
 using ShoppingListApi.Model.Post;
 using ShoppingListApi.Model.ReturnTypes;
@@ -125,16 +127,20 @@ public class ShoppingListController : ControllerBase
 
             return Ok(shoppingLists);
         }
-        catch (NumberedException)
+        catch (NumberedException nEx)
         {
-            throw;
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(GetShoppingListsForUser));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
         }
         catch (Exception e)
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetShoppingListsForUser));
-            throw numberedException;
+                nameof(ShoppingListController), nameof(GetShoppingListsForUser));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
         }
     }
 
@@ -213,7 +219,7 @@ public class ShoppingListController : ControllerBase
                 "Due to an internal error, your request could not be processed.");
         }
     }
-    
+
     [HttpPost]
     [AdminEndpoint]
     [ProducesResponseType<string>(StatusCodes.Status409Conflict)]
@@ -370,7 +376,111 @@ public class ShoppingListController : ControllerBase
                 "Due to an internal error, your request could not be processed.");
         }
     }
-    
+
+    [HttpPost]
+    [ProducesResponseType<Guid>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
+    [Route("User/{userId:Guid}/ShoppingList")]
+    public async Task<ActionResult> AddShoppingListForUser([FromRoute] Guid userId, [FromBody] string shoppingListName)
+    {
+        try
+        {
+            var result = await _databaseService
+                .SqlConnectionHandler<ShoppingListAdditionData, ShoppingListAdditionResult>(
+                    async (data, sqlConnection) => await _databaseService.HandleAddingShoppingList(data, sqlConnection),
+                    new ShoppingListAdditionData(shoppingListName, userId));
+
+            if (result.Success is false || result.AddedShoppingListId is null)
+            {
+                if (result.MaximumNumberOfListsReached)
+                {
+                    return BadRequest("Maximum number of shopping lists reached!");
+                }
+
+                if (result.AddedShoppingListId is null)
+                {
+                    return Problem("Due to an internal error your request could not be processed.");
+                }
+
+                if (result.ListAssignmentSuccess is false)
+                {
+                    if (result.AddedShoppingListId is not null)
+                    {
+                        await _databaseService.SqlConnectionHandler<Guid, bool>(
+                            async (input, connection) =>
+                                await _databaseService.RemoveShoppingListById(input, connection),
+                            (Guid)result.AddedShoppingListId);
+                    }
+
+                    return Problem("Due to an internal error your request could not be processed.");
+                }
+            }
+
+            return Ok(result.AddedShoppingListId);
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(AddShoppingListForUser));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(AddShoppingListForUser));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+    }
+
+    [HttpPost]
+    [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}/Item")]
+    public async Task<ActionResult> AddItemToShoppingList([FromRoute] Guid userId, [FromRoute] Guid shoppingListId,
+        [FromBody] ItemPost itemPost)
+    {
+        try
+        {
+            var result = await _databaseService.SqlConnectionHandler<NewItemData, ItemAdditionResult>(
+                async (data, connection) => await _databaseService.HandleAddingItemToShoppingList(data, connection),
+                new NewItemData(itemPost, shoppingListId, userId));
+
+            if (result.Success is false || result.ItemId is null)
+            {
+                if (result.AccessGranted is false)
+                {
+                    return Unauthorized("You do not have permission to access this list.");
+                }
+
+                if (result.MaximumCountReached)
+                {
+                    return BadRequest("You have reached the maximum number of items in a list.");
+                }
+
+                return Problem("Due to an internal error your request could not be processed.");
+            }
+
+            return Ok(result.ItemId);
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListController), nameof(AddItemToShoppingList));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListController), nameof(AddItemToShoppingList));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+    }
+
     /*
 
 

@@ -212,7 +212,7 @@ public class DatabaseService
         int targetIndex = 0;
 
         string checkQuery = "SELECT UR.EnumIndex FROM ListMember AS LM " +
-                            "JOIN UserRole AS UR ON UserRole.UserRoleID = ListMember.UserRoleID " +
+                            "JOIN UserRole AS UR ON UR.UserRoleID = LM.UserRoleID " +
                             "WHERE LM.UserID = @UserID AND LM.ShoppingListID = @ShoppingListID";
 
         await using SqlCommand checkCommand = new(checkQuery, sqlConnection);
@@ -238,7 +238,7 @@ public class DatabaseService
 
             while (await sqlReader.ReadAsync())
             {
-                targetIndex = sqlReader.GetInt32(sqlReader.GetOrdinal("UR.EnumIndex"));
+                targetIndex = sqlReader.GetInt32(0);
             }
 
             sqlReader.Close();
@@ -259,6 +259,88 @@ public class DatabaseService
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(DatabaseService), nameof(CheckUsersRoleInList));
+            throw numberedException;
+        }
+    }
+
+    public async Task<int> GetShoppingListCountForUser(Guid userId, SqlConnection sqlConnection)
+    {
+        int count = 0;
+        string query = "SELECT COUNT(DISTINCT ShoppingListID) FROM ListMember " +
+                       "WHERE UserRoleID IN (SELECT UserRoleID FROM UserRole WHERE UserRole.EnumIndex = @AdminUserRoleIndex) " +
+                       "AND UserID = @UserID";
+
+        await using SqlCommand countCommand = new(query, sqlConnection);
+
+        countCommand.Parameters.AddRange([
+            new SqlParameter() { ParameterName = "@UserID", Value = userId },
+            new SqlParameter() { ParameterName = "@AdminUserRoleIndex", Value = (int)UserRoleEnum.ListAdmin }
+        ]);
+
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+
+            await using SqlDataReader sqlReader = await countCommand.ExecuteReaderAsync();
+
+            while (sqlReader.Read())
+            {
+                count = sqlReader.GetInt32(0);
+            }
+
+            return count;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(GetShoppingListCountForUser));
+            throw numberedException;
+        }
+    }
+
+    public async Task<int> GetItemsCountForShoppingList(Guid shoppingListId, SqlConnection sqlConnection)
+    {
+        int count = 0;
+        string query = "SELECT Count(DISTINCT ItemID) FROM Item " +
+                       "WHERE ShoppingListID = @ShoppingListID ";
+
+        await using SqlCommand countCommand = new(query, sqlConnection);
+
+        countCommand.Parameters.Add(new SqlParameter() { ParameterName = "@ShoppingListID", Value = shoppingListId });
+
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+
+            await using SqlDataReader sqlReader = await countCommand.ExecuteReaderAsync();
+
+            while (sqlReader.Read())
+            {
+                count = sqlReader.GetInt32(0);
+            }
+
+            return count;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(GetItemsCountForShoppingList));
             throw numberedException;
         }
     }
@@ -787,8 +869,8 @@ public class DatabaseService
 
         string getQuery = "SELECT LU.UserID, LU.FirstName, LU.LastName, LU.EmailAddress " +
                           "FROM ListUser AS LU " +
-                          "JOIN ListMember AS LM ON ListUser.UserID = ListMember.UserID " +
-                          "JOIN UserRole AS UR ON UserRole.UserRoleID = ListMember.UserRoleID " +
+                          "JOIN ListMember AS LM ON LU.UserID = LM.UserID " +
+                          "JOIN UserRole AS UR ON UR.UserRoleID = LM.UserRoleID " +
                           "WHERE LM.ShoppingListID = @ShoppingListID AND LM.UserRoleID IN " +
                           "(SELECT UserRoleID FROM UserRole WHERE UserRole.EnumIndex = @CollaboratorEnumIndex)";
 
@@ -855,7 +937,10 @@ public class DatabaseService
 
         try
         {
-            await sqlConnection.OpenAsync();
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
 
             await using SqlDataReader sqlReader = await command.ExecuteReaderAsync();
 
@@ -953,6 +1038,98 @@ public class DatabaseService
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(DatabaseService), nameof(HandleLogin));
+            throw numberedException;
+        }
+    }
+
+    public async Task<ShoppingListAdditionResult> HandleAddingShoppingList(
+        ShoppingListAdditionData shoppingListAdditionData,
+        SqlConnection sqlConnection)
+    {
+        const bool success = true;
+
+        try
+        {
+            var shoppingListCount = await GetShoppingListCountForUser(shoppingListAdditionData.UserId, sqlConnection);
+
+            if (shoppingListCount >= 5)
+            {
+                return new ShoppingListAdditionResult(!success, null, true);
+            }
+
+            var (shoppingListAdded, shoppingListId) =
+                await AddShoppingList(shoppingListAdditionData.ShoppingListName, sqlConnection);
+
+            if (shoppingListAdded is false || shoppingListId is null)
+            {
+                return new ShoppingListAdditionResult(!success, shoppingListId, false);
+            }
+
+            var shoppingListAssigned =
+                await AssignUserToShoppingList(
+                    new(shoppingListAdditionData.UserId, (Guid)shoppingListId, UserRoleEnum.ListAdmin), sqlConnection);
+
+            if (shoppingListAssigned is false)
+            {
+                return new ShoppingListAdditionResult(!success, shoppingListId, false, false);
+            }
+
+            return new ShoppingListAdditionResult(success, shoppingListId, false, true);
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(HandleAddingShoppingList));
+            throw numberedException;
+        }
+    }
+
+    public async Task<ItemAdditionResult> HandleAddingItemToShoppingList(NewItemData newItemData,
+        SqlConnection sqlConnection)
+    {
+        const bool success = true;
+
+        try
+        {
+            var userRole =
+                await CheckUsersRoleInList(new CheckUsersRoleData(newItemData.UserId, newItemData.ShoppingListId),
+                    sqlConnection);
+
+            if (userRole is null)
+            {
+                return new ItemAdditionResult(!success, false, null, false);
+            }
+
+            var result = await GetItemsCountForShoppingList(newItemData.ShoppingListId, sqlConnection);
+
+            if (result >= 5)
+            {
+                return new ItemAdditionResult(!success, true, null);
+            }
+
+            var (itemAdditionSuccessful, addedItemId) = await AddItemToShoppingList(newItemData, sqlConnection);
+
+            if (itemAdditionSuccessful is false || addedItemId is null)
+            {
+                return new ItemAdditionResult(!success, false, addedItemId);
+            }
+
+            return new ItemAdditionResult(success, false, addedItemId);
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(HandleAddingItemToShoppingList));
             throw numberedException;
         }
     }
@@ -1085,7 +1262,7 @@ public class DatabaseService
         }
     }
 
-    public async Task<(bool success, Guid? listID)> AddShoppingList(ShoppingListPost shoppingListPost,
+    public async Task<(bool success, Guid? listID)> AddShoppingList(string shoppingListName,
         SqlConnection sqlConnection)
     {
         var addQuery =
@@ -1098,7 +1275,7 @@ public class DatabaseService
         [
             new SqlParameter()
                 { ParameterName = "@ShoppingListID", Value = shoppingListId, SqlDbType = SqlDbType.UniqueIdentifier },
-            new SqlParameter() { ParameterName = "@ShoppingListName", Value = shoppingListPost.ShoppingListName }
+            new SqlParameter() { ParameterName = "@ShoppingListName", Value = shoppingListName }
         ];
 
         try
@@ -1128,7 +1305,6 @@ public class DatabaseService
     public async Task<(bool success, Guid? itemId)> AddItemToShoppingList(NewItemData newItemData,
         SqlConnection sqlConnection)
     {
-        // ItemUnit aus der Abfrage entfernt
         var addQuery =
             "INSERT INTO Item (ItemID, ShoppingListID, ItemName, ItemAmount) "
             + "VALUES (@ItemID, @ShoppingListID, @ItemName, @ItemAmount)";
@@ -1144,8 +1320,8 @@ public class DatabaseService
                 Value = newItemData.ShoppingListId,
                 SqlDbType = SqlDbType.UniqueIdentifier
             },
-            new SqlParameter() { ParameterName = "@ItemName", Value = newItemData.itemPost.ItemName },
-            new SqlParameter() { ParameterName = "@ItemAmount", Value = newItemData.itemPost.ItemAmount }
+            new SqlParameter() { ParameterName = "@ItemName", Value = newItemData.ItemPost.ItemName },
+            new SqlParameter() { ParameterName = "@ItemAmount", Value = newItemData.ItemPost.ItemAmount }
         ];
 
         try
@@ -1176,7 +1352,7 @@ public class DatabaseService
         SqlConnection sqlConnection)
     {
         var addQuery = "INSERT INTO ListMember (ShoppingListID, UserID, UserRoleID) "
-                       + "VALUES (@ShoppingListID, @UserID, @UserRoleID)";
+                       + "VALUES (@ShoppingListID, @UserID, (SELECT UserRoleID FROM UserRole WHERE UserRole.EnumIndex = @AdminUserRoleIndex))";
 
         List<SqlParameter> parameters =
         [
@@ -1194,9 +1370,8 @@ public class DatabaseService
             },
             new SqlParameter()
             {
-                ParameterName = "@UserRoleID",
-                Value = userListAssignmentData.UserRoleId,
-                SqlDbType = SqlDbType.UniqueIdentifier
+                ParameterName = "@AdminUserRoleIndex",
+                Value = (int)userListAssignmentData.UserRole
             }
         ];
 
@@ -1417,7 +1592,7 @@ public class DatabaseService
 
         updateCommand.Parameters.AddRange([
             new SqlParameter() { ParameterName = "@NewApiKey", Value = newApiKey },
-            new SqlParameter() { ParameterName = "@NewExpirationDateTime", Value = DateTimeOffset.UtcNow },
+            new SqlParameter() { ParameterName = "@NewExpirationDateTime", Value = DateTimeOffset.UtcNow.AddHours(6) },
             new SqlParameter() { ParameterName = "@UserID", Value = userId, SqlDbType = SqlDbType.UniqueIdentifier }
         ]);
 

@@ -49,8 +49,7 @@ public class MyAuthenticationMiddleware
         {
             if (!context.Request.Headers.TryGetValue("X-API-KEY", out var extractedMasterKey))
             {
-                context.Response.StatusCode = 500;
-                await context.Response.WriteAsync("Service not available!");
+                await HM.HandleAuthenticationResponse(401, 0, "API Key is missing!", context);
                 return;
             }
 
