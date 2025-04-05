@@ -56,7 +56,7 @@ public class DatabaseService
 
     public async Task<T2> SqlConnectionHandler<T2>(Func<SqlConnection, Task<T2>> action)
     {
-        using SqlConnection sqlConnection = new(_connectionString);
+        await using SqlConnection sqlConnection = new(_connectionString);
 
         try
         {
@@ -367,6 +367,8 @@ public class DatabaseService
                 }
             }
 
+            sqlReader.Close();
+
             if (loadedUserIdsForEmail.Count == 0)
             {
                 throw new NoContentFoundException<string>("No user found for the provided email address.",
@@ -471,6 +473,8 @@ public class DatabaseService
                     loadedIds.Add(sqlReader.GetGuid(0));
                 }
             }
+
+            sqlReader.Close();
 
             if (loadedIds.Count == 0)
             {
@@ -607,7 +611,7 @@ public class DatabaseService
         sqlCommand.Parameters.AddRange([
             new SqlParameter()
                 { ParameterName = "@ShoppingListID", Value = shoppingListId, SqlDbType = SqlDbType.UniqueIdentifier },
-            new SqlParameter() { ParameterName = "AdminEnumIndex", Value = (int)UserRoleEnum.ListAdmin }
+            new SqlParameter() { ParameterName = "@AdminEnumIndex", Value = (int)UserRoleEnum.ListAdmin }
         ]);
 
         try
@@ -619,7 +623,14 @@ public class DatabaseService
 
             await using SqlDataReader sqlReader = await sqlCommand.ExecuteReaderAsync();
 
-            if (sqlReader.HasRows && await sqlReader.ReadAsync())
+            if (sqlReader.HasRows is false)
+            {
+                return null;
+            }
+
+            ShoppingList? targetShoppingList = null;
+
+            while (await sqlReader.ReadAsync())
             {
                 var listOwner = new ListUserMinimal(
                     sqlReader.GetGuid(1),
@@ -628,16 +639,16 @@ public class DatabaseService
                     sqlReader.GetString(4)
                 );
 
-                var shoppingList = new ShoppingList(
+                targetShoppingList = new ShoppingList(
                     shoppingListId,
                     sqlReader.GetString(0),
                     listOwner
                 );
-
-                return shoppingList;
             }
 
-            return null;
+            sqlReader.Close();
+
+            return targetShoppingList;
         }
         catch (NumberedException)
         {
@@ -861,6 +872,7 @@ public class DatabaseService
                 }
             }
 
+            sqlReader.Close();
             return users;
         }
         catch (NumberedException)
