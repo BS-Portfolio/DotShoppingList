@@ -393,6 +393,11 @@ public class ShoppingListController : ControllerBase
 
             if (result.Success is false || result.AddedShoppingListId is null)
             {
+                if (result.NameAlreadyExists)
+                {
+                    return Conflict($"You already have a shopping list named: \"{shoppingListName}\"");
+                }
+                
                 if (result.MaximumNumberOfListsReached)
                 {
                     return BadRequest("Maximum number of shopping lists reached!");

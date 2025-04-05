@@ -130,10 +130,10 @@ public class DatabaseService
     {
         string existenceCheckQuery = "SELECT SL.ShoppingListID " +
                                      "FROM ShoppingList AS SL " +
-                                     "JOIN MemberList AS ML ON SL.ShoppingListID = ML.ShoppingListID " +
+                                     "JOIN ListMember AS LM ON SL.ShoppingListID = LM.ShoppingListID " +
                                      "WHERE SL.ShoppingListName = @ShoppingListName AND " +
-                                     "ML.UserID = @UserID AND " +
-                                     "ML.UserRoleID IN (SELECT UserRoleID FROM UserRole WHERE UserRole.EnumIndex = @AdminEnumIndex)";
+                                     "LM.UserID = @UserID AND " +
+                                     "LM.UserRoleID IN (SELECT UserRoleID FROM UserRole WHERE UserRole.EnumIndex = @AdminEnumIndex)";
 
         await using SqlCommand checkCommand = new(existenceCheckQuery, sqlConnection);
 
@@ -1050,6 +1050,13 @@ public class DatabaseService
 
         try
         {
+            var alreadyExists = await CheckShoppingListExistence(new ShoppingListExistenceCheckData(shoppingListAdditionData.UserId, shoppingListAdditionData.ShoppingListName), sqlConnection);
+
+            if (alreadyExists)
+            {
+                return new ShoppingListAdditionResult(!success, null, false, null, true);
+            }
+            
             var shoppingListCount = await GetShoppingListCountForUser(shoppingListAdditionData.UserId, sqlConnection);
 
             if (shoppingListCount >= 5)
