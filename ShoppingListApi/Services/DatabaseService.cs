@@ -1149,7 +1149,7 @@ public class DatabaseService
     {
         const bool success = true;
         const bool accessGranted = true;
-        
+
         try
         {
             var userRole = await CheckUsersRoleInList(
@@ -1162,7 +1162,8 @@ public class DatabaseService
             }
 
             var updateSuccess = await ModifyShoppingListName(
-                new ModificationData<Guid, ShoppingListPatch>(modificationData.Identifier.shoppingListId, modificationData.Payload),
+                new ModificationData<Guid, ShoppingListPatch>(modificationData.Identifier.shoppingListId,
+                    modificationData.Payload),
                 sqlConnection);
 
             if (updateSuccess is false)
@@ -1184,14 +1185,14 @@ public class DatabaseService
             throw numberedException;
         }
     }
-    
+
     public async Task<UpdateResult> HandleShoppingListItemUpdate(
         ModificationData<(Guid userId, Guid shoppingListId, Guid itemId), ItemPatch> modificationData,
         SqlConnection sqlConnection)
     {
         const bool success = true;
         const bool accessGranted = true;
-        
+
         try
         {
             var userRole = await CheckUsersRoleInList(
@@ -1226,7 +1227,7 @@ public class DatabaseService
             throw numberedException;
         }
     }
-    
+
     #endregion
 
     #region Data-Writer
@@ -1603,7 +1604,8 @@ public class DatabaseService
         }
     }
 
-    public async Task<bool> ModifyItem(ModificationData<Guid, ItemPatch> itemModificationData, SqlConnection sqlConnection)
+    public async Task<bool> ModifyItem(ModificationData<Guid, ItemPatch> itemModificationData,
+        SqlConnection sqlConnection)
     {
         Guid itemId = itemModificationData.Identifier;
         ItemPatch itemPatch = itemModificationData.Payload;
@@ -1720,16 +1722,16 @@ public class DatabaseService
     public async Task<(bool success, int removedShoppingListsCount)> RemoveUserById(Guid userId,
         SqlConnection sqlConnection)
     {
-        SqlCommand sqlCommand = new();
+        await using SqlCommand sqlCommand = new();
 
         sqlCommand.CommandType = CommandType.StoredProcedure;
         sqlCommand.CommandText = "uspRemoveUser";
+        sqlCommand.Connection = sqlConnection;
 
         SqlParameter successParam = new SqlParameter("@success", SqlDbType.Bit)
             { Direction = ParameterDirection.Output };
         SqlParameter removedShoppingListsCountParam = new SqlParameter("@shoppingListsRemovedCount", SqlDbType.Int)
             { Direction = ParameterDirection.Output };
-
 
         sqlCommand.Parameters.AddRange([
             new SqlParameter() { ParameterName = @"userId", Value = userId, SqlDbType = SqlDbType.UniqueIdentifier },
@@ -1769,7 +1771,7 @@ public class DatabaseService
         }
     }
 
-    public async Task<(bool success, int removedShoppingListsCount)> RemoveUserByEmail(string emailAddress,
+    public async Task<UserRemovalDbResult> RemoveUserByEmail(string emailAddress,
         SqlConnection sqlConnection)
     {
         try
@@ -1778,10 +1780,17 @@ public class DatabaseService
 
             if (userId is null)
             {
-                return (false, 0);
+                return new UserRemovalDbResult(false, false, 0);
             }
 
-            return await RemoveUserById((Guid)userId, sqlConnection);
+            var (success, count) = await RemoveUserById((Guid)userId, sqlConnection);
+
+            if (success is false)
+            {
+                return new UserRemovalDbResult(false, true, 0);
+            }
+
+            return new UserRemovalDbResult(success, true, count);
         }
         catch (NumberedException)
         {
