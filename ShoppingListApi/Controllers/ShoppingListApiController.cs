@@ -6,9 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using ShoppingListApi.Attributes;
 using ShoppingListApi.Configs;
+using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.Database;
 using ShoppingListApi.Model.Get;
+using ShoppingListApi.Model.Patch;
 using ShoppingListApi.Model.Post;
 using ShoppingListApi.Model.ReturnTypes;
 using ShoppingListApi.Services;
@@ -18,15 +20,15 @@ namespace ShoppingListApi.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class ShoppingListController : ControllerBase
+public class ShoppingListApiController : ControllerBase
 {
     private readonly DatabaseService _databaseService;
-    private readonly ILogger<ShoppingListController> _logger;
+    private readonly ILogger<ShoppingListApiController> _logger;
 
-    public ShoppingListController(IServiceProvider serviceProvider)
+    public ShoppingListApiController(IServiceProvider serviceProvider)
     {
         _databaseService = serviceProvider.GetRequiredService<DatabaseService>();
-        _logger = serviceProvider.GetRequiredService<ILogger<ShoppingListController>>();
+        _logger = serviceProvider.GetRequiredService<ILogger<ShoppingListApiController>>();
     }
 
     [HttpGet]
@@ -53,7 +55,7 @@ public class ShoppingListController : ControllerBase
         catch (NumberedException nEx)
         {
             _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListController), nameof(GetUserRoles));
+                nameof(ShoppingListApiController), nameof(GetUserRoles));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Du to an internal error, your request could not be processed.");
         }
@@ -61,7 +63,7 @@ public class ShoppingListController : ControllerBase
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ShoppingListController), nameof(GetUserRoles));
+                nameof(ShoppingListApiController), nameof(GetUserRoles));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Du to an internal error, your request could not be processed.");
         }
@@ -92,7 +94,7 @@ public class ShoppingListController : ControllerBase
         catch (NumberedException nEx)
         {
             _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListController), nameof(GetUserByEmail));
+                nameof(ShoppingListApiController), nameof(GetUserByEmail));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
@@ -100,7 +102,7 @@ public class ShoppingListController : ControllerBase
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ShoppingListController), nameof(GetUserByEmail));
+                nameof(ShoppingListApiController), nameof(GetUserByEmail));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
@@ -130,7 +132,7 @@ public class ShoppingListController : ControllerBase
         catch (NumberedException nEx)
         {
             _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListController), nameof(GetShoppingListsForUser));
+                nameof(ShoppingListApiController), nameof(GetShoppingListsForUser));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
@@ -138,7 +140,7 @@ public class ShoppingListController : ControllerBase
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ShoppingListController), nameof(GetShoppingListsForUser));
+                nameof(ShoppingListApiController), nameof(GetShoppingListsForUser));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
@@ -169,7 +171,7 @@ public class ShoppingListController : ControllerBase
         catch (NumberedException nEx)
         {
             _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListController), nameof(GetUserById));
+                nameof(ShoppingListApiController), nameof(GetUserById));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
@@ -177,7 +179,7 @@ public class ShoppingListController : ControllerBase
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ShoppingListController), nameof(GetUserById));
+                nameof(ShoppingListApiController), nameof(GetUserById));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
@@ -206,7 +208,7 @@ public class ShoppingListController : ControllerBase
         catch (NumberedException nEx)
         {
             _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListController), nameof(GetAllUsers));
+                nameof(ShoppingListApiController), nameof(GetAllUsers));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
@@ -214,7 +216,7 @@ public class ShoppingListController : ControllerBase
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ShoppingListController), nameof(GetAllUsers));
+                nameof(ShoppingListApiController), nameof(GetAllUsers));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
@@ -255,7 +257,7 @@ public class ShoppingListController : ControllerBase
         catch (NumberedException nEx)
         {
             _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListController), nameof(AddUserRole));
+                nameof(ShoppingListApiController), nameof(AddUserRole));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Du to an internal error, your request could not be processed.");
         }
@@ -263,7 +265,7 @@ public class ShoppingListController : ControllerBase
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ShoppingListController), nameof(AddUserRole));
+                nameof(ShoppingListApiController), nameof(AddUserRole));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Du to an internal error, your request could not be processed.");
         }
@@ -306,13 +308,13 @@ public class ShoppingListController : ControllerBase
         catch (FormatException fEx)
         {
             _logger.LogWithLevel(LogLevel.Error, fEx, "0", fEx.Message,
-                nameof(ShoppingListController), nameof(AddUserRole));
+                nameof(ShoppingListApiController), nameof(AddUserRole));
             return BadRequest("Your input email address and password were delivered in wrong formatting!");
         }
         catch (NumberedException nEx)
         {
             _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListController), nameof(AddUserRole));
+                nameof(ShoppingListApiController), nameof(AddUserRole));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
@@ -320,7 +322,7 @@ public class ShoppingListController : ControllerBase
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ShoppingListController), nameof(AddNewUser));
+                nameof(ShoppingListApiController), nameof(AddNewUser));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
@@ -350,20 +352,20 @@ public class ShoppingListController : ControllerBase
         catch (NoContentFoundException<string> ncEx)
         {
             _logger.LogWithLevel(LogLevel.Error, ncEx, ncEx.ErrorNumber, ncEx.Message,
-                nameof(ShoppingListController), nameof(UserLogin));
+                nameof(ShoppingListApiController), nameof(UserLogin));
             return NotFound("Not user account found for the provided email address.");
         }
         catch (MultipleUsersForEmailException mEx)
         {
             _logger.LogWithLevel(LogLevel.Error, mEx, mEx.ErrorNumber, mEx.Message,
-                nameof(ShoppingListController), nameof(UserLogin));
+                nameof(ShoppingListApiController), nameof(UserLogin));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed. Your email address has been registered under multiple users!");
         }
         catch (NumberedException nEx)
         {
             _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListController), nameof(UserLogin));
+                nameof(ShoppingListApiController), nameof(UserLogin));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
@@ -371,7 +373,7 @@ public class ShoppingListController : ControllerBase
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ShoppingListController), nameof(UserLogin));
+                nameof(ShoppingListApiController), nameof(UserLogin));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
@@ -397,7 +399,7 @@ public class ShoppingListController : ControllerBase
                 {
                     return Conflict($"You already have a shopping list named: \"{shoppingListName}\"");
                 }
-                
+
                 if (result.MaximumNumberOfListsReached)
                 {
                     return BadRequest("Maximum number of shopping lists reached!");
@@ -427,7 +429,7 @@ public class ShoppingListController : ControllerBase
         catch (NumberedException nEx)
         {
             _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListController), nameof(AddShoppingListForUser));
+                nameof(ShoppingListApiController), nameof(AddShoppingListForUser));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
@@ -435,13 +437,17 @@ public class ShoppingListController : ControllerBase
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ShoppingListController), nameof(AddShoppingListForUser));
+                nameof(ShoppingListApiController), nameof(AddShoppingListForUser));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
     }
 
     [HttpPost]
+    [ProducesResponseType<Guid>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<AuthenticationErrorResponse>(StatusCodes.Status401Unauthorized)]
     [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}/Item")]
     public async Task<ActionResult> AddItemToShoppingList([FromRoute] Guid userId, [FromRoute] Guid shoppingListId,
         [FromBody] ItemPost itemPost)
@@ -456,7 +462,7 @@ public class ShoppingListController : ControllerBase
             {
                 if (result.AccessGranted is false)
                 {
-                    return Unauthorized("You do not have permission to access this list.");
+                    return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
                 }
 
                 if (result.MaximumCountReached)
@@ -472,7 +478,7 @@ public class ShoppingListController : ControllerBase
         catch (NumberedException nEx)
         {
             _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListController), nameof(AddItemToShoppingList));
+                nameof(ShoppingListApiController), nameof(AddItemToShoppingList));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
@@ -480,122 +486,163 @@ public class ShoppingListController : ControllerBase
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ShoppingListController), nameof(AddItemToShoppingList));
+                nameof(ShoppingListApiController), nameof(AddItemToShoppingList));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }
     }
 
+    [HttpPatch]
+    [Route("User/{userId:Guid}")]
+    public async Task<ActionResult> ModifyUserDetails([FromRoute] Guid userId, [FromBody] ListUserPatch listUserPatch)
+    {
+        if (listUserPatch.NewFirstName is null &&
+            listUserPatch.NewLastName is null)
+        {
+            return BadRequest("Nothing to update!");
+        }
+
+        try
+        {
+            var success = await _databaseService.SqlConnectionHandler<ModificationData<Guid, ListUserPatch>, bool>(
+                async (input, connection) => await _databaseService.ModifyUserDetails(input, connection),
+                new ModificationData<Guid, ListUserPatch>(userId, listUserPatch));
+
+            if (success is false) return NotFound($"A user with the provided ID {userId} was not found.");
+
+            return Ok("Update successful!");
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListApiController), nameof(ModifyUserDetails));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListApiController), nameof(ModifyUserDetails));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+    }
+
+    [HttpPatch]
+    [Route("User/{userId:Guid}/ShoppingList/{shoppingListId}")]
+    public async Task<ActionResult> ModifyShoppingListName([FromRoute] Guid userId, [FromRoute] Guid shoppingListId,
+        [FromBody] ShoppingListPatch shoppingListPatch)
+    {
+        try
+        {
+            var result = await _databaseService
+                .SqlConnectionHandler<ModificationData<(Guid userId, Guid shoppingListId), ShoppingListPatch>,
+                    UpdateResult>(
+                    (input, connection) => _databaseService.HandleShoppingListNameUpdate(input, connection)
+                    , new ModificationData<(Guid userId, Guid shoppingListId), ShoppingListPatch>((userId, shoppingListId), shoppingListPatch));
+
+            if (result.Success is false)
+            {
+                if (result.AccessGranted)
+                {
+                    return NotFound("No shopping list found for the provided ID's");
+                }
+
+                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
+            }
+
+            return Ok("Update Successful!");
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListApiController), nameof(ModifyShoppingListName));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListApiController), nameof(ModifyShoppingListName));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+    }
+
+    [HttpPatch]
+    [Route("User/{userId:Guid}/ShoppingList/{shoppingListId}/Item/{itemId:Guid}")]
+    public async Task<ActionResult> ModifyItemDetails(Guid userId, Guid shoppingListId, Guid itemId, ItemPatch itemPatch)
+    {
+        if (itemPatch.NewItemAmount is null &&
+            itemPatch.NewItemName is null)
+        {
+            return BadRequest("Nothing to update!");
+        }
+        
+        try
+        {
+            var result = await _databaseService
+                .SqlConnectionHandler<ModificationData<(Guid userId, Guid shoppingListId, Guid itemId), ItemPatch>,
+                    UpdateResult>(
+                    (input, connection) => _databaseService.HandleShoppingListItemUpdate(input, connection)
+                    , new ModificationData<(Guid userId, Guid shoppingListId, Guid itemId), ItemPatch>((userId, shoppingListId, itemId), itemPatch));
+
+            if (result.Success is false)
+            {
+                if (result.AccessGranted)
+                {
+                    return NotFound("No shopping list item found for the provided ID's");
+                }
+
+                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
+            }
+
+            return Ok("Update Successful!");
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListApiController), nameof(ModifyShoppingListName));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListApiController), nameof(ModifyShoppingListName));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+    }
     /*
 
 
-    [HttpGet]
-    [Route("ShoppingList/{listId:guid}")]
-    public async Task<ActionResult> GetShoppingList(Guid listId)
-    {
-        try
-        {
-            var shoppingList = await _databaseService.SqlConnectionHandler<Guid, ShoppingList?>(
-                (input, connection) => _databaseService.GetShoppingListById(input, connection),
-                listId
-            );
+    [HttpDelete]
+public async Task<ActionResult>  RemoveUser(){
+}
 
-            if (shoppingList == null)
-            {
-                return NotFound($"Shopping list with ID {listId} not found");
-            }
+     [HttpDelete]
+public async Task<ActionResult>  RemoveShoppingList(){
+}
 
-            return Ok(shoppingList);
-        }
-        catch (NumberedException nEx)
-        {
-            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListController), nameof(GetShoppingList));
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                "Due to an internal error, your request could not be processed.");
-        }
-        catch (Exception e)
-        {
-            var numberedException = new NumberedException(e);
-            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ShoppingListController), nameof(GetShoppingList));
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                "Due to an internal error, your request could not be processed.");
-        }
-    }
+    [HttpDelete]
+public async Task<ActionResult>  RemoveItemFromShoppingList(){
+}
 
-    [HttpGet]
-    [Route("User/{userId:guid}/lists")]
-    public async Task<ActionResult> GetUserShoppingLists(Guid userId)
-    {
-        try
-        {
-            var shoppingLists = await _databaseService.SqlConnectionHandler<Guid, List<ShoppingList>>(
-                (input, connection) => _databaseService.GetShoppingListsForUser(input, connection),
-                userId
-            );
+    [HttpDelete]
+public async Task<ActionResult>  RemoveCollaboratorFromList(){
+}
 
-            if (shoppingLists.Count == 0)
-            {
-                return NoContent();
-            }
+    [HttpDelete]
+public async Task<ActionResult>  LeaveListAsCollaborator(){
+}
 
-            return Ok(shoppingLists);
-        }
-        catch (NumberedException nEx)
-        {
-            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListController), nameof(GetUserShoppingLists));
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                "Due to an internal error, your request could not be processed.");
-        }
-        catch (Exception e)
-        {
-            var numberedException = new NumberedException(e);
-            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ShoppingListController), nameof(GetUserShoppingLists));
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                "Due to an internal error, your request could not be processed.");
-        }
-    }
 
-    [HttpGet]
-    [Route("ShoppingList/{listId:guid}/items")]
-    public async Task<ActionResult> GetShoppingListItems(Guid listId)
-    {
-        try
-        {
-            var items = await _databaseService.SqlConnectionHandler<Guid, List<Item>>(
-                (input, connection) => _databaseService.GetItemsForShoppingList(input, connection),
-                listId
-            );
-
-            if (items.Count == 0)
-            {
-                return NoContent();
-            }
-
-            return Ok(items);
-        }
-        catch (NumberedException nEx)
-        {
-            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListController), nameof(GetShoppingListItems));
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                "Due to an internal error, your request could not be processed.");
-        }
-        catch (Exception e)
-        {
-            var numberedException = new NumberedException(e);
-            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ShoppingListController), nameof(GetShoppingListItems));
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                "Due to an internal error, your request could not be processed.");
-        }
-    }
 
     // PATCH-Methoden
-    [HttpPatch]
     [Route("ShoppingList/{listId:guid}")]
     public async Task<ActionResult> UpdateShoppingList(Guid listId, [FromBody] Model.Patch.ShoppingListPatch listPatch)
     {

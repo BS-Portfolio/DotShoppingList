@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Newtonsoft.Json;
+using ShoppingListApi.Enums;
 using ShoppingListApi.Model.ReturnTypes;
 
 namespace ShoppingListApi.Configs;
@@ -15,12 +16,12 @@ public class HelperMethods
         return BitConverter.ToString(randomBytes).Replace("-", "");
     }
 
-    internal static async Task HandleAuthenticationResponse(int httpResponseCode, int authenticationCode, string message, HttpContext context)
+    internal static async Task HandleAuthenticationResponse(int httpResponseCode, AuthorizationErrorEnum authEnum, HttpContext context)
     {
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = httpResponseCode;
         string jsonResponse =
-            JsonConvert.SerializeObject(new AuthenticationErrorReturn(authenticationCode, message));
+            JsonConvert.SerializeObject(new AuthenticationErrorResponse(authEnum));
         byte[] responseBytes = Encoding.UTF8.GetBytes(jsonResponse);
 
         await context.Response.Body.WriteAsync(responseBytes);

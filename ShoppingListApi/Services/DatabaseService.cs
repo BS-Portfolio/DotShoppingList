@@ -1050,13 +1050,15 @@ public class DatabaseService
 
         try
         {
-            var alreadyExists = await CheckShoppingListExistence(new ShoppingListExistenceCheckData(shoppingListAdditionData.UserId, shoppingListAdditionData.ShoppingListName), sqlConnection);
+            var alreadyExists = await CheckShoppingListExistence(
+                new ShoppingListExistenceCheckData(shoppingListAdditionData.UserId,
+                    shoppingListAdditionData.ShoppingListName), sqlConnection);
 
             if (alreadyExists)
             {
                 return new ShoppingListAdditionResult(!success, null, false, null, true);
             }
-            
+
             var shoppingListCount = await GetShoppingListCountForUser(shoppingListAdditionData.UserId, sqlConnection);
 
             if (shoppingListCount >= 5)
@@ -1141,6 +1143,90 @@ public class DatabaseService
         }
     }
 
+    public async Task<UpdateResult> HandleShoppingListNameUpdate(
+        ModificationData<(Guid userId, Guid shoppingListId), ShoppingListPatch> modificationData,
+        SqlConnection sqlConnection)
+    {
+        const bool success = true;
+        const bool accessGranted = true;
+        
+        try
+        {
+            var userRole = await CheckUsersRoleInList(
+                new CheckUsersRoleData(modificationData.Identifier.userId, modificationData.Identifier.shoppingListId),
+                sqlConnection);
+
+            if (userRole is null || userRole != UserRoleEnum.ListAdmin)
+            {
+                return new UpdateResult(!success, !accessGranted);
+            }
+
+            var updateSuccess = await ModifyShoppingListName(
+                new ModificationData<Guid, ShoppingListPatch>(modificationData.Identifier.shoppingListId, modificationData.Payload),
+                sqlConnection);
+
+            if (updateSuccess is false)
+            {
+                return new UpdateResult(!success, accessGranted);
+            }
+
+            return new UpdateResult(success, accessGranted);
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(HandleShoppingListNameUpdate));
+            throw numberedException;
+        }
+    }
+    
+    public async Task<UpdateResult> HandleShoppingListItemUpdate(
+        ModificationData<(Guid userId, Guid shoppingListId, Guid itemId), ItemPatch> modificationData,
+        SqlConnection sqlConnection)
+    {
+        const bool success = true;
+        const bool accessGranted = true;
+        
+        try
+        {
+            var userRole = await CheckUsersRoleInList(
+                new CheckUsersRoleData(modificationData.Identifier.userId, modificationData.Identifier.shoppingListId),
+                sqlConnection);
+
+            if (userRole is null)
+            {
+                return new UpdateResult(!success, !accessGranted);
+            }
+
+            var updateSuccess = await ModifyItem(
+                new ModificationData<Guid, ItemPatch>(modificationData.Identifier.itemId, modificationData.Payload),
+                sqlConnection);
+
+            if (updateSuccess is false)
+            {
+                return new UpdateResult(!success, accessGranted);
+            }
+
+            return new UpdateResult(success, accessGranted);
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(HandleShoppingListItemUpdate));
+            throw numberedException;
+        }
+    }
+    
     #endregion
 
     #region Data-Writer
@@ -1404,7 +1490,7 @@ public class DatabaseService
 
     #region Data-Modifier
 
-    public async Task<bool> ModifyUserDetails(ModificationData<ListUserPatch> userDetailsModificationData,
+    public async Task<bool> ModifyUserDetails(ModificationData<Guid, ListUserPatch> userDetailsModificationData,
         SqlConnection sqlConnection)
     {
         const bool success = true;
@@ -1426,12 +1512,6 @@ public class DatabaseService
         {
             updateParts.Add("LastName = @LastName");
             parameters.Add(new SqlParameter("@LastName", userPatch.NewLastName));
-        }
-
-        if (!string.IsNullOrEmpty(userPatch.NewEmailAddress))
-        {
-            updateParts.Add("EmailAddress = @EmailAddress");
-            parameters.Add(new SqlParameter("@EmailAddress", userPatch.NewEmailAddress));
         }
 
         if (updateParts.Count == 0)
@@ -1473,7 +1553,8 @@ public class DatabaseService
         }
     }
 
-    public async Task<bool> ModifyShoppingListName(ModificationData<ShoppingListPatch> shoppingListModificationData,
+    public async Task<bool> ModifyShoppingListName(
+        ModificationData<Guid, ShoppingListPatch> shoppingListModificationData,
         SqlConnection sqlConnection)
     {
         var listId = shoppingListModificationData.Identifier;
@@ -1522,7 +1603,7 @@ public class DatabaseService
         }
     }
 
-    public async Task<bool> UpdateItem(ModificationData<ItemPatch> itemModificationData, SqlConnection sqlConnection)
+    public async Task<bool> ModifyItem(ModificationData<Guid, ItemPatch> itemModificationData, SqlConnection sqlConnection)
     {
         Guid itemId = itemModificationData.Identifier;
         ItemPatch itemPatch = itemModificationData.Payload;
@@ -1580,12 +1661,12 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(UpdateItem));
+                nameof(DatabaseService), nameof(ModifyItem));
             throw numberedException;
         }
     }
 
-    public async Task<bool> UpdateUsersApiKey(Guid userId, SqlConnection sqlConnectin)
+    public async Task<bool> UpdateUsersApiKey(Guid userId, SqlConnection sqlConnection)
     {
         const bool success = true;
 
@@ -1593,7 +1674,7 @@ public class DatabaseService
                              "SET ApiKey = @NewApiKey, ApiKeyExpirationDateTime = @NewExpirationDateTime " +
                              "WHERE UserID = @UserID";
 
-        await using SqlCommand updateCommand = new(updateQuery, sqlConnectin);
+        await using SqlCommand updateCommand = new(updateQuery, sqlConnection);
 
         string newApiKey = HM.GenerateApiKey();
 
@@ -1605,9 +1686,9 @@ public class DatabaseService
 
         try
         {
-            if (sqlConnectin.State != ConnectionState.Open)
+            if (sqlConnection.State != ConnectionState.Open)
             {
-                await sqlConnectin.OpenAsync();
+                await sqlConnection.OpenAsync();
             }
 
             int checkResult = await updateCommand.ExecuteNonQueryAsync();

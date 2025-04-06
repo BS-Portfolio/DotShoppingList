@@ -6,12 +6,9 @@ public class ListUserPatch
 {
     public string? NewFirstName { get; set; }
     public string? NewLastName { get; set; }
-    public string? NewEmailAddress { get; set; }
-
-    public ListUserPatch(string? newFirstName, string? newLastName, string? newEmailAddress)
+    public ListUserPatch(string? newFirstName, string? newLastName)
     {
         NewFirstName = newFirstName;
         NewLastName = newLastName;
-        NewEmailAddress = newEmailAddress;
     }
 }
