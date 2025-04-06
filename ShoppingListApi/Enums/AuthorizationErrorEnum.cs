@@ -21,5 +21,7 @@ public enum AuthorizationErrorEnum
     [Description("User Credentials are provided in a wrong format!")]
     WrongFormat = 7,
     [Description("You are not part of this list!")]
-    ListAccessNotGranted = 8
+    ListAccessNotGranted = 8,
+    [Description("Your are not allowed to execute the requested action!")]
+    ActionNotAllowed = 9
 }

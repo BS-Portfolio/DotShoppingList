@@ -86,7 +86,7 @@ public class MyAuthenticationMiddleware
         {
             Guid userId = Guid.Parse(userIdSv.ToString());
             string userApiKey = userApiKeySv.ToString();
-            var result = await _databaseService.Authenticate(userId, userApiKey);
+            var result = await _databaseService.AuthenticateAsync(userId, userApiKey);
 
             if (result.IsAuthenticated)
             {
