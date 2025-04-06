@@ -31,7 +31,7 @@ public class ListUserPostExtended
         FirstName = listUserPost.FirstName;
         LastName = listUserPost.LastName;
 
-        byte[] decodedEmail64StringBytes = Convert.FromBase64String(listUserPost.EmailAddress);
+        byte[] decodedEmail64StringBytes = Convert.FromBase64String(listUserPost.EmailAddress64);
         string decodedEmailAddress = Encoding.UTF8.GetString(decodedEmail64StringBytes);
         EmailAddress = decodedEmailAddress;
 

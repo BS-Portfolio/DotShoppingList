@@ -285,17 +285,18 @@ public class ShoppingListApiController : ControllerBase
     {
         try
         {
+            var userPostExtended = new ListUserPostExtended(userPost);
+
             var emailAlreadyExists = await _databaseService.SqlConnectionHandlerAsync<string, bool>(
                 async (emailAddress, sqlConnection) =>
-                    await _databaseService.CheckUserExistenceAsync(emailAddress, sqlConnection), userPost.EmailAddress);
+                    await _databaseService.CheckUserExistenceAsync(emailAddress, sqlConnection),
+                userPostExtended.EmailAddress);
 
             if (emailAlreadyExists)
             {
                 return Conflict(
                     "A user with the same email address already exists in the database. Use a different address to register yourself!");
             }
-
-            var userPostExtended = new ListUserPostExtended(userPost);
 
             var (success, addedUserId) =
                 await _databaseService.SqlConnectionHandlerAsync<ListUserPostExtended, (bool, Guid?)>(

@@ -273,7 +273,7 @@ public class DatabaseService
 
             await using SqlDataReader sqlReader = await checkCommand.ExecuteReaderAsync();
 
-            if (!sqlReader.HasRows)
+            if (sqlReader.HasRows is false)
             {
                 return null;
             }
@@ -1442,6 +1442,14 @@ public class DatabaseService
                 return new CollaboratorAddRemoveResult(false, true, true, false);
             }
 
+            var addResult = await AssignUserToShoppingListAsync(new UserListAssignmentData((Guid)collaboratorId,
+                data.ShoppingListId, UserRoleEnum.Collaborator), sqlConnection);
+
+            if (addResult is false)
+            {
+                return new CollaboratorAddRemoveResult(false, true, true, true);
+            }
+
             return new CollaboratorAddRemoveResult(true, true, true, true);
         }
         catch (NumberedException)
@@ -2127,7 +2135,8 @@ public class DatabaseService
 
         sqlCommand.CommandType = CommandType.StoredProcedure;
         sqlCommand.CommandText = "uspRemoveShoppingList";
-
+        sqlCommand.Connection = sqlConnection;
+        
         SqlParameter successParam = new SqlParameter("@success", SqlDbType.Bit)
             { Direction = ParameterDirection.Output };
 
