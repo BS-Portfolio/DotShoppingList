@@ -1,0 +1,43 @@
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(), nameof());
+            throw numberedException;
+        }
+
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListApiController), nameof());
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListApiController), nameof());
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+
+user 1:
+
+username: bWlsYWRAZGcuY29t
+
+pass: dGVzdDEyMzQ=
+
+id: bc35a3ba-92ff-4ad5-b61e-555628508ebe
+
+user 2: 
+
+username: dGVzdEB0ZXN0LnRlc3Q=
+
+pass: dGVzdDEyMzQ=
+
+id: 63864144-c7e2-40fa-acb9-ee6bf22f0948
