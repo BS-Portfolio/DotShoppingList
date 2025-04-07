@@ -37,3 +37,8 @@ button {
   text-decoration: none;
   font-size: 14px;
 }
+
+.auth-link:hover {
+  background: none;
+  color: var(--color-primary);
+}
