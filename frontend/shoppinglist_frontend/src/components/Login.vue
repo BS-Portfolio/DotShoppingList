@@ -30,7 +30,7 @@ const login = () => {
       <input v-model="username" placeholder="Username" />
       <input v-model="password" type="password" placeholder="Password" @keyup.enter="login" />
       <button @click="login">Login</button>
-      <RouterLink to="/registration" class="auth-link">Noch keinen Account? Registrieren</RouterLink>
+      <RouterLink to="/registration" class="auth-link">Don't have an account? Register now.</RouterLink>
     </div>
   </div>
 </template>

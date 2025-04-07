@@ -55,7 +55,7 @@ const register = () => {
       <input v-model="username" placeholder="Username" />
       <input v-model="password" type="password" placeholder="Password" @keyup.enter="register" />
       <button @click="register">Registrieren</button>
-      <RouterLink to="/login" class="auth-link">Bereits einen Account? Login</RouterLink>
+      <RouterLink to="/login" class="auth-link">Already have an account? Login now.</RouterLink>
     </div>
   </div>
 </template>
