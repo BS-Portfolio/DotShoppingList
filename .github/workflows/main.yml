@@ -4,34 +4,37 @@ on:
     branches: [ main, develop_backend ]
   pull_request:
     branches: [ main, develop_backend ]
-
 jobs:
-  build-and-test:
+  build-test-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
+      
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-
+      
       - name: Restore dependencies
         run: dotnet restore
-
+        working-directory: ./ShoppingListApi
+      
       - name: Build solution
         run: dotnet build --no-restore
-
+        working-directory: ./ShoppingListApi
+      
+      - name: Create test results directory
+        run: mkdir -p ./ShoppingListApi/test-results
+      
       - name: Run tests and log output
         run: |
-          mkdir -p test-results
-          dotnet test --no-build --logger "trx;LogFileName=test-results.trx" > test-results/test-results.log
-          cat test-results/test-results.log
-
+          dotnet test --no-build --logger "trx;LogFileName=test-results.trx" > ./test-results/test-results.log
+          cat ./test-results/test-results.log
+        working-directory: ./ShoppingListApi
+      
       - name: Upload test result log
         uses: actions/upload-artifact@v4
         with:
           name: dotnet-test-log
-          path: test-results/test-results.log
+          path: ./ShoppingListApi/test-results/test-results.log
