@@ -21,21 +21,21 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore
-        working-directory: LF8/ShoppingListApi
+        working-directory: ./ShoppingListApi
 
       - name: Build solution
         run: dotnet build --no-restore
-        working-directory: LF8/ShoppingListApi
+        working-directory: ./ShoppingListApi
         
       - name: Run tests and log output
         run: |
           mkdir -p LF8/ShoppingListApi/test-results
           dotnet test --no-build --logger "trx;LogFileName=LF8/ShoppingListApi/test-results.trx" > LF8/ShoppingListApi/test-results/test-results.log
           cat LF8/ShoppingListApi/test-results/test-results.log
-        working-directory: LF8/ShoppingListApi
+        working-directory: ./ShoppingListApi
 
       - name: Upload test result log
         uses: actions/upload-artifact@v4
         with:
           name: dotnet-test-log
-          path: LF8/ShoppingListApi/test-results/test-results.log 
+          path: ./ShoppingListApi/test-results/test-results.log 
