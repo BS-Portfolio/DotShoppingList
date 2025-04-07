@@ -1,4 +1,5 @@
 name: main.yml
+
 on:
   push:
     branches: [ main, develop_backend ]
@@ -6,7 +7,7 @@ on:
     branches: [ main, develop_backend ]
 
 jobs:
-  build-and-test:
+  build-test-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,18 +21,21 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore
+        working-directory: LF8/ShoppingListApi
 
       - name: Build solution
         run: dotnet build --no-restore
-
+        working-directory: LF8/ShoppingListApi
+        
       - name: Run tests and log output
         run: |
-          mkdir -p test-results
-          dotnet test --no-build --logger "trx;LogFileName=test-results.trx" > test-results/test-results.log
-          cat test-results/test-results.log
+          mkdir -p LF8/ShoppingListApi/test-results
+          dotnet test --no-build --logger "trx;LogFileName=LF8/ShoppingListApi/test-results.trx" > LF8/ShoppingListApi/test-results/test-results.log
+          cat LF8/ShoppingListApi/test-results/test-results.log
+        working-directory: LF8/ShoppingListApi
 
       - name: Upload test result log
         uses: actions/upload-artifact@v4
         with:
           name: dotnet-test-log
-          path: test-results/test-results.log
+          path: LF8/ShoppingListApi/test-results/test-results.log 
