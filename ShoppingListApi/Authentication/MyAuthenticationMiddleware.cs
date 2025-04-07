@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using ShoppingListApi.Attributes;
 using ShoppingListApi.Configs;
 using ShoppingListApi.Controllers;
+using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.ReturnTypes;
 using ShoppingListApi.Services;
@@ -49,8 +50,7 @@ public class MyAuthenticationMiddleware
         {
             if (!context.Request.Headers.TryGetValue("X-API-KEY", out var extractedMasterKey))
             {
-                context.Response.StatusCode = 500;
-                await context.Response.WriteAsync("Service not available!");
+                await HM.HandleAuthenticationResponse(401, AuthorizationErrorEnum.ApiKeyIsMissing, context);
                 return;
             }
 
@@ -58,13 +58,13 @@ public class MyAuthenticationMiddleware
 
             if (storedKey is null)
             {
-                await HM.HandleAuthenticationResponse(500, 5, "Service Not Available!", context);
+                await HM.HandleAuthenticationResponse(500, AuthorizationErrorEnum.ServiceNotAvailable, context);
                 return;
             }
 
             if (!storedKey.Equals(extractedMasterKey))
             {
-                await HM.HandleAuthenticationResponse(401, 1, "Wrong API key!", context);
+                await HM.HandleAuthenticationResponse(401, AuthorizationErrorEnum.WrongApiKey, context);
                 return;
             }
 
@@ -78,7 +78,7 @@ public class MyAuthenticationMiddleware
 
         if (userIdExists is false || userKeyExists is false)
         {
-            await HM.HandleAuthenticationResponse(401, 6, "User Credentials Missing!", context);
+            await HM.HandleAuthenticationResponse(401, AuthorizationErrorEnum.UserCredentialsMissing, context);
             return;
         }
 
@@ -86,7 +86,7 @@ public class MyAuthenticationMiddleware
         {
             Guid userId = Guid.Parse(userIdSv.ToString());
             string userApiKey = userApiKeySv.ToString();
-            var result = await _databaseService.Authenticate(userId, userApiKey);
+            var result = await _databaseService.AuthenticateAsync(userId, userApiKey);
 
             if (result.IsAuthenticated)
             {
@@ -96,19 +96,19 @@ public class MyAuthenticationMiddleware
 
             if (result.AccountExists is false)
             {
-                await HM.HandleAuthenticationResponse(401, 2, "User Account does not exist!", context);
+                await HM.HandleAuthenticationResponse(401, AuthorizationErrorEnum.UserAccountNotFound, context);
                 return;
             }
 
             if (result.ApiKeyWasEqual is false)
             {
-                await HM.HandleAuthenticationResponse(401, 3, "User API Key is not correct", context);
+                await HM.HandleAuthenticationResponse(401, AuthorizationErrorEnum.InvalidUserApiKey, context);
                 return;
             }
 
             if (result.ApiKeyIsValid is false)
             {
-                await HM.HandleAuthenticationResponse(401, 4, "User API Key is expired! Login in again!", context);
+                await HM.HandleAuthenticationResponse(401, AuthorizationErrorEnum.ExpiredApiKey, context);
                 return;
             }
         }
@@ -116,7 +116,7 @@ public class MyAuthenticationMiddleware
         {
             _logger.LogWithLevel(LogLevel.Error, fEx, "0", fEx.Message,
                 nameof(MyAuthenticationMiddleware), nameof(InvokeAsync));
-            await HM.HandleAuthenticationResponse(40, 7, "User Credentials are provided in a wrong format!", context);
+            await HM.HandleAuthenticationResponse(40, AuthorizationErrorEnum.WrongFormat, context);
         }
         catch (NumberedException nEx)
         {

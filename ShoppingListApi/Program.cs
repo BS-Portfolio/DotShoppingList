@@ -13,11 +13,11 @@ builder.Logging.AddNLog();
 // Add services to the container.
 
 builder.Services.AddControllers().AddNewtonsoftJson(options =>
-    {
-        // Optional: Customize settings for Newtonsoft.Json
-        options.SerializerSettings.Formatting = Formatting.Indented; // Pretty-print JSON
-        options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore; // Ignore null values in JSON output
-    });
+{
+    // Optional: Customize settings for Newtonsoft.Json
+    options.SerializerSettings.Formatting = Formatting.Indented; // Pretty-print JSON
+    options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore; // Ignore null values in JSON output
+});
 ;
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -25,7 +25,7 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Shopping List API", Version = "v1" });
 
-    
+
     // 🔐 API Key Authentication (Only API Key)
     options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
     {
@@ -40,7 +40,7 @@ builder.Services.AddSwaggerGen(options =>
     options.AddSecurityDefinition("UserKeyAndUserId", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
-        Name = "USER-KEY",  // 🔹 User API Key header
+        Name = "USER-KEY", // 🔹 User API Key header
         Type = SecuritySchemeType.ApiKey,
         Description = "Enter your User API Key (Requires USER-ID as well)",
         Scheme = "UserKeyAndUserIdScheme"
@@ -86,6 +86,19 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddTransient<ConnectionStringService>();
 builder.Services.AddTransient<DatabaseService>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins", policy =>
+    {
+        policy.AllowAnyOrigin() // allow specific origin
+            .WithMethods("GET");
+        policy.AllowAnyOrigin()
+            .WithMethods("POST").WithMethods("PATCH").WithMethods("DELETE").WithHeaders("X-Frontend")
+            .WithHeaders("accept")
+            .WithHeaders("content-type");
+    });
+});
 
 var app = builder.Build();
 
