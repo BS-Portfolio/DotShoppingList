@@ -1,9 +1,9 @@
 ﻿name: testing.yml
 on:
   push:
-    branches: [ main, develop_backend ,feature/* , bugfix/* ]
+    branches: [ main, develop_backend ]
   pull_request:
-    branches: [ main, develop_backend ,feature/* , bugfix/* ]
+    branches: [ main, develop_backend ]
 
 jobs:
   build-and-test:
