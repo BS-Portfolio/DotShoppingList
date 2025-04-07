@@ -336,7 +336,7 @@ public class ShoppingListApiController : ControllerBase
     [Route("User/Login")]
     [PublicEndpoint]
     [ProducesResponseType<ListUser>(StatusCodes.Status200OK)]
-    [ProducesResponseType<string>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<AuthenticationErrorResponse>(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult> UserLogin([FromBody] LoginData loginData)
     {
@@ -349,7 +349,7 @@ public class ShoppingListApiController : ControllerBase
 
             if (user is null)
             {
-                return Unauthorized("Your credentials are not valid!");
+                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.LoginFailure));
             }
 
             return Ok(user);
