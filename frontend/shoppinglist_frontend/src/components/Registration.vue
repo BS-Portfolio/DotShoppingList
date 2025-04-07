@@ -6,6 +6,8 @@ import { useRouter } from 'vue-router';
 const authStore = useAuthStore();
 const router = useRouter();
 
+const firstname = ref('');
+const lastname = ref('');
 const username = ref('');
 const email = ref('');
 const password = ref('');
@@ -51,6 +53,8 @@ const register = () => {
   <div class="login">
     <div class="card">
       <h1 class="caveat-brush-regular">Registrieren</h1>
+      <input v-model="firstname" placeholder="First name" />
+      <input v-model="lastname" placeholder="Last name" />
       <input v-model="email" type="email" placeholder="Email" />
       <input v-model="username" placeholder="Username" />
       <input v-model="password" type="password" placeholder="Password" @keyup.enter="register" />
