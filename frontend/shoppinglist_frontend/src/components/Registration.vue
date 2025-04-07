@@ -53,12 +53,14 @@ const register = () => {
   <div class="login">
     <div class="card">
       <h1 class="caveat-brush-regular">Registrieren</h1>
-      <input v-model="firstname" placeholder="First name" />
-      <input v-model="lastname" placeholder="Last name" />
-      <input v-model="email" type="email" placeholder="Email" />
-      <input v-model="username" placeholder="Username" />
-      <input v-model="password" type="password" placeholder="Password" @keyup.enter="register" />
-      <button @click="register">Registrieren</button>
+      <form @submit.prevent="register">
+        <input v-model="firstname" placeholder="First name" />
+        <input v-model="lastname" placeholder="Last name" />
+        <input v-model="email" type="email" placeholder="Email" />
+        <input v-model="username" placeholder="Username" />
+        <input v-model="password" type="password" placeholder="Password" />
+        <button type="submit">Registrieren</button>
+      </form>
       <RouterLink to="/login" class="auth-link">Already have an account? Login now.</RouterLink>
     </div>
   </div>
