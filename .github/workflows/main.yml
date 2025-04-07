@@ -1,0 +1,44 @@
+name: main.yml
+on:
+  push:
+    branches: [ main, develop_backend ]
+  pull_request:
+    branches: [ main, develop_backend ]
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: ./ShoppingListApi
+      
+      - name: Build solution
+        run: dotnet build --no-restore
+        working-directory: ./ShoppingListApi
+      
+      - name: Create test results directory
+        run: mkdir -p test-results
+        working-directory: ./ShoppingListApi
+      
+      - name: Run tests and log output
+        run: |
+          # Continue on error flag hinzufügen
+          dotnet test --no-build --logger "trx;LogFileName=./test-results/test-results.trx" --no-restore --blame-hang-timeout 60s > ./test-results/test-results.log || true
+          echo "Test execution completed. Results are saved regardless of test failures."
+          cat ./test-results/test-results.log
+        working-directory: ./ShoppingListApi
+      
+      - name: Upload test result log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dotnet-test-log
+          path: ./ShoppingListApi/test-results/
