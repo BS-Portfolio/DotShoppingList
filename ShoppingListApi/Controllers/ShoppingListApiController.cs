@@ -353,6 +353,12 @@ public class ShoppingListApiController : ControllerBase
 
             return Ok(user);
         }
+        catch (FormatException fEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, fEx, "0", fEx.Message,
+                nameof(ShoppingListApiController), nameof(UserLogin));
+            return BadRequest("Your input email address and password were delivered in wrong formatting!");
+        }
         catch (NoContentFoundException<string> ncEx)
         {
             _logger.LogWithLevel(LogLevel.Error, ncEx, ncEx.ErrorNumber, ncEx.Message,

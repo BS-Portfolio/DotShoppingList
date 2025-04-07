@@ -21,7 +21,7 @@ public class UnitTests
             .AddJsonFile("appsettings.json")
             .Build();
             
-        var connectionString = configuration.GetConnectionString("Azure");
+        var connectionString = configuration.GetConnectionString("Milad");
         var canConnect = false;
         
         try

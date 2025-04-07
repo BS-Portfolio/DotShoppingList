@@ -13,7 +13,7 @@ public class ConnectionStringService
 
     public string GetConnectionString()
     {
-        var user = "Azure";
+        var user = "Milad";
         
         try
         {
