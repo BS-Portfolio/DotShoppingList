@@ -338,13 +338,14 @@ public class ShoppingListApiController : ControllerBase
     [ProducesResponseType<ListUser>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult> UserLogin([FromHeader] string emailAddress, [FromHeader] string password)
+    public async Task<ActionResult> UserLogin([FromBody] LoginData loginData)
     {
+
         try
         {
             var user = await _databaseService.SqlConnectionHandlerAsync<LoginData, ListUser?>(
-                async (loginData, sqlConnection) => await _databaseService.HandleLoginAsync(loginData, sqlConnection),
-                new LoginData(emailAddress, password));
+                async (input, sqlConnection) => await _databaseService.HandleLoginAsync(input, sqlConnection),
+                loginData);
 
             if (user is null)
             {

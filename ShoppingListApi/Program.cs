@@ -95,13 +95,14 @@ builder.Services.AddCors(options =>
         policy.AllowAnyOrigin() // allow specific origin
             .WithMethods("GET");
         policy.AllowAnyOrigin()
-            .WithMethods("POST").WithMethods("PATCH").WithMethods("DELETE").WithHeaders("X-Frontend")
-            .WithHeaders("accept")
-            .WithHeaders("content-type");
+            .WithMethods("POST", "PATCH", "DELETE")
+            .WithHeaders("X-Frontend", "accept", "content-type");
     });
 });
 
 var app = builder.Build();
+
+app.UseCors("AllowSpecificOrigins");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
