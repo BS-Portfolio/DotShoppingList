@@ -30,50 +30,11 @@ const login = () => {
       <input v-model="username" placeholder="Username" />
       <input v-model="password" type="password" placeholder="Password" @keyup.enter="login" />
       <button @click="login">Login</button>
-      <RouterLink to="/registration" class="registration-link">Noch keinen Account? Registrieren</RouterLink>
+      <RouterLink to="/registration" class="link">Noch keinen Account? Registrieren</RouterLink>
     </div>
   </div>
 </template>
 
 <style scoped>
-.login {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  height: 100vh;
-  margin-top: 2rem;
-}
-
-.card {
-  padding: 2rem;
-  background-color: #fff8dc;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border: 2px solid var(--color-primary);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 400px;
-}
-
-input {
-  width: 30%;
-  height: 3vh;
-  font-size: 18px;
-  margin-bottom: 0.5rem;
-}
-
-button {
-  padding: 10px 20px;
-  font-size: 16px;
-  margin-top: 0.5rem;
-}
-
-.registration-link {
-  margin-top: 1rem;
-  text-decoration: none;
-  font-size: 14px;
-}
-
+@import './../assets/auth.css';
 </style>
