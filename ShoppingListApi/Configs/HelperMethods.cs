@@ -16,7 +16,7 @@ public class HelperMethods
         return BitConverter.ToString(randomBytes).Replace("-", "");
     }
 
-    internal static async Task HandleAuthenticationResponse(int httpResponseCode, AuthorizationErrorEnum authEnum, HttpContext context)
+    internal static async Task HandleAuthenticationResponseAsync(int httpResponseCode, AuthorizationErrorEnum authEnum, HttpContext context)
     {
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = httpResponseCode;
