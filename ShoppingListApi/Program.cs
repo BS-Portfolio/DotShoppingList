@@ -86,6 +86,7 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddTransient<ConnectionStringService>();
 builder.Services.AddTransient<DatabaseService>();
+builder.Services.AddTransient<MyAuthenticationService>();
 
 builder.Services.AddCors(options =>
 {
