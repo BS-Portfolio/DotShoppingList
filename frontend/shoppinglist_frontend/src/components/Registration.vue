@@ -18,7 +18,22 @@ const handleLoginSuccess = () => {
   router.push('/');
 };
 
+const validateEmail = (email: string): boolean => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+};
+
 const register = () => {
+  if (!username.value || !email.value || !password.value) {
+    alert('Bitte füllen Sie alle Felder aus.');
+    return;
+  }
+
+  if (!validateEmail(email.value)) {
+    alert('Bitte geben Sie eine gültige E-Mail-Adresse ein.');
+    return;
+  }
+
   const encodedUsername = btoa(username.value);
   const encodedEmail = btoa(email.value);
   const encodedPassword = btoa(password.value);
@@ -30,7 +45,6 @@ const register = () => {
   authStore.register(username.value, email.value, password.value);
   if (authStore.isAuthenticated) handleLoginSuccess();
 };
-
 </script>
 
 <template>
