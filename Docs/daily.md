@@ -1,4 +1,15 @@
-# Freitag, 04.04.25'
+# Montag, 07.04.25
+
+## Tasks:
+- API frontend
+- Klassendiagramm
+- Pipeline
+- Unit Tests
+
+## Blocker:
+- 
+
+# Freitag, 04.04.25
 
 ## Tasks:
 - Dashboard
