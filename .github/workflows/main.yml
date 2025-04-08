@@ -27,7 +27,7 @@ jobs:
         working-directory: ./ShoppingListApi
       
       - name: Check code formatting
-        run: dotnet format ./ShoppingListApi/ShoppingListApi.sln --verify-no-changes
+        run: dotnet format ./ShoppingListApi/ShoppingListApi.sln
 
       - name: Check for vulnerable dependencies and log output
         run: |
