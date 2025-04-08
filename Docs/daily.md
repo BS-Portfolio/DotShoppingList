@@ -1,3 +1,15 @@
+# Dienstag, 08.04.25
+
+## Tasks:
+- Shoppinglist Funktionalität
+- Unit Tests
+- Anpassung Sequenzdiagramm
+- Anpassung Klassendiagramm
+- API Azure deployen
+- Pipelines
+
+## Blocker:
+
 # Montag, 07.04.25
 
 ## Tasks:
