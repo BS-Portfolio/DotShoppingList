@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.OpenApi.Models;
 using NLog;
 using NLog.Extensions.Logging;
@@ -24,7 +25,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Shopping List API", Version = "v1" });
-
 
     // 🔐 API Key Authentication (Only API Key)
     options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
@@ -53,7 +53,8 @@ builder.Services.AddSwaggerGen(options =>
         Type = SecuritySchemeType.ApiKey,
         Description = "Enter your User ID",
         Scheme = "UserIdScheme"
-    });
+    }
+    );
 
     // 🔐 Apply Security Policies
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -82,6 +83,11 @@ builder.Services.AddSwaggerGen(options =>
             new string[] { }
         }
     });
+    
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath);
+    
 });
 
 builder.Services.AddTransient<ConnectionStringService>();

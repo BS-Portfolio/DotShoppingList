@@ -162,32 +162,41 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// user endpoint for retrieving a single shopping list by id 
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="shoppingListId"></param>
+    /// <param name="requestingUserId"></param>
+    /// <returns></returns>
     [HttpGet]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<AuthenticationErrorResponse>(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType<List<ShoppingList>>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}")]
-    public async Task<ActionResult> GetShoppingListForUser([FromRoute] Guid userId, [FromRoute] Guid shoppingListId, [FromHeader(Name = "USER-ID")] Guid? requestingUserId )
+    public async Task<ActionResult> GetShoppingListForUser([FromRoute] Guid userId, [FromRoute] Guid shoppingListId,
+        [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
     {
         if (requestingUserId is null)
         {
             return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
         }
-        
+
         try
         {
             var result = await _databaseService
                 .SqlConnectionHandlerAsync<ShoppingListIdentificationData, RecordFetchResult<ShoppingList?>>(
                     async (input, connection) =>
                         await _databaseService.HandleShoppingListFetchForUserAsync(input, connection),
-                new ShoppingListIdentificationData((Guid)requestingUserId, shoppingListId));
+                    new ShoppingListIdentificationData((Guid)requestingUserId, shoppingListId));
 
             if (result.Record is null)
             {
                 if (result.RecordExists is false)
                 {
-                    return NotFound("A shopping list for the provided list owner and shopping list id's does not exists!");
+                    return NotFound(
+                        "A shopping list for the provided list owner and shopping list id's does not exists!");
                 }
 
                 if (result.AccessGranted is false)
@@ -216,8 +225,12 @@ public class ShoppingListApiController : ControllerBase
                 "Due to an internal error, your request could not be processed.");
         }
     }
-    
-    
+
+    /// <summary>
+    /// admin endpoint to retrieve a user by their id
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns></returns>
     [HttpGet]
     [AdminEndpoint]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
@@ -257,6 +270,10 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// admin endpoint to retrieve a list the minimal data of all the registered users 
+    /// </summary>
+    /// <returns></returns>
     [HttpGet]
     [AdminEndpoint]
     [ProducesResponseType<List<ListUserMinimal>>(StatusCodes.Status200OK)]
@@ -294,6 +311,11 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// admin endpoint to add new user roles
+    /// </summary>
+    /// <param name="userRolePost"></param>
+    /// <returns></returns>
     [HttpPost]
     [AdminEndpoint]
     [ProducesResponseType<string>(StatusCodes.Status409Conflict)]
@@ -344,6 +366,11 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// public endpoint to register new users
+    /// </summary>
+    /// <param name="userPost"></param>
+    /// <returns></returns>
     [HttpPost]
     [PublicEndpoint]
     [ProducesResponseType<string>(StatusCodes.Status409Conflict)]
@@ -402,6 +429,11 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// public endpoint to log in
+    /// </summary>
+    /// <param name="loginData"></param>
+    /// <returns></returns>
     [HttpPost]
     [Route("User/Login")]
     [PublicEndpoint]
@@ -410,7 +442,6 @@ public class ShoppingListApiController : ControllerBase
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult> UserLogin([FromBody] LoginData loginData)
     {
-
         try
         {
             var user = await _databaseService.SqlConnectionHandlerAsync<LoginData, ListUser?>(
@@ -460,6 +491,12 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// user endpoint to add a shopping list for a user. The max allowed amount of shopping lists for every user as list owner is 5.  
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="shoppingListName"></param>
+    /// <returns></returns>
     [HttpPost]
     [ProducesResponseType<Guid>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
@@ -525,6 +562,13 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// user endpoint to add a new item to a shopping list. The maximum allowed amount of items for any shopping list is 20.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="shoppingListId"></param>
+    /// <param name="itemPost"></param>
+    /// <returns></returns>
     [HttpPost]
     [ProducesResponseType<Guid>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
@@ -575,6 +619,14 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// user endpoint to add collaborators to a shopping list by the list admin.
+    /// </summary>
+    /// <param name="requestingUserId"></param>
+    /// <param name="userId"></param>
+    /// <param name="shoppingListId"></param>
+    /// <param name="collaboratorEmailAddress"></param>
+    /// <returns></returns>
     [HttpPost]
     [ProducesResponseType<Guid>(StatusCodes.Status200OK)]
     [ProducesResponseType<Guid>(StatusCodes.Status404NotFound)]
@@ -637,7 +689,12 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
-
+    /// <summary>
+    /// user endpoint to modify the first and last name.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="listUserPatch"></param>
+    /// <returns></returns>
     [HttpPatch]
     [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<string>(StatusCodes.Status200OK)]
@@ -679,6 +736,13 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// user endpoint to modify the name of the shopping list by list owner.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="shoppingListId"></param>
+    /// <param name="shoppingListPatch"></param>
+    /// <returns></returns>
     [HttpPatch]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<AuthenticationErrorResponse>(StatusCodes.Status401Unauthorized)]
@@ -725,6 +789,14 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// user endpoint to modify the detais of an item in the shopping list.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="shoppingListId"></param>
+    /// <param name="itemId"></param>
+    /// <param name="itemPatch"></param>
+    /// <returns></returns>
     [HttpPatch]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
@@ -777,7 +849,12 @@ public class ShoppingListApiController : ControllerBase
                 "Due to an internal error, your request could not be processed.");
         }
     }
-
+    
+    /// <summary>
+    /// admin endpoint to remove all the data of a user from the database via their email address.
+    /// </summary>
+    /// <param name="emailAddress"></param>
+    /// <returns></returns>
     [HttpDelete]
     [AdminEndpoint]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
@@ -820,6 +897,12 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// user endpoint to remove a shopping list for list owner
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="shoppingListId"></param>
+    /// <returns></returns>
     [HttpDelete]
     [ProducesResponseType<string>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
@@ -868,6 +951,13 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// user endpoint to remove an item from the shopping list.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="shoppingListId"></param>
+    /// <param name="itemId"></param>
+    /// <returns></returns>
     [HttpDelete]
     [ProducesResponseType<string>(StatusCodes.Status200OK)]
     [ProducesResponseType<AuthenticationErrorResponse>(StatusCodes.Status401Unauthorized)]
@@ -911,6 +1001,14 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// user endpoint to remove a collaborator from a shopping list. Either the list owner kicks a collaborator or a collaborator leaves the list.
+    /// </summary>
+    /// <param name="requestingUserId"></param>
+    /// <param name="userId"></param>
+    /// <param name="shoppingListId"></param>
+    /// <param name="collaboratorId"></param>
+    /// <returns></returns>
     [HttpDelete]
     [ProducesResponseType<string>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
