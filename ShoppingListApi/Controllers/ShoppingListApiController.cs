@@ -33,6 +33,10 @@ public class ShoppingListApiController : ControllerBase
         _logger = serviceProvider.GetRequiredService<ILogger<ShoppingListApiController>>();
     }
 
+    /// <summary>
+    /// public endpoint to get all user role id's
+    /// </summary>
+    /// <returns></returns>
     [HttpGet]
     [PublicEndpoint]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
@@ -71,6 +75,11 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// admin endpoint to get user details by email address for an api admin
+    /// </summary>
+    /// <param name="emailAddress"></param>
+    /// <returns></returns>
     [HttpGet]
     [AdminEndpoint]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
@@ -110,6 +119,11 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// user endpoint to get all the shopping lists for a user
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns></returns>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<List<ShoppingList>>(StatusCodes.Status200OK)]
@@ -148,6 +162,62 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
+    [HttpGet]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<AuthenticationErrorResponse>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<List<ShoppingList>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
+    [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}")]
+    public async Task<ActionResult> GetShoppingListForUser([FromRoute] Guid userId, [FromRoute] Guid shoppingListId, [FromHeader(Name = "USER-ID")] Guid? requestingUserId )
+    {
+        if (requestingUserId is null)
+        {
+            return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
+        }
+        
+        try
+        {
+            var result = await _databaseService
+                .SqlConnectionHandlerAsync<ShoppingListIdentificationData, RecordFetchResult<ShoppingList?>>(
+                    async (input, connection) =>
+                        await _databaseService.HandleShoppingListFetchForUserAsync(input, connection),
+                new ShoppingListIdentificationData((Guid)requestingUserId, shoppingListId));
+
+            if (result.Record is null)
+            {
+                if (result.RecordExists is false)
+                {
+                    return NotFound("A shopping list for the provided list owner and shopping list id's does not exists!");
+                }
+
+                if (result.AccessGranted is false)
+                {
+                    return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
+                }
+
+                return Problem("Due to an internal error, your request could not be processed.");
+            }
+
+            return Ok(result.Record);
+        }
+        catch (NumberedException nEx)
+        {
+            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+                nameof(ShoppingListApiController), nameof(GetShoppingListForUser));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ShoppingListApiController), nameof(GetShoppingListForUser));
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Due to an internal error, your request could not be processed.");
+        }
+    }
+    
+    
     [HttpGet]
     [AdminEndpoint]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
@@ -506,6 +576,10 @@ public class ShoppingListApiController : ControllerBase
     }
 
     [HttpPost]
+    [ProducesResponseType<Guid>(StatusCodes.Status200OK)]
+    [ProducesResponseType<Guid>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<AuthenticationErrorResponse>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}/Collaborator/{collaboratorEmailAddress}")]
     public async Task<ActionResult> AddCollaboratorToShoppingList([FromHeader(Name = "USER-ID")] Guid? requestingUserId,
         Guid userId, Guid shoppingListId, string collaboratorEmailAddress)
@@ -747,6 +821,10 @@ public class ShoppingListApiController : ControllerBase
     }
 
     [HttpDelete]
+    [ProducesResponseType<string>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<AuthenticationErrorResponse>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}")]
     public async Task<ActionResult> RemoveShoppingList([FromRoute] Guid userId, [FromRoute] Guid shoppingListId)
     {
@@ -791,6 +869,9 @@ public class ShoppingListApiController : ControllerBase
     }
 
     [HttpDelete]
+    [ProducesResponseType<string>(StatusCodes.Status200OK)]
+    [ProducesResponseType<AuthenticationErrorResponse>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [Route(("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}/Item/{itemId:Guid}"))]
     public async Task<ActionResult> RemoveItemFromShoppingList([FromRoute] Guid userId, [FromRoute] Guid shoppingListId,
         [FromRoute] Guid itemId)
@@ -831,6 +912,10 @@ public class ShoppingListApiController : ControllerBase
     }
 
     [HttpDelete]
+    [ProducesResponseType<string>(StatusCodes.Status200OK)]
+    [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<AuthenticationErrorResponse>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}/Collaborator/{collaboratorId:Guid}")]
     public async Task<ActionResult> RemoveCollaboratorFromList([FromHeader(Name = "USER-ID")] Guid? requestingUserId,
         [FromRoute] Guid userId, [FromRoute] Guid shoppingListId, [FromRoute] Guid collaboratorId)
