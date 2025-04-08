@@ -8,6 +8,7 @@ const shoppingLists = ref<{
   collaborators: string[];
 }[]>([]);
 const error = ref<string | null>(null);
+const newListName = ref<string>('');
 
 const fetchShoppingLists = async () => {
   try {
@@ -49,6 +50,43 @@ const fetchShoppingLists = async () => {
   }
 };
 
+const createNewList = async () => {
+  if (!newListName.value.trim()) return;
+
+  try {
+    const userData = localStorage.getItem('userData');
+    const userID = userData ? JSON.parse(userData).userID : null;
+    const userApiKey = userData ? JSON.parse(userData).apiKey : null;
+
+    if (!userData) {
+      throw new Error('User data not found in session storage.');
+    }
+
+    const response = await fetch(
+        `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList`,
+        {
+          method: 'POST',
+          headers: {
+            'accept': 'text/plain',
+            'USER-KEY': userApiKey,
+            'USER-ID': userID,
+            'Content-Type': 'application/json-patch+json',
+          },
+          body: JSON.stringify(newListName.value),
+        }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
+
+    newListName.value = '';
+    await fetchShoppingLists();
+  } catch (err) {
+    error.value = (err as Error).message;
+  }
+};
+
 onMounted(fetchShoppingLists);
 </script>
 
@@ -71,6 +109,14 @@ onMounted(fetchShoppingLists);
             </template>
           </span>
         </div>
+      </li>
+      <li>
+        <input
+            v-model="newListName"
+            placeholder="Enter new list name"
+            @keyup.enter="createNewList"
+        />
+        <button @click="createNewList">Add List</button>
       </li>
     </ul>
     <p v-else-if="error">{{ error }}</p>
@@ -117,5 +163,24 @@ li:hover {
 
 .list-details strong {
   color: var(--color-primary);
+}
+
+input {
+  padding: 0.5rem;
+  border: 1px solid var(--color-primary);
+  border-radius: 4px;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: var(--color-hover);
 }
 </style>
