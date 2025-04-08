@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useAuthStore } from '@/stores/auth';
-import { useRouter } from 'vue-router';
-
-const authStore = useAuthStore();
-const router = useRouter();
+import { useAuthHelpers } from '@/composables/useAuthHelpers';
 
 const firstname = ref('');
 const lastname = ref('');
@@ -12,35 +8,23 @@ const username = ref('');
 const email = ref('');
 const password = ref('');
 
-const saveToSession = (key: string, value: any) => localStorage.setItem(key, JSON.stringify(value));
-
-const handleLoginSuccess = () => {
-  saveToSession('isAuthenticated', true);
-  authStore.isAuthenticated = true;
-  router.push('/');
-};
-
-const validateEmail = (email: string): boolean => {
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return re.test(email);
-};
+const { encode, handleLoginSuccess, validateEmail } = useAuthHelpers();
 
 const register = async () => {
   if (!username.value || !email.value || !password.value) {
-    alert('Bitte füllen Sie alle Felder aus.');
+    alert('Please fill out all fields.');
     return;
   }
 
   if (!validateEmail(email.value)) {
-    alert('Bitte geben Sie eine gültige E-Mail-Adresse ein.');
+    alert('Please enter a valid email address.');
     return;
   }
 
-  const encodedEmail = btoa(email.value);
-  const encodedPassword = btoa(password.value);
+  let response: Response;
 
   try {
-    const response = await fetch('https://localhost:7191/ShoppingListApi/User', {
+    response = await fetch('https://localhost:7191/ShoppingListApi/User', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -49,44 +33,50 @@ const register = async () => {
         firstname: firstname.value,
         lastname: lastname.value,
         username: username.value,
-        emailAddress64: encodedEmail,
-        password64: encodedPassword
+        emailAddress64: encode(email.value),
+        password64: encode(password.value)
       })
     });
+  } catch (networkError) {
+    console.error('Network error during registration:', networkError);
+    alert('A network error occurred. Please try again.');
+    return;
+  }
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      if (response.status === 409) {
-        throw new Error('Ein Benutzer mit derselben E-Mail-Adresse existiert bereits. Bitte verwenden Sie eine andere Adresse, um sich zu registrieren!');
-      }
-      throw new Error(errorText);
-    }
+  if (response.status === 409) {
+    alert('A user with this email already exists. Please use a different email.');
+    return;
+  }
 
-    const data = await response.json();
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Server error:', errorText);
+    alert(`Registration failed: ${errorText}`);
+    return;
+  }
 
-    if (data.isAuthenticated) {
-      handleLoginSuccess();
-    } else {
-      alert('Registrierung fehlgeschlagen.');
-    }
+  try {
+    await response.json(); // assume successful response
+    void handleLoginSuccess();
   } catch (error) {
-    console.error('Fehler bei der Registrierung:', error);
-    alert(`Ein Fehler ist aufgetreten: ${error.message}`);
+    console.error('Post-registration error:', error);
+    alert('Registration succeeded, but an error occurred afterward.');
   }
 };
 </script>
 
+
 <template>
   <div class="login">
     <div class="card">
-      <h1 class="caveat-brush-regular">Registrieren</h1>
+      <h1 class="caveat-brush-regular">Register</h1>
       <form @submit.prevent="register">
-        <input v-model="firstname" placeholder="First name" />
-        <input v-model="lastname" placeholder="Last name" />
-        <input v-model="email" type="email" placeholder="Email" />
-        <input v-model="username" placeholder="Username" />
-        <input v-model="password" type="password" placeholder="Password" />
-        <button type="submit">Registrieren</button>
+        <input v-model="firstname" placeholder="First name"/>
+        <input v-model="lastname" placeholder="Last name"/>
+        <input v-model="email" type="email" placeholder="Email"/>
+        <input v-model="username" placeholder="Username"/>
+        <input v-model="password" type="password" placeholder="Password"/>
+        <button type="submit">Register</button>
       </form>
       <RouterLink to="/login" class="auth-link">Already have an account? Login now.</RouterLink>
     </div>

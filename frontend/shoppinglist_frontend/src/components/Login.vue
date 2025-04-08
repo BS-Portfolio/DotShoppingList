@@ -1,26 +1,15 @@
 <script setup lang="ts">
 import {ref} from 'vue';
-import {useAuthStore} from '@/stores/auth';
-import {useRouter} from 'vue-router';
-
-const authStore = useAuthStore();
-const router = useRouter();
+import {useAuthHelpers} from '@/composables/useAuthHelpers';
 
 const username = ref('');
 const password = ref('');
 
-const saveToSession = (key: string, value: any) => localStorage.setItem(key, JSON.stringify(value));
-
-const handleLoginSuccess = (responseData: any) => {
-  saveToSession('isAuthenticated', true);
-  saveToSession('userData', responseData);
-  authStore.isAuthenticated = true;
-  router.push('/');
-};
+const {encode, handleLoginSuccess} = useAuthHelpers();
 
 const login = async () => {
-  const encodedEmail = btoa(username.value);
-  const encodedPassword = btoa(password.value);
+  const encodedEmail = encode(username.value);
+  const encodedPassword = encode(password.value);
 
   try {
     const response = await fetch('https://localhost:7191/ShoppingListApi/User/Login', {
@@ -38,12 +27,11 @@ const login = async () => {
 
     if (response.status === 200) {
       const responseData = await response.json();
-      handleLoginSuccess(responseData);
+      void handleLoginSuccess(responseData);
     } else {
       alert('Login failed. Please check your credentials.');
     }
   } catch (error) {
-    console.log(error)
     alert('An error occurred during login. Please try again.');
   }
 };
