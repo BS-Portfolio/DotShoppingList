@@ -68,25 +68,16 @@ jobs:
       # Run tests with coverage and log output
       - name: Run tests and log output
         run: |
-          # Führen Sie die Tests aus und sammeln Sie gleichzeitig die Coverage-Daten im Cobertura-Format
           dotnet test --no-build --logger "trx;LogFileName=./test-results/test-results.trx" \
-                      --no-restore --collect:"XPlat Code Coverage" \
-                      /p:CoverletOutput=./test-results/coverage.cobertura.xml \
+                      --no-restore \
+                      /p:CollectCoverage=true \
                       /p:CoverletOutputFormat=cobertura \
+                      /p:CoverletOutput=./test-results/coverage.cobertura.xml \
                       --blame-hang-timeout 60s > ./test-results/test-results.log || true
           echo "Test execution completed. Results are saved regardless of test failures."
           cat ./test-results/test-results.log
         working-directory: ./ShoppingListApi
-
-      # Ensure coverage file is generated
-      - name: Ensure coverage file is generated
-        run: |
-          if [ ! -f ./test-results/coverage.cobertura.xml ]; then
-            echo "Coverage report not found!"
-            exit 1
-          fi
-        working-directory: ./ShoppingListApi
-
+  
       # Generate coverage report (Cobertura format)
       - name: Generate coverage report
         run: |
