@@ -16,9 +16,6 @@ using ShoppingListApi.Model.Patch;
 using ShoppingListApi.Model.Post;
 using ShoppingListApi.Model.ReturnTypes;
 using ShoppingListApi.Services;
-using Xunit.Sdk;
-
-namespace ShoppingListApi.Controllers;
 
 [ApiController]
 [Route("[controller]")]

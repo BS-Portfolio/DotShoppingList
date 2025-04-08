@@ -4,7 +4,6 @@ using System.Text.Json.Serialization.Metadata;
 using Newtonsoft.Json;
 using ShoppingListApi.Attributes;
 using ShoppingListApi.Configs;
-using ShoppingListApi.Controllers;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.ReturnTypes;
