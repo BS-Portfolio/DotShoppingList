@@ -91,8 +91,8 @@ jobs:
       - name: Generate coverage report
         run: |
           reportgenerator \
-            -reports:./ShoppingListApi/test-results/**/coverage.cobertura.xml \
-            -targetdir:./ShoppingListApi/test-results/coverage-report \
+            -reports:./test-results/coverage.cobertura.xml \
+            -targetdir:./test-results/coverage-report \
             -reporttypes:Html
         working-directory: ./ShoppingListApi
 
