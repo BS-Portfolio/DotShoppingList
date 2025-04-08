@@ -78,6 +78,15 @@ jobs:
           cat ./test-results/test-results.log
         working-directory: ./ShoppingListApi
 
+      # Ensure coverage file is generated
+      - name: Ensure coverage file is generated
+        run: |
+          if [ ! -f ./test-results/coverage.cobertura.xml ]; then
+            echo "Coverage report not found!"
+            exit 1
+          fi
+        working-directory: ./ShoppingListApi
+
       # Generate coverage report (Cobertura format)
       - name: Generate coverage report
         run: |
@@ -85,6 +94,7 @@ jobs:
             -reports:./ShoppingListApi/test-results/**/coverage.cobertura.xml \
             -targetdir:./ShoppingListApi/test-results/coverage-report \
             -reporttypes:Html
+        working-directory: ./ShoppingListApi
 
       # Upload test results
       - name: Upload test results
