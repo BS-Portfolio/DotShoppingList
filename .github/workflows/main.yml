@@ -1,33 +1,61 @@
 name: main.yml
+
 on:
   push:
     branches: [ main, develop_backend ]
   pull_request:
     branches: [ main, develop_backend ]
+
 jobs:
   build-test-deploy:
     runs-on: ubuntu-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-      
+
       - name: Restore dependencies
         run: dotnet restore
         working-directory: ./ShoppingListApi
       
+      - name: Check code formatting
+        run: dotnet format ./ShoppingListApi/ShoppingListApi.sln
+
+      - name: Check for vulnerable dependencies and log output
+        run: |
+          dotnet list package --vulnerable > ./vulnerability-report.txt || true
+          cat ./vulnerability-report.txt
+        working-directory: ./ShoppingListApi
+
+      - name: Upload vulnerability report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vulnerability-report
+          path: ./ShoppingListApi/vulnerability-report.txt
+
       - name: Build solution
         run: dotnet build --no-restore
         working-directory: ./ShoppingListApi
-      
+
       - name: Create test results directory
         run: mkdir -p test-results
         working-directory: ./ShoppingListApi
-      
+
+      - name: Install Coverlet and ReportGenerator
+        run: |
+          dotnet tool install --global coverlet.console
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
       - name: Run tests and log output
         run: |
           # Continue on error flag hinzufügen
@@ -35,10 +63,24 @@ jobs:
           echo "Test execution completed. Results are saved regardless of test failures."
           cat ./test-results/test-results.log
         working-directory: ./ShoppingListApi
-      
-      - name: Upload test result log
+
+      - name: Generate coverage report
+        run: |
+          reportgenerator \
+            -reports:./ShoppingListApi/test-results/coverage.xml \
+            -targetdir:./ShoppingListApi/test-results/coverage-report \
+            -reporttypes:Html
+
+      - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: dotnet-test-log
           path: ./ShoppingListApi/test-results/
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: code-coverage-report
+          path: ./ShoppingListApi/test-results/coverage-report/
