@@ -71,8 +71,6 @@ jobs:
           dotnet test --no-build --logger "trx;LogFileName=./test-results/test-results.trx" \
                       --no-restore \
                       /p:CollectCoverage=true \
-                      /p:CoverletOutputFormat=opencover \
-                      /p:CoverletOutput=./test-results/coverage.log \
                       --blame-hang-timeout 60s > ./test-results/test-results.log || true
           echo "Test execution completed. Results are saved regardless of test failures."
           cat ./test-results/test-results.log
@@ -85,11 +83,3 @@ jobs:
         with:
           name: dotnet-test-log
           path: ./ShoppingListApi/test-results/
-
-      # Upload coverage report
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: code-coverage-report
-          path: ./ShoppingListApi/test-results/coverage-report/
