@@ -93,7 +93,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
         policy.AllowAnyOrigin() // allow specific origin
-            .WithMethods("GET");
+            .WithMethods("GET").WithHeaders("USER-ID", "USER-KEY", "X-API-KEY");
         policy.AllowAnyOrigin()
             .WithMethods("POST", "PATCH", "DELETE")
             .WithHeaders("X-Frontend", "accept", "content-type");

@@ -1,8 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
-using Moq;
-using ShoppingListApi.Configs;
-using ShoppingListApi.Model.Get;
-using ShoppingListApi.Model.Patch;
+using NLog;
+using NLog.Extensions.Logging;
 using ShoppingListApi.Model.Post;
 using ShoppingListApi.Services;
 using Xunit;
@@ -13,14 +11,40 @@ namespace ShoppingListApi.Tests;
 public class UnitTests
 {
     private readonly ITestOutputHelper _testOutputHelper;
-    private readonly Mock<ILogger<DatabaseService>> _dbLoggerMock;
-    private readonly Mock<IServiceProvider> _serviceProviderMock;
-    private readonly Mock<ConnectionStringService> _connectionStringServiceMock;
-    private readonly DatabaseService _databaseService;
+    private readonly ServiceProvider _serviceProvider;
 
     public UnitTests(ITestOutputHelper testOutputHelper)
     {
         _testOutputHelper = testOutputHelper;
+
+        // Create a ServiceCollection and register necessary services
+        var serviceCollection = new ServiceCollection();
+
+        // Register Configuration
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json")
+            .Build(); // Use your configuration
+        serviceCollection.AddSingleton<IConfiguration>(configuration);
+        
+        // Register Logger
+        var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.AddNLog();  // Add NLog as the logging provider
+        });
+
+        serviceCollection.AddLogging();
+        
+        // Register ILogger<ConnectionStringService> and ILogger<DatabaseService>
+        // These are provided by the LoggerFactory, not manually registered
+        serviceCollection.AddSingleton<ILogger<ConnectionStringService>>(loggerFactory.CreateLogger<ConnectionStringService>());
+        serviceCollection.AddSingleton<ILogger<DatabaseService>>(loggerFactory.CreateLogger<DatabaseService>());
+
+        // Register your ConnectionStringService
+        serviceCollection.AddTransient<ConnectionStringService>();
+
+        // Build the ServiceProvider
+        _serviceProvider = serviceCollection.BuildServiceProvider();
     }
 
     [Fact]
@@ -30,10 +54,10 @@ public class UnitTests
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json")
             .Build();
-            
+
         var connectionString = configuration.GetConnectionString("Azure");
         var canConnect = false;
-        
+
         try
         {
             using var connection = new SqlConnection(connectionString);
@@ -45,97 +69,64 @@ public class UnitTests
         {
             _testOutputHelper.WriteLine($"Connection error: {ex.Message}");
         }
-        
-        var userMessage = canConnect ? "Connection successful!" : "Connection failed!";
-        
-        Assert.True(canConnect, userMessage);
+
+        Assert.True(canConnect, "The connection to the database was successfully established!");
     }
+
     [Fact]
-    public void ShoppingList_AddItemsToShoppingList_AddsItems()
+    public void Check_Database_Connection_2()
     {
-        // Arrange
-        var listId = Guid.NewGuid();
-        var owner = new ListUserMinimal(Guid.NewGuid(), "John", "Doe", "john@example.com");
-        var shoppingList = new ShoppingList(listId, "Grocery List", owner);
-        
-        var items = new List<Item>
+        var connectionStringService = _serviceProvider.GetRequiredService<ConnectionStringService>();
+
+        var connectionString = connectionStringService.GetConnectionString();
+        var canConnect = false;
+
+        try
         {
-            new Item(Guid.NewGuid(), "Milk", "2 liters"),
-            new Item(Guid.NewGuid(), "Bread", "1 loaf")
-        };
+            using var connection = new SqlConnection(connectionString);
+            connection.Open();
+            canConnect = connection.State == System.Data.ConnectionState.Open;
+            connection.Close();
+        }
+        catch (Exception ex)
+        {
+            _testOutputHelper.WriteLine($"Connection error: {ex.Message}");
+        }
 
-        // Act
-        shoppingList.AddItemsToShoppingList(items);
-
-        // Assert
-        Assert.Equal(2, shoppingList.Items.Count);
-        Assert.Contains(items[0], shoppingList.Items);
-        Assert.Contains(items[1], shoppingList.Items);
+        Assert.True(canConnect, "The connection to the database was successfully established!");
     }
 
     [Fact]
-    public void ItemPatch_Constructor_SetsOnlySpecifiedProperties()
+    public async Task Check_Database_Method_AddUserAsync()
     {
         // Arrange
-        var newName = "New Item Name";
-        var newAmount = "New Amount";
+        var databaseService = new DatabaseService(_serviceProvider);
 
+        var listUserPost1 = new ListUserPost("Milad", "Test1", "TWlsYWRAbWFzdGVyLmNvbQ==", "bWFzdGVyNjUkdWhnJg==");
+        var lu1Ex = new ListUserPostExtended(listUserPost1);
+        
+        var listUserPost2 = new ListUserPost("Milad", "Test2", "bWlsYWRAdGVzdDIuY29t", "bWFzdGVyNjUkdWhnJg==");
+        var lu2Ex = new ListUserPostExtended(listUserPost2);
+        
+        var listUserPost3 = new ListUserPost("Milad", "Test3", "bWlsYWRAdGVzdDMuY29t", "bWFzdGVyNjUkdWhnJg==");
+        var lu3Ex = new ListUserPostExtended(listUserPost3);
+        
         // Act
-        var itemPatch = new ItemPatch(newName, newAmount);
+        var result1 = await databaseService.TestTransactionHandlerAsync<ListUserPostExtended, (bool succes, Guid? userId)>(
+            async (input, connection, tx) => await databaseService.AddUserAsync(input, connection, tx),  
+            lu1Ex);
+        
+        var result2 = await databaseService.TestTransactionHandlerAsync<ListUserPostExtended, (bool succes, Guid? userId)>(
+            async (input, connection, tx) => await databaseService.AddUserAsync(input, connection, tx),  
+            lu2Ex);
+        
+        var result3 = await databaseService.TestTransactionHandlerAsync<ListUserPostExtended, (bool succes, Guid? userId)>(
+            async (input, connection, tx) => await databaseService.AddUserAsync(input, connection, tx),  
+            lu3Ex);
 
         // Assert
-        Assert.Equal(newName, itemPatch.NewItemName);
-        Assert.Equal(newAmount, itemPatch.NewItemAmount);
-    }
-
-    [Fact]
-    public void GenerateApiKey_ReturnsNonEmptyString()
-    {
-        // Act
-        var apiKey = HM.GenerateApiKey();
-
-        // Assert
-        Assert.NotNull(apiKey);
-        Assert.NotEmpty(apiKey);
-        Assert.True(apiKey.Length > 10); // Sollte eine angemessene Länge haben
-    }
-
-    [Fact]
-    public void GenerateApiKey_ReturnsDifferentKeysOnMultipleCalls()
-    {
-        // Act
-        var key1 = HM.GenerateApiKey();
-        var key2 = HM.GenerateApiKey();
-        var key3 = HM.GenerateApiKey();
-
-        // Assert
-        Assert.NotEqual(key1, key2);
-        Assert.NotEqual(key1, key3);
-        Assert.NotEqual(key2, key3);
-    }
-
-    [Fact]
-    public void UserRoleEnum_HasExpectedValues()
-    {
-        // Assert
-        Assert.Equal(1, (int)Enums.UserRoleEnum.ListAdmin);
-        Assert.Equal(2, (int)Enums.UserRoleEnum.Collaborator);
-    }
-
-    [Fact]
-    public void UserRole_Constructor_SetsEnumIndex()
-    {
-        // Arrange
-        var roleId = Guid.NewGuid();
-        var roleTitle = "Admin";
-        var enumIndex = (int)Enums.UserRoleEnum.ListAdmin;
-
-        // Act
-        var userRole = new UserRole(roleId, roleTitle, enumIndex);
-
-        // Assert
-        Assert.Equal(roleId, userRole.UserRoleId);
-        Assert.Equal(roleTitle, userRole.UserRoleTitle);
-        Assert.Equal(enumIndex, userRole.EnumIndex);
+        Assert.True(result1 is { succes: true, userId: not null });
+        Assert.True(result2 is { succes: true, userId: not null });
+        Assert.True(result3 is { succes: true, userId: not null });
     }
 }

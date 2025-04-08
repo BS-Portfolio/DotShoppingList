@@ -1,8 +1,4 @@
 using System.Data;
-using Azure.Core;
-using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.SignalR;
 using ShoppingListApi.Configs;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
@@ -10,10 +6,7 @@ using ShoppingListApi.Model.Database;
 using ShoppingListApi.Model.Get;
 using ShoppingListApi.Model.Post;
 using ShoppingListApi.Model.Patch;
-using Microsoft.Data.SqlClient;
-using Microsoft.Win32.SafeHandles;
 using ShoppingListApi.Model.ReturnTypes;
-using Xunit.Sdk;
 
 namespace ShoppingListApi.Services;
 
@@ -23,10 +16,10 @@ public class DatabaseService
     private readonly ILogger<DatabaseService> _logger;
     private readonly string _connectionString;
 
-    public DatabaseService(IServiceProvider serviceprovider)
+    public DatabaseService(IServiceProvider serviceProvider)
     {
-        _connectionStringService = serviceprovider.GetRequiredService<ConnectionStringService>();
-        _logger = serviceprovider.GetRequiredService<ILogger<DatabaseService>>();
+        _connectionStringService = serviceProvider.GetRequiredService<ConnectionStringService>();
+        _logger = serviceProvider.GetRequiredService<ILogger<DatabaseService>>();
         _connectionString = _connectionStringService.GetConnectionString();
     }
 
@@ -75,6 +68,35 @@ public class DatabaseService
         }
         finally
         {
+            await sqlConnection.CloseAsync();
+        }
+    }
+
+    public async Task<T2> TestTransactionHandlerAsync<T1, T2>(Func<T1, SqlConnection, SqlTransaction, Task<T2>> action,
+        T1 parameter)
+    {
+        await using SqlConnection sqlConnection = new(_connectionString);
+        SqlTransaction? transaction = null;
+
+        try
+        {
+            await sqlConnection.OpenAsync();
+            transaction = sqlConnection.BeginTransaction(IsolationLevel.Snapshot);
+            var result = await action.Invoke(parameter, sqlConnection, transaction);
+
+            return result;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(SqlConnectionHandlerAsync));
+            throw numberedException;
+        }
+        finally
+        {
+            transaction?.Rollback();
+            transaction?.Dispose();
             await sqlConnection.CloseAsync();
         }
     }
@@ -174,15 +196,25 @@ public class DatabaseService
         }
     }
 
-    public async Task<bool> CheckShoppingListIdExistenceAsync(Guid shoppingListId, SqlConnection sqlConnection)
+    public async Task<bool> CheckShoppingListIdExistenceAsync(ShoppingListIdentificationData data,
+        SqlConnection sqlConnection)
     {
         string existenceCheckQuery = "SELECT SL.ShoppingListID " +
                                      "FROM ShoppingList AS SL " +
-                                     "WHERE SL.ShoppingListID = @ShoppingListID";
+                                     "JOIN ListMember AS LM ON SL.ShoppingListID = LM.ShoppingListID " +
+                                     "JOIN UserRole AS UR ON LM.UserRoleID = UR.UserRoleID " +
+                                     "WHERE SL.ShoppingListID = @ShoppingListID AND " +
+                                     "LM.UserID = @UserID AND " +
+                                     "LM.UserRoleID IN " +
+                                     "(SELECT UserRoleID FROM UserRole WHERE UserRole.EnumIndex = @AdminUserRoleIndex)";
 
         await using SqlCommand checkCommand = new(existenceCheckQuery, sqlConnection);
 
-        checkCommand.Parameters.Add(new SqlParameter() { ParameterName = "@ShoppingListID", Value = shoppingListId });
+        checkCommand.Parameters.AddRange([
+            new SqlParameter() { ParameterName = "@ShoppingListID", Value = data.ShoppingListId },
+            new SqlParameter() { ParameterName = "@UserID", Value = data.UserId },
+            new SqlParameter() { ParameterName = "@AdminUserRoleIndex", Value = (int)UserRoleEnum.ListAdmin }
+        ]);
 
         try
         {
@@ -390,7 +422,7 @@ public class DatabaseService
     #endregion
 
     #region Data-Reader
-    
+
     public async Task<CredentialsCheckReturn> CheckCredentialsAsync(LoginData loginData, SqlConnection sqlConnection)
     {
         string loginQuery =
@@ -951,6 +983,60 @@ public class DatabaseService
 
     #region Multi-Handlers
 
+    /// <summary>
+    /// the input user ID should be assigned to the requesting user id not the list owner's id
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="sqlConnection"></param>
+    /// <returns></returns>
+    /// <exception cref="NumberedException"></exception>
+    public async Task<RecordFetchResult<ShoppingList?>> HandleShoppingListFetchForUserAsync(
+        ShoppingListIdentificationData data, SqlConnection sqlConnection)
+    {
+        try
+        {
+            var exists = await CheckShoppingListIdExistenceAsync(data, sqlConnection);
+
+            if (exists is false)
+            {
+                return new RecordFetchResult<ShoppingList?>(null, null, false);
+            }
+
+            var requestingUsersRole = await CheckUsersRoleInListAsync(data, sqlConnection);
+
+            if (requestingUsersRole is null)
+            {
+                return new RecordFetchResult<ShoppingList?>(null, false, true);
+            }
+
+            var shoppingList = await GetShoppingListByIdAsync(data.ShoppingListId, sqlConnection);
+
+            if (shoppingList is null)
+            {
+                return new RecordFetchResult<ShoppingList?>(null, true, true);
+            }
+
+            var items = await GetItemsForShoppingListAsync(shoppingList.ShoppingListId, sqlConnection);
+            shoppingList.AddItemsToShoppingList(items);
+
+            var collaborators = await GetShoppingListCollaboratorsAsync(shoppingList.ShoppingListId, sqlConnection);
+            shoppingList.AddCollaboratorsToShoppingList(collaborators);
+
+            return new RecordFetchResult<ShoppingList?>(shoppingList, true, true);
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(HandleShoppingListsFetchForUserAsync));
+            throw numberedException;
+        }
+    }
+
     public async Task<List<ShoppingList>> HandleShoppingListsFetchForUserAsync(Guid userId, SqlConnection sqlConnection)
     {
         try
@@ -1216,7 +1302,7 @@ public class DatabaseService
 
         try
         {
-            var existenceCheck = await CheckShoppingListIdExistenceAsync(data.ShoppingListId, sqlConnection);
+            var existenceCheck = await CheckShoppingListIdExistenceAsync(data, sqlConnection);
 
             if (existenceCheck is false)
             {
@@ -1401,11 +1487,17 @@ public class DatabaseService
 
     #region Data-Writer
 
-    public async Task<bool> AddRecordAsync(string addQuery, List<SqlParameter> parameters, SqlConnection sqlConnection)
+    public async Task<bool> AddRecordAsync(string addQuery, List<SqlParameter> parameters, SqlConnection sqlConnection,
+        SqlTransaction? transaction = null)
     {
         const bool success = true;
 
         await using SqlCommand sqlCommand = new(addQuery, sqlConnection);
+
+        if (transaction is not null)
+        {
+            sqlCommand.Transaction = transaction;
+        }
 
         sqlCommand.Parameters.AddRange(parameters.ToArray());
 
@@ -1480,7 +1572,7 @@ public class DatabaseService
     }
 
     public async Task<(bool succes, Guid? userId)> AddUserAsync(ListUserPostExtended userPostExtended,
-        SqlConnection sqlConnection)
+        SqlConnection sqlConnection, SqlTransaction? transaction = null)
     {
         var addQuery =
             "INSERT INTO ListUser (UserID, FirstName, LastName, EmailAddress, PasswordHash, CreationDateTime, ApiKey, ApiKeyExpirationDateTime) "
@@ -1503,7 +1595,7 @@ public class DatabaseService
 
         try
         {
-            bool successCheck = await AddRecordAsync(addQuery, parameters, sqlConnection);
+            bool successCheck = await AddRecordAsync(addQuery, parameters, sqlConnection, transaction);
 
             if (successCheck is false)
             {
@@ -2068,7 +2160,7 @@ public class DatabaseService
         sqlCommand.CommandType = CommandType.StoredProcedure;
         sqlCommand.CommandText = "uspRemoveShoppingList";
         sqlCommand.Connection = sqlConnection;
-        
+
         SqlParameter successParam = new SqlParameter("@success", SqlDbType.Bit)
             { Direction = ParameterDirection.Output };
 
