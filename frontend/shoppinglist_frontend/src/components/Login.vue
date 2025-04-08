@@ -11,8 +11,9 @@ const password = ref('');
 
 const saveToSession = (key: string, value: any) => localStorage.setItem(key, JSON.stringify(value));
 
-const handleLoginSuccess = () => {
+const handleLoginSuccess = (responseData: any) => {
   saveToSession('isAuthenticated', true);
+  saveToSession('userData', responseData);
   authStore.isAuthenticated = true;
   router.push('/');
 };
@@ -25,19 +26,19 @@ const login = async () => {
     const response = await fetch('https://localhost:7191/ShoppingListApi/User/Login', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Accept': 'text/plain',
-        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
         'X-Frontend': ''
       },
       body: JSON.stringify({
-        email: encodedEmail,
+        emailAddress: encodedEmail,
         password: encodedPassword
       })
     });
 
     if (response.status === 200) {
-      handleLoginSuccess();
+      const responseData = await response.json();
+      handleLoginSuccess(responseData);
     } else {
       alert('Login failed. Please check your credentials.');
     }
