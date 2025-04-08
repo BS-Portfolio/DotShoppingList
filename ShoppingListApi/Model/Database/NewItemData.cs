@@ -7,13 +7,15 @@ public class NewItemData
 {
     public ItemPost ItemPost { get; }
     public Guid ShoppingListId { get; }
-    
-    public Guid UserId { get; }
 
-    public NewItemData(ItemPost itemPost, Guid shoppingListId, Guid userId)
+    public Guid ListOwnerId { get; }
+    public Guid? RequestingUserId { get; }
+
+    public NewItemData(ItemPost itemPost, Guid shoppingListId, Guid listOwnerId, Guid? requestingUserId = null)
     {
         this.ItemPost = itemPost;
         ShoppingListId = shoppingListId;
-        UserId = userId;
+        ListOwnerId = listOwnerId;
+        RequestingUserId = requestingUserId;
     }
 }
