@@ -71,27 +71,11 @@ jobs:
           dotnet test --no-build --logger "trx;LogFileName=./test-results/test-results.trx" \
                       --no-restore \
                       /p:CollectCoverage=true \
-                      /p:CoverletOutputFormat=cobertura \
-                      /p:CoverletOutput=./test-results/coverage.cobertura.xml \
+                      /p:CoverletOutputFormat=opencover \
+                      /p:CoverletOutput=./test-results/coverage.log \
                       --blame-hang-timeout 60s > ./test-results/test-results.log || true
           echo "Test execution completed. Results are saved regardless of test failures."
           cat ./test-results/test-results.log
-        working-directory: ./ShoppingListApi
-  
-      # Generate coverage report (Cobertura format)
-      - name: Generate coverage report
-        run: |
-          if [ -f "./test-results/coverage.cobertura.xml" ]; then
-            reportgenerator \
-              -reports:./test-results/coverage.cobertura.xml \
-              -targetdir:./test-results/coverage-report \
-              -reporttypes:Html
-          else
-            echo "Coverage file not found. Listing available files:"
-            find ./test-results -type f
-            mkdir -p ./test-results/coverage-report
-            echo "<html><body><h1>No coverage data available</h1></body></html>" > ./test-results/coverage-report/index.html
-          fi
         working-directory: ./ShoppingListApi
 
       # Upload test results
