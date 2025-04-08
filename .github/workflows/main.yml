@@ -1,42 +1,83 @@
 name: main.yml
+
 on:
   push:
     branches: [ main, develop_backend ]
   pull_request:
     branches: [ main, develop_backend ]
+
 jobs:
   build-test-deploy:
     runs-on: ubuntu-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
     steps:
+      # Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v3
-      
+
+      # Setup .NET
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-      
+
+      # Restore dependencies
       - name: Restore dependencies
         run: dotnet restore
         working-directory: ./ShoppingListApi
-      
+
+      # Check code formatting
+      - name: Check code formatting
+        run: dotnet format ./ShoppingListApi/ShoppingListApi.sln
+
+      # Check for vulnerable dependencies and log output
+      - name: Check for vulnerable dependencies and log output
+        run: |
+          dotnet list package --vulnerable > ./vulnerability-report.txt || true
+          cat ./vulnerability-report.txt
+        working-directory: ./ShoppingListApi
+
+      # Upload vulnerability report
+      - name: Upload vulnerability report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vulnerability-report
+          path: ./ShoppingListApi/vulnerability-report.txt
+
+      # Build solution
       - name: Build solution
         run: dotnet build --no-restore
         working-directory: ./ShoppingListApi
-      
+
+      # Create test results directory
       - name: Create test results directory
         run: mkdir -p test-results
         working-directory: ./ShoppingListApi
-      
+
+      # Install Coverlet and ReportGenerator
+      - name: Install Coverlet and ReportGenerator
+        run: |
+          dotnet tool install --global coverlet.console
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+      # Run tests with coverage and log output
       - name: Run tests and log output
         run: |
-          # Continue on error flag hinzufügen
-          dotnet test --no-build --logger "trx;LogFileName=./test-results/test-results.trx" --no-restore --blame-hang-timeout 60s > ./test-results/test-results.log || true
+          dotnet test --no-build --logger "trx;LogFileName=./test-results/test-results.trx" \
+                      --no-restore \
+                      /p:CollectCoverage=true \
+                      --blame-hang-timeout 60s > ./test-results/test-results.log || true
           echo "Test execution completed. Results are saved regardless of test failures."
           cat ./test-results/test-results.log
         working-directory: ./ShoppingListApi
-      
-      - name: Upload test result log
+
+      # Upload test results
+      - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
