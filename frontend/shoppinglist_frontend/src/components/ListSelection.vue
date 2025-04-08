@@ -11,30 +11,30 @@ const shoppingLists = ref<{
 const error = ref<string | null>(null);
 const newListName = ref<string>('');
 
+const getUserData = () => {
+  const userData = localStorage.getItem('userData');
+  if (!userData) throw new Error('User data not found in session storage.');
+  return JSON.parse(userData);
+};
+
 const fetchShoppingLists = async () => {
   try {
-    const userData = localStorage.getItem('userData');
-    const userID = userData ? JSON.parse(userData).userID : null;
-    const userApiKey = userData ? JSON.parse(userData).apiKey : null;
-
-    if (!userData) {
-      throw new Error('User data not found in session storage.');
-    }
-
+    const {userID, apiKey} = getUserData();
     const response = await fetch(
         `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/all`,
         {
           method: 'GET',
           headers: {
             accept: 'text/plain',
-            'USER-KEY': userApiKey,
+            'USER-KEY': apiKey,
             'USER-ID': userID,
           },
         }
     );
 
     if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
+      error.value = `Error: ${response.status} ${response.statusText}`;
+      return;
     }
 
     const data = await response.json();
@@ -56,21 +56,14 @@ const createNewList = async () => {
   if (!newListName.value.trim()) return;
 
   try {
-    const userData = localStorage.getItem('userData');
-    const userID = userData ? JSON.parse(userData).userID : null;
-    const userApiKey = userData ? JSON.parse(userData).apiKey : null;
-
-    if (!userData) {
-      throw new Error('User data not found in session storage.');
-    }
-
+    const {userID, apiKey} = getUserData();
     const response = await fetch(
         `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList`,
         {
           method: 'POST',
           headers: {
             accept: 'text/plain',
-            'USER-KEY': userApiKey,
+            'USER-KEY': apiKey,
             'USER-ID': userID,
             'Content-Type': 'application/json-patch+json',
           },
@@ -79,7 +72,8 @@ const createNewList = async () => {
     );
 
     if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
+      error.value = `Error: ${response.status} ${response.statusText}`;
+      return;
     }
 
     newListName.value = '';
@@ -90,35 +84,27 @@ const createNewList = async () => {
 };
 
 const removeList = async (listId: string) => {
-  const userData = localStorage.getItem('userData');
-  const userID = userData ? JSON.parse(userData).userID : null;
-  const userApiKey = userData ? JSON.parse(userData).apiKey : null;
-
-  if (!userData) {
-    alert('User data not found in session storage.');
-    return;
-  }
-
-  const confirmed = confirm('Are you sure you want to delete this list?');
-  if (!confirmed) return;
-
   try {
+    const {userID, apiKey} = getUserData();
+    const confirmed = confirm('Are you sure you want to delete this list?');
+    if (!confirmed) return;
+
     const response = await fetch(
         `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}`,
         {
           method: 'DELETE',
           headers: {
             accept: 'text/plain',
-            'USER-KEY': userApiKey,
+            'USER-KEY': apiKey,
             'USER-ID': userID,
           },
         }
     );
 
     if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
+      error.value = `Error: ${response.status} ${response.statusText}`;
+      return;
     }
-
     await fetchShoppingLists();
   } catch (err) {
     error.value = (err as Error).message;
@@ -172,49 +158,10 @@ li.list-item {
   padding: 1rem;
   border: 1px solid var(--color-primary);
   border-radius: 4px;
+  transition: background-color 0.3s ease;
 }
 
 li.list-item:hover {
-  background-color: #f5a4b8;
-  cursor: pointer;
-}
-
-.remove-button {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  background: none;
-  border: none;
-  color: red;
-  font-size: 1.25rem;
-  cursor: pointer;
-}
-
-.remove-button:hover {
-  color: darkred;
-}
-</style>
-
-<style scoped>
-h2 {
-  color: var(--color-primary);
-  margin-bottom: 0.5rem;
-  text-align: center;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border: 1px solid var(--color-primary);
-  border-radius: 4px;
-}
-
-li:hover {
   background-color: #f5a4b8;
   cursor: pointer;
 }
@@ -236,6 +183,34 @@ li:hover {
   color: var(--color-primary);
 }
 
+.remove-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  transition: color 0.3s ease;
+}
+
+.remove-button:hover {
+  color: darkred;
+}
+
+h2 {
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
 input {
   padding: 0.5rem;
   border: 1px solid var(--color-primary);
@@ -249,19 +224,10 @@ button {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 button:hover {
   background-color: var(--color-hover);
 }
-
-.remove-button {
-  background: none;
-  border: none;
-  color: var(--color-primary);
-  font-size: 1.25rem;
-  cursor: pointer;
-  margin-left: 0.5rem;
-}
-
 </style>
