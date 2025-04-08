@@ -2,6 +2,7 @@
 import {onMounted, ref} from 'vue';
 
 const shoppingLists = ref<{
+  shoppingListId: string;
   shoppingListName: string;
   listOwner: string;
   itemCount: number;
@@ -38,6 +39,7 @@ const fetchShoppingLists = async () => {
 
     const data = await response.json();
     shoppingLists.value = data.map((list: any) => ({
+      shoppingListId: list.shoppingListId,
       shoppingListName: list.shoppingListName,
       listOwner: `${list.listOwner.firstName} ${list.listOwner.lastName}`,
       itemCount: list.items.length,
@@ -67,7 +69,7 @@ const createNewList = async () => {
         {
           method: 'POST',
           headers: {
-            'accept': 'text/plain',
+            accept: 'text/plain',
             'USER-KEY': userApiKey,
             'USER-ID': userID,
             'Content-Type': 'application/json-patch+json',
@@ -87,15 +89,54 @@ const createNewList = async () => {
   }
 };
 
+const removeList = async (listId: string) => {
+  const userData = localStorage.getItem('userData');
+  const userID = userData ? JSON.parse(userData).userID : null;
+  const userApiKey = userData ? JSON.parse(userData).apiKey : null;
+
+  if (!userData) {
+    alert('User data not found in session storage.');
+    return;
+  }
+
+  const confirmed = confirm('Are you sure you want to delete this list?');
+  if (!confirmed) return;
+
+  try {
+    const response = await fetch(
+        `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            accept: 'text/plain',
+            'USER-KEY': userApiKey,
+            'USER-ID': userID,
+          },
+        }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
+
+    await fetchShoppingLists();
+  } catch (err) {
+    error.value = (err as Error).message;
+  }
+};
+
 onMounted(fetchShoppingLists);
 </script>
 
 <template>
   <div>
-    <h2>Lists</h2>
+    <h2>Shopping Lists</h2>
     <ul v-if="shoppingLists.length">
-      <li v-for="(list, index) in shoppingLists" :key="index">
-        <div class="list-name">{{ list.shoppingListName }}</div>
+      <li v-for="(list, index) in shoppingLists" :key="index" class="list-item">
+        <div class="list-name">
+          {{ list.shoppingListName }}
+          <button class="remove-button" @click="removeList(list.shoppingListId)">x</button>
+        </div>
         <div class="list-details">
           <span><strong>Owner:</strong> {{ list.listOwner }}</span>
           <span><strong>Item Count:</strong> {{ list.itemCount }}</span>
@@ -123,6 +164,36 @@ onMounted(fetchShoppingLists);
     <p v-else>Loading...</p>
   </div>
 </template>
+
+<style scoped>
+li.list-item {
+  position: relative;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-primary);
+  border-radius: 4px;
+}
+
+li.list-item:hover {
+  background-color: #f5a4b8;
+  cursor: pointer;
+}
+
+.remove-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: red;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.remove-button:hover {
+  color: darkred;
+}
+</style>
 
 <style scoped>
 h2 {
@@ -183,4 +254,14 @@ button {
 button:hover {
   background-color: var(--color-hover);
 }
+
+.remove-button {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
 </style>

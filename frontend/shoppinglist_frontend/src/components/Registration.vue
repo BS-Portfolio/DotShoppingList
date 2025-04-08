@@ -38,7 +38,6 @@ const register = async () => {
       })
     });
   } catch (networkError) {
-    console.error('Network error during registration:', networkError);
     alert('A network error occurred. Please try again.');
     return;
   }
@@ -50,16 +49,14 @@ const register = async () => {
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Server error:', errorText);
     alert(`Registration failed: ${errorText}`);
     return;
   }
 
   try {
-    await response.json(); // assume successful response
+    await response.json();
     void handleLoginSuccess();
   } catch (error) {
-    console.error('Post-registration error:', error);
     alert('Registration succeeded, but an error occurred afterward.');
   }
 };
