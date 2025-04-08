@@ -25,7 +25,7 @@ const validateEmail = (email: string): boolean => {
   return re.test(email);
 };
 
-const register = () => {
+const register = async () => {
   if (!username.value || !email.value || !password.value) {
     alert('Bitte füllen Sie alle Felder aus.');
     return;
@@ -36,16 +36,43 @@ const register = () => {
     return;
   }
 
-  const encodedUsername = btoa(username.value);
   const encodedEmail = btoa(email.value);
   const encodedPassword = btoa(password.value);
 
-  console.log("Username (Base64):", encodedUsername);
-  console.log("Email (Base64):", encodedEmail);
-  console.log("Password (Base64):", encodedPassword);
+  try {
+    const response = await fetch('https://localhost:7191/ShoppingListApi/User', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        firstname: firstname.value,
+        lastname: lastname.value,
+        username: username.value,
+        emailAddress64: encodedEmail,
+        password64: encodedPassword
+      })
+    });
 
-  authStore.register(username.value, email.value, password.value);
-  if (authStore.isAuthenticated) handleLoginSuccess();
+    if (!response.ok) {
+      const errorText = await response.text();
+      if (response.status === 409) {
+        throw new Error('Ein Benutzer mit derselben E-Mail-Adresse existiert bereits. Bitte verwenden Sie eine andere Adresse, um sich zu registrieren!');
+      }
+      throw new Error(errorText);
+    }
+
+    const data = await response.json();
+
+    if (data.isAuthenticated) {
+      handleLoginSuccess();
+    } else {
+      alert('Registrierung fehlgeschlagen.');
+    }
+  } catch (error) {
+    console.error('Fehler bei der Registrierung:', error);
+    alert(`Ein Fehler ist aufgetreten: ${error.message}`);
+  }
 };
 </script>
 
