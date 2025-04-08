@@ -4,6 +4,7 @@
 
 <template>
   <h2>User Management</h2>
+  <a>placeholder</a>
 </template>
 
 <style scoped>
