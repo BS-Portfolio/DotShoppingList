@@ -64,24 +64,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4 # Updated to v4
-        run: |
-          echo "✅ Checked out repository"
 
       - name: Set up Azure CLI
         uses: azure/setup-azure-cli@v2 # Latest version
-        run: |
-          echo "✅ Azure CLI setup completed"
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2 # Latest version
         with:
           publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
           package: ./ShoppingListApi/bin/Release/net8.0/publish # Adjust the path to the published app package
-        run: |
-          echo "✅ Deploying to Azure Web App..."
-          # You can use additional logging here if needed.
 
       - name: Verify Deployment
         run: |
           echo "✅ Verifying the deployment..."
-          # Add any additional deployment verification commands if needed, such as curl to check app availability.
+          # You can use curl or another command to verify the app is running, e.g.,:
+          # curl https://$AZURE_WEBAPP_NAME.azurewebsites.net
