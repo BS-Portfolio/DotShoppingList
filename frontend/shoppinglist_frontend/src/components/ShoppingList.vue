@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import {onMounted, ref} from 'vue';
+import {RouterLink, useRoute} from 'vue-router';
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -25,7 +25,7 @@ const getUserData = () => {
 };
 
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
-  const { userID, apiKey } = getUserData();
+  const {userID, apiKey} = getUserData();
 
   const mergedOptions: RequestInit = {
     ...options,
@@ -54,7 +54,7 @@ const handleSuccess = async (message: string) => {
 
 const loadShoppingList = async (listId: string) => {
   try {
-    const { userID } = getUserData();
+    const {userID} = getUserData();
     const response = await fetchWithAuth(
         `${baseUrl}/User/${userID}/ShoppingList/${listId}`);
     const data = await response.json();
@@ -72,8 +72,10 @@ const loadShoppingList = async (listId: string) => {
 };
 
 const addItem = async (input: string) => {
-  const [name, quantity] = input.split(',').map((str) => str.trim());
-  if (!name || !quantity) {
+  const [name, quantityRaw] = input.split(',').map((str) => str.trim());
+  const quantity = quantityRaw || '1';
+
+  if (!name) {
     error.value = 'Invalid input. Use the format "ItemName, Amount".';
     return;
   }
@@ -96,12 +98,17 @@ const addItem = async (input: string) => {
 };
 
 const updateItem = async (itemID: string, name: string, quantity: string) => {
-  if (!name.trim() || !quantity.trim()) return;
+  if (!name.trim()) return;
+
+  if (!quantity.trim() || quantity === '0') {
+    await deleteItem(itemID);
+    return;
+  }
 
   try {
     const {userID} = getUserData();
     await fetchWithAuth(
-        `${baseUrl}User/${userID}/ShoppingList/${listId}/Item/${itemID}`,
+        `${baseUrl}/User/${userID}/ShoppingList/${listId}/Item/${itemID}`,
         {
           method: 'PATCH',
           headers: {
@@ -178,6 +185,9 @@ onMounted(() => {
         </li>
       </ul>
 
+      <RouterLink to="/dashboard" class="back-button">Dashboard</RouterLink>
+
+
       <div v-if="successMessage" class="success">{{ successMessage }}</div>
     </div>
   </div>
@@ -196,6 +206,22 @@ div {
   height: 5vh;
   font-size: 25px;
 }
+
+.back-button {
+  cursor: pointer;
+  background-color: var(--color-primary);
+  border: none;
+  color: white;
+  border-radius: 5px;
+  margin-left: 1rem;
+  padding: 5px 10px;
+  font-size: 16px;
+}
+
+.back-button:hover {
+  background-color: var(--color-hover);
+}
+
 
 ul {
   list-style-type: none;
