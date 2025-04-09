@@ -148,7 +148,6 @@ onMounted(() => {
 });
 </script>
 
-
 <template>
   <div>
     <h1 class="caveat-brush-regular">Shopping List</h1>
@@ -184,11 +183,8 @@ onMounted(() => {
           <button class="remove-button" @click="deleteItem(item.itemID)">×</button>
         </li>
       </ul>
-
-      <RouterLink to="/dashboard" class="back-button">Dashboard</RouterLink>
-
-
       <div v-if="successMessage" class="success">{{ successMessage }}</div>
+      <RouterLink to="/dashboard" class="back-button">Dashboard</RouterLink>
     </div>
   </div>
 </template>
