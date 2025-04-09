@@ -36,6 +36,23 @@ jobs:
           $appsettings | Out-File -FilePath "appsettings.json" -Encoding UTF8
           Write-Output "✅ appsettings.json created in ShoppingListApi"
 
+      # Check code formatting
+      - name: Check code formatting
+        run: dotnet format ./ShoppingListApi/ShoppingListApi.sln
+
+      - name: Check for vulnerable dependencies and log output
+        run: |
+          dotnet list package --vulnerable > ./vulnerability-report.txt || true
+          type ./vulnerability-report.txt
+        working-directory: ./ShoppingListApi
+      
+      - name: Upload vulnerability report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vulnerability-report
+          path: ./ShoppingListApi/vulnerability-report.txt
+
       - name: Run Unit and Integration Tests
         working-directory: ShoppingListApi.Test
         run: |
