@@ -1,0 +1,54 @@
+name: Run Unit and Integration Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    env:
+      DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
+      AZURE_PUBLISH_PROFILE: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.x" # Adjust if you're using a different .NET version
+
+      - name: Restore dependencies
+        run: dotnet restore ShoppingListApi.Test
+
+      - name: Generate appsettings.json in ShoppingListApi
+        working-directory: ShoppingListApi
+        run: |
+          $appsettings = @{
+            "ConnectionStrings" = @{
+              "Azure" = "$env:DB_CONNECTION_STRING"
+            }
+          } | ConvertTo-Json -Depth 3
+          $appsettings | Out-File -FilePath "appsettings.json" -Encoding UTF8
+          Write-Output "✅ appsettings.json created in ShoppingListApi"
+
+      - name: Run Unit and Integration Tests
+        working-directory: ShoppingListApi.Test
+        run: |
+          Write-Output "🚀 Running tests..."
+          dotnet test --logger:"trx;LogFileName=test-results.trx" --results-directory ./TestResults --verbosity normal
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: ShoppingListApi.Test/TestResults
+
+      - name: Clean up appsettings.json from ShoppingListApi
+        if: always()
+        working-directory: ShoppingListApi
+        run: |
+          Remove-Item appsettings.json -Force
+          Write-Output "🧹 appsettings.json removed from ShoppingListApi"
