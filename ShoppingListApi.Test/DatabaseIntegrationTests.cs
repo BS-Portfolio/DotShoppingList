@@ -16,12 +16,12 @@ using Xunit.Abstractions;
 
 namespace ShoppingListApi.Tests;
 
-public class DatabaseUniteTests
+public class DatabaseIntegrationTests
 {
     private readonly ITestOutputHelper _testOutputHelper;
     private readonly ServiceProvider _serviceProvider;
 
-    public DatabaseUniteTests(ITestOutputHelper testOutputHelper)
+    public DatabaseIntegrationTests(ITestOutputHelper testOutputHelper)
     {
         _testOutputHelper = testOutputHelper;
 

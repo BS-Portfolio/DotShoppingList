@@ -4,9 +4,9 @@ using ShoppingListApi.Configs;
 
 namespace ShoppingListApi.Tests;
 
-public class ModelClassTests
+public class UnitTests
 {
-    public ModelClassTests()
+    public UnitTests()
     {
         
     }
