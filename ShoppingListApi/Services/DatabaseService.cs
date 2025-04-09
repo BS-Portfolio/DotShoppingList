@@ -1212,7 +1212,7 @@ public class DatabaseService
 
             var result = await GetItemsCountForShoppingListAsync(newItemData.ShoppingListId, sqlConnection);
 
-            if (result >= 5)
+            if (result >= 20)
             {
                 return new ItemAdditionResult(!success, true, null);
             }
