@@ -1,3 +1,16 @@
+# Mittwoch, 09.04.25
+
+## Tasks:
+- Pipeline
+- Klassendiagramm
+- Shoppinglist Funktionalität
+- User Management
+- Design finalisieren
+
+## Blocker:
+- Zeit
+- Azure Database firewall
+
 # Dienstag, 08.04.25
 
 ## Tasks:
@@ -9,6 +22,7 @@
 - Pipelines
 
 ## Blocker:
+-
 
 # Montag, 07.04.25
 
