@@ -10,11 +10,11 @@ export const useAuthHelpers = () => {
 
   const encode = (text: string) => btoa(text);
 
-  const handleLoginSuccess = (userData?: any) => {
+  const handleLoginSuccess = async (userData?: any): Promise<void> => {
     saveToSession('isAuthenticated', true);
     if (userData) saveToSession('userData', userData);
     authStore.isAuthenticated = true;
-    void router.push('/')
+    await router.push('/');
   };
 
   const validateEmail = (email: string): boolean => {

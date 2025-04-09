@@ -1,54 +1,16 @@
 <script setup lang="ts">
-import {ref} from 'vue';
-import {useAuthHelpers} from '@/composables/useAuthHelpers';
-import {useAuthStore} from '@/stores/auth';
+import { ref } from 'vue';
+import { useAuthHelpers } from '@/composables/useAuthHelpers';
+import { useAuthStore } from '@/stores/auth';
 
 const username = ref('');
 const password = ref('');
 const authStore = useAuthStore();
 
-const {encode, handleLoginSuccess} = useAuthHelpers();
-let keyExpiryWarningTimer: ReturnType<typeof setTimeout> | null = null;
-let keyExpiryLogoutTimer: ReturnType<typeof setTimeout> | null = null;
+const { encode, handleLoginSuccess } = useAuthHelpers();
 
 const login = async () => {
-  const encodedEmail = encode(username.value);
-  const encodedPassword = encode(password.value);
-
-  try {
-    const response = await fetch('https://localhost:7191/ShoppingListApi/User/Login', {
-      method: 'POST',
-      headers: {
-        'Accept': 'text/plain',
-        'Content-Type': 'application/json',
-        'X-Frontend': ''
-      },
-      body: JSON.stringify({
-        emailAddress: encodedEmail,
-        password: encodedPassword
-      })
-    });
-
-    if (keyExpiryWarningTimer) clearTimeout(keyExpiryWarningTimer);
-    if (keyExpiryLogoutTimer) clearTimeout(keyExpiryLogoutTimer);
-
-    keyExpiryWarningTimer = setTimeout(() => {
-      alert('Your API key will expire in 5 minutes. You will be automatically logged out in 3 minutes.');
-    }, 21300 * 1000);
-
-    keyExpiryLogoutTimer = setTimeout(() => {
-      authStore.logout();
-    }, 21600 * 1000);
-
-    if (response.status === 200) {
-      const responseData = await response.json();
-      void handleLoginSuccess(responseData);
-    } else {
-      alert('Login failed. Please check your credentials.');
-    }
-  } catch (error) {
-    alert('An error occurred during login. Please try again.');
-  }
+  await authStore.login(username.value, password.value, encode, handleLoginSuccess);
 };
 </script>
 
@@ -57,13 +19,11 @@ const login = async () => {
     <div class="card">
       <h1 class="caveat-brush-regular">Login</h1>
       <form @submit.prevent="login">
-        <input v-model="username" placeholder="Username" autocomplete="username"/>
-        <input v-model="password" type="password" placeholder="Password"
-               autocomplete="current-password"/>
+        <input v-model="username" placeholder="Username" autocomplete="username" />
+        <input v-model="password" type="password" placeholder="Password" autocomplete="current-password" />
         <button type="submit">Login</button>
       </form>
-      <RouterLink to="/registration" class="auth-link">Don't have an account? Register now.
-      </RouterLink>
+      <RouterLink to="/registration" class="auth-link">Don't have an account? Register now.</RouterLink>
     </div>
   </div>
 </template>

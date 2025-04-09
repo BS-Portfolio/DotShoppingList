@@ -1,35 +1,33 @@
 <script setup lang="ts">
-import { RouterLink, RouterView, useRouter } from 'vue-router'
-import { computed } from 'vue'
-import { useAuthStore } from '@/stores/auth'
+import {RouterLink, RouterView, useRouter} from 'vue-router'
+import {computed} from 'vue'
+import {useAuthStore} from '@/stores/auth'
 
-const router = useRouter()
 const authStore = useAuthStore()
+const router = useRouter()
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 
 const logout = () => {
-  authStore.isAuthenticated = false
-  localStorage.removeItem('isAuthenticated')
+  authStore.logout()
+  authStore.$reset()
   router.push('/login')
 }
-
 </script>
 
 <template>
   <header>
-    <img alt="Shopping List logo" class="logo" src="@/assets/logo.png" width="125" height="125" />
+    <img alt="Shopping List logo" class="logo" src="@/assets/logo.png" width="125" height="125"/>
     <div class="wrapper">
       <nav>
         <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
         <RouterLink v-if="isAuthenticated" to="/dashboard">Dashboard</RouterLink>
         <button v-if="isAuthenticated" @click="logout" class="logout-button">Logout</button>
       </nav>
     </div>
   </header>
 
-  <RouterView />
+  <RouterView/>
 </template>
 
 <style scoped>
@@ -52,14 +50,6 @@ nav {
   font-size: 12px;
   text-align: center;
   margin-top: 1rem;
-}
-
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
 }
 
 nav a {
