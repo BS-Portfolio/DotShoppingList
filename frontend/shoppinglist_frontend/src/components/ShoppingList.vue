@@ -8,6 +8,7 @@ const shoppingList = ref<{
   shoppingListName: '',
   items: [],
 });
+
 const error = ref<string | null>(null);
 const successMessage = ref<string | null>(null);
 const newItemName = ref<string>('');
@@ -20,26 +21,40 @@ const getUserData = () => {
   return JSON.parse(userData);
 };
 
+const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
+  const {userID, apiKey} = getUserData();
+
+  const mergedOptions: RequestInit = {
+    ...options,
+    headers: {
+      accept: 'application/json',
+      'USER-KEY': apiKey,
+      'USER-ID': userID,
+      ...options.headers,
+    },
+  };
+
+  const response = await fetch(url, mergedOptions);
+
+  if (!response.ok) {
+    throw new Error(`Error: ${response.status} ${response.statusText}`);
+  }
+
+  return response;
+};
+
+const handleSuccess = async (message: string) => {
+  successMessage.value = message;
+  setTimeout(() => (successMessage.value = null), 3000);
+  await loadShoppingList(listId);
+};
+
 const loadShoppingList = async (listId: string) => {
   try {
-    const {userID, apiKey} = getUserData();
-
-    const response = await fetch(
-      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}`,
-      {
-        method: 'GET',
-        headers: {
-          accept: 'application/json',
-          'USER-KEY': apiKey,
-          'USER-ID': userID,
-        },
-      }
+    const {userID} = getUserData();
+    const response = await fetchWithAuth(
+      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}`
     );
-
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
-    }
-
     const data = await response.json();
     shoppingList.value = {
       shoppingListName: data.shoppingListName,
@@ -58,31 +73,18 @@ const addItem = async (name: string, quantity: string) => {
   if (!name.trim() || !quantity.trim()) return;
 
   try {
-    const {userID, apiKey} = getUserData();
-
-    const response = await fetch(
+    const {userID} = getUserData();
+    await fetchWithAuth(
       `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}/Item`,
       {
         method: 'POST',
-        headers: {
-          accept: 'application/json',
-          'USER-KEY': apiKey,
-          'USER-ID': userID,
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({itemName: name, itemAmount: quantity}),
       }
     );
-
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
-    }
-
-    successMessage.value = 'Item added successfully!';
-    setTimeout(() => (successMessage.value = null), 3000);
     newItemName.value = '';
     newItemAmount.value = '';
-    await loadShoppingList(listId);
+    await handleSuccess('Item added successfully!');
   } catch (err) {
     error.value = (err as Error).message;
   }
@@ -92,29 +94,19 @@ const updateItem = async (itemID: string, name: string, quantity: string) => {
   if (!name.trim() || !quantity.trim()) return;
 
   try {
-    const {userID, apiKey} = getUserData();
-
-    const response = await fetch(
+    const {userID} = getUserData();
+    await fetchWithAuth(
       `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}/Item/${itemID}`,
       {
         method: 'PATCH',
         headers: {
-          accept: 'text/plain',
-          'USER-KEY': apiKey,
-          'USER-ID': userID,
           'Content-Type': 'application/json-patch+json',
+          accept: 'text/plain',
         },
         body: JSON.stringify({newItemName: name, newItemAmount: quantity}),
       }
     );
-
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
-    }
-
-    successMessage.value = 'Item updated successfully!';
-    setTimeout(() => (successMessage.value = null), 3000);
-    await loadShoppingList(listId);
+    await handleSuccess('Item updated successfully!');
   } catch (err) {
     error.value = (err as Error).message;
   }
@@ -122,27 +114,15 @@ const updateItem = async (itemID: string, name: string, quantity: string) => {
 
 const deleteItem = async (itemID: string) => {
   try {
-    const {userID, apiKey} = getUserData();
-
-    const response = await fetch(
+    const {userID} = getUserData();
+    await fetchWithAuth(
       `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}/Item/${itemID}`,
       {
         method: 'DELETE',
-        headers: {
-          accept: 'text/plain',
-          'USER-KEY': apiKey,
-          'USER-ID': userID,
-        },
+        headers: {accept: 'text/plain'},
       }
     );
-
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
-    }
-
-    successMessage.value = 'Item deleted successfully!';
-    setTimeout(() => (successMessage.value = null), 3000);
-    await loadShoppingList(listId);
+    await handleSuccess('Item deleted successfully!');
   } catch (err) {
     error.value = (err as Error).message;
   }
@@ -152,6 +132,7 @@ onMounted(() => {
   void loadShoppingList(listId);
 });
 </script>
+
 
 <template>
   <div>
