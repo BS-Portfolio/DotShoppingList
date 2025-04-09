@@ -150,21 +150,18 @@ onMounted(() => {
       />
       <ul>
         <li v-for="(item, index) in shoppingList.items" :key="index" class="list-item">
-          <!-- Item Name -->
           <input
             v-model="item.name"
             class="editable-field"
             @keyup.enter="updateItem(item.itemID, item.name, item.quantity)"
           />
 
-          <!-- Item Quantity -->
           <input
             v-model="item.quantity"
             class="editable-field"
             @keyup.enter="updateItem(item.itemID, item.name, item.quantity)"
           />
 
-          <!-- Delete Button -->
           <button class="remove-button" @click="deleteItem(item.itemID)">×</button>
         </li>
       </ul>
