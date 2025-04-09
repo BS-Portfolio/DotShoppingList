@@ -1,0 +1,89 @@
+name: Testing
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: windows-latest
+    env:
+      DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
+      AZURE_PUBLISH_PROFILE: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+
+      - name: Restore dependencies
+        run: dotnet restore ShoppingListApi.Test
+
+      - name: Generate appsettings.json in ShoppingListApi
+        working-directory: ShoppingListApi
+        run: |
+          Write-Output "✅ Generating appsettings.json..."
+          $appsettings = @{
+            "ConnectionStrings" = @{
+              "Azure" = "$env:DB_CONNECTION_STRING"
+            }
+          } | ConvertTo-Json -Depth 3
+          $appsettings | Out-File -FilePath "appsettings.json" -Encoding UTF8
+          Write-Output "✅ appsettings.json created in ShoppingListApi"
+
+      - name: Run Unit and Integration Tests
+        working-directory: ShoppingListApi.Test
+        run: |
+          Write-Output "🚀 Running tests..."
+          dotnet test --logger:"trx;LogFileName=test-results.trx" --results-directory ./TestResults --verbosity normal
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ShoppingListApi.Test/TestResults
+
+      - name: Clean up appsettings.json from ShoppingListApi
+        if: always()
+        working-directory: ShoppingListApi
+        run: |
+          Write-Output "🧹 Removing appsettings.json..."
+          Remove-Item appsettings.json -Force
+          Write-Output "🧹 appsettings.json removed from ShoppingListApi"
+
+  deploy: # ✅ FIXED INDENTATION HERE
+    needs: test
+    runs-on: windows-latest
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.x"
+
+      - name: Publish the API
+        working-directory: ShoppingListApi
+        run: |
+          echo "🔧 Publishing API..."
+          dotnet publish -c Release -o publish
+          echo "✅ API published to /publish folder"
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+          package: ./ShoppingListApi/publish
+
+      - name: Confirm Deployment
+        run: |
+          echo "🚀 Deployment triggered to Azure App Service."
+          echo "You can check your web app in the Azure Portal or via the app's URL."
