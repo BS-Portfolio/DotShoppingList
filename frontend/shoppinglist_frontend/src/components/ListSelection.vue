@@ -117,6 +117,8 @@ onMounted(fetchShoppingLists);
 <template>
   <div>
     <h2>Shopping Lists</h2>
+
+    <!-- Show existing lists -->
     <ul v-if="shoppingLists.length">
       <li v-for="(list, index) in shoppingLists" :key="index" class="list-item">
         <div class="list-name">
@@ -137,17 +139,22 @@ onMounted(fetchShoppingLists);
           </span>
         </div>
       </li>
-      <li>
-        <input
-            v-model="newListName"
-            placeholder="Enter new list name"
-            @keyup.enter="createNewList"
-        />
-        <button @click="createNewList">Add List</button>
-      </li>
     </ul>
-    <p v-else-if="error">{{ error }}</p>
-    <p v-else>Loading...</p>
+
+    <!-- No lists -->
+    <div v-else>
+      <p>No shopping lists found.</p>
+    </div>
+
+    <!-- Always show add list input -->
+    <div class="add-list">
+      <input
+          v-model="newListName"
+          placeholder="Enter new list name"
+          @keyup.enter="createNewList"
+      />
+      <button @click="createNewList">Add List</button>
+    </div>
   </div>
 </template>
 
