@@ -153,18 +153,25 @@ onMounted(() => {
           <input
             v-model="item.name"
             class="editable-field"
-            @keyup.enter="updateItem(item.itemID, item.name, item.quantity)"
+            @keyup.enter="
+        updateItem(item.itemID, item.name, item.quantity);
+        ($event.target as HTMLInputElement).blur();
+      "
           />
 
           <input
             v-model="item.quantity"
             class="editable-field"
-            @keyup.enter="updateItem(item.itemID, item.name, item.quantity)"
+            @keyup.enter="
+        updateItem(item.itemID, item.name, item.quantity);
+        ($event.target as HTMLInputElement).blur();
+      "
           />
 
           <button class="remove-button" @click="deleteItem(item.itemID)">×</button>
         </li>
       </ul>
+
       <div v-if="successMessage" class="success">{{ successMessage }}</div>
     </div>
   </div>
