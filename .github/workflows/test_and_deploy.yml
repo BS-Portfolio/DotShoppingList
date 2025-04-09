@@ -12,10 +12,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 # Updated to v4
+        uses: actions/checkout@v4
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4 # Corrected to v4
+        uses: actions/setup-dotnet@v4
 
       - name: Restore dependencies
         run: dotnet restore ShoppingListApi.Test
@@ -40,7 +40,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4 # Updated to v4
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: ShoppingListApi.Test/TestResults
@@ -53,7 +53,7 @@ jobs:
           Remove-Item appsettings.json -Force
           Write-Output "🧹 appsettings.json removed from ShoppingListApi"
 
-    deploy:
+  deploy: # ✅ FIXED INDENTATION HERE
     needs: test
     runs-on: windows-latest
     environment: production
@@ -64,7 +64,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.x'
+          dotnet-version: "8.x"
 
       - name: Publish the API
         working-directory: ShoppingListApi
