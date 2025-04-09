@@ -1,0 +1,141 @@
+name: Run Tests and Deploy to Azure
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  test:
+    runs-on: windows-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+      DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
+      AZURE_PUBLISH_PROFILE: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.x"
+      
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: ./ShoppingListApi
+      
+      - name: Generate appsettings.json in ShoppingListApi
+        working-directory: ShoppingListApi
+        run: |
+          Write-Output "✅ Generating appsettings.json..."
+          $appsettings = @{
+            "ConnectionStrings" = @{
+              "Azure" = "$env:DB_CONNECTION_STRING"
+            }
+          } | ConvertTo-Json -Depth 3
+          $appsettings | Out-File -FilePath "appsettings.json" -Encoding UTF8
+          Write-Output "✅ appsettings.json created in ShoppingListApi"
+      
+      - name: Check code formatting
+        run: dotnet format ./ShoppingListApi/ShoppingListApi.sln --verify-no-changes
+      
+      - name: Check for vulnerable dependencies and log output
+        run: |
+          dotnet list package --vulnerable > ./vulnerability-report.txt || true
+          type ./vulnerability-report.txt
+        working-directory: ./ShoppingListApi
+      
+      - name: Upload vulnerability report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vulnerability-report
+          path: ./ShoppingListApi/vulnerability-report.txt
+      
+      - name: Build solution
+        run: dotnet build --no-restore
+        working-directory: ./ShoppingListApi
+      
+      - name: Create test results directory
+        working-directory: ./ShoppingListApi
+        run: |
+          if (!(Test-Path test-results)) {
+            New-Item -ItemType Directory -Path test-results -Force
+          }
+      
+      - name: Install Coverlet and ReportGenerator
+        run: |
+          dotnet tool install --global coverlet.console
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+          echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      
+      - name: Run Unit and Integration Tests
+        working-directory: ShoppingListApi.Test
+        run: |
+          Write-Output "🚀 Running tests..."
+          dotnet test --logger:"trx;LogFileName=test-results.trx" --results-directory ./TestResults --verbosity normal
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ShoppingListApi.Test/TestResults
+      
+      - name: Clean up appsettings.json from ShoppingListApi
+        if: always()
+        working-directory: ShoppingListApi
+        run: |
+          Write-Output "🧹 Removing appsettings.json..."
+          Remove-Item appsettings.json -Force -ErrorAction SilentlyContinue
+          Write-Output "🧹 appsettings.json removed from ShoppingListApi"
+  
+  deploy:
+    needs: test
+    runs-on: windows-latest
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.x"
+      
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: ./ShoppingListApi
+      
+      - name: Generate production appsettings.json
+        working-directory: ShoppingListApi
+        run: |
+          Write-Output "✅ Generating production appsettings.json..."
+          $appsettings = @{
+            "ConnectionStrings" = @{
+              "Azure" = "$env:DB_CONNECTION_STRING"
+            }
+          } | ConvertTo-Json -Depth 3
+          $appsettings | Out-File -FilePath "appsettings.json" -Encoding UTF8
+          $appsettings | Out-File -FilePath "appsettings.Production.json" -Encoding UTF8
+          Write-Output "✅ Production configuration created in ShoppingListApi"
+      
+      - name: Publish the API
+        working-directory: ShoppingListApi
+        run: |
+          echo "🔧 Publishing API..."
+          dotnet publish -c Release -o publish
+          echo "✅ API published to /publish folder"
+      
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+          package: ./ShoppingListApi/publish
+      
+      - name: Confirm Deployment
+        run: |
+          echo "🚀 Deployment triggered to Azure App Service."
+          echo "You can check your web app in the Azure Portal or via the app's URL."
