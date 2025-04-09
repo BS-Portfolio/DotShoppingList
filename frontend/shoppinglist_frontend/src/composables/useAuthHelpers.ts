@@ -14,7 +14,7 @@ export const useAuthHelpers = () => {
     saveToSession('isAuthenticated', true);
     if (userData) saveToSession('userData', userData);
     authStore.isAuthenticated = true;
-    await router.push('/');
+    await router.push('/dashboard');
   };
 
   const validateEmail = (email: string): boolean => {

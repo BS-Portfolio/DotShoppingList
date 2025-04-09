@@ -20,7 +20,6 @@ const logout = () => {
     <img alt="Shopping List logo" class="logo" src="@/assets/logo.png" width="125" height="125"/>
     <div class="wrapper">
       <nav>
-        <RouterLink to="/">Home</RouterLink>
         <RouterLink v-if="isAuthenticated" to="/dashboard">Dashboard</RouterLink>
         <button v-if="isAuthenticated" @click="logout" class="logout-button">Logout</button>
       </nav>

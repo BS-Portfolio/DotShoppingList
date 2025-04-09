@@ -2,6 +2,8 @@
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
+const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
 const shoppingList = ref<{
   shoppingListName: string;
   items: { itemID: string; name: string; quantity: string }[];
@@ -54,8 +56,7 @@ const loadShoppingList = async (listId: string) => {
   try {
     const { userID } = getUserData();
     const response = await fetchWithAuth(
-      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}`
-    );
+        `${baseUrl}/User/${userID}/ShoppingList/${listId}`);
     const data = await response.json();
     shoppingList.value = {
       shoppingListName: data.shoppingListName,
@@ -80,12 +81,12 @@ const addItem = async (input: string) => {
   try {
     const {userID} = getUserData();
     await fetchWithAuth(
-      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}/Item`,
-      {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({itemName: name, itemAmount: quantity}),
-      }
+        `${baseUrl}/User/${userID}/ShoppingList/${listId}/Item`,
+        {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({itemName: name, itemAmount: quantity}),
+        }
     );
     newItemInput.value = '';
     await handleSuccess('Item added successfully!');
@@ -100,15 +101,15 @@ const updateItem = async (itemID: string, name: string, quantity: string) => {
   try {
     const {userID} = getUserData();
     await fetchWithAuth(
-      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}/Item/${itemID}`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json-patch+json',
-          accept: 'text/plain',
-        },
-        body: JSON.stringify({newItemName: name, newItemAmount: quantity}),
-      }
+        `${baseUrl}User/${userID}/ShoppingList/${listId}/Item/${itemID}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json-patch+json',
+            accept: 'text/plain',
+          },
+          body: JSON.stringify({newItemName: name, newItemAmount: quantity}),
+        }
     );
     await handleSuccess('Item updated successfully!');
   } catch (err) {
@@ -120,11 +121,11 @@ const deleteItem = async (itemID: string) => {
   try {
     const {userID} = getUserData();
     await fetchWithAuth(
-      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}/Item/${itemID}`,
-      {
-        method: 'DELETE',
-        headers: {accept: 'text/plain'},
-      }
+        `${baseUrl}/User/${userID}/ShoppingList/${listId}/Item/${itemID}`,
+        {
+          method: 'DELETE',
+          headers: {accept: 'text/plain'},
+        }
     );
     await handleSuccess('Item deleted successfully!');
   } catch (err) {
@@ -148,26 +149,26 @@ onMounted(() => {
     <div v-else>
       <h2 class="list-name-header">{{ shoppingList.shoppingListName }}</h2>
       <input
-        v-model="newItemInput"
-        placeholder="Add a new item (e.g., 'Apples, 2 kg') ↵"
-        @keyup.enter="addItem(newItemInput)"
-        class="new-item-input"
+          v-model="newItemInput"
+          placeholder="Add a new item (e.g., 'Apples, 2 kg') ↵"
+          @keyup.enter="addItem(newItemInput)"
+          class="new-item-input"
       />
       <ul>
         <li v-for="(item, index) in shoppingList.items" :key="index" class="list-item">
           <input
-            v-model="item.name"
-            class="editable-field"
-            @keyup.enter="
+              v-model="item.name"
+              class="editable-field"
+              @keyup.enter="
         updateItem(item.itemID, item.name, item.quantity);
         ($event.target as HTMLInputElement).blur();
       "
           />
 
           <input
-            v-model="item.quantity"
-            class="editable-field"
-            @keyup.enter="
+              v-model="item.quantity"
+              class="editable-field"
+              @keyup.enter="
         updateItem(item.itemID, item.name, item.quantity);
         ($event.target as HTMLInputElement).blur();
       "

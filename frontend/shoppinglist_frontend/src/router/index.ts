@@ -10,7 +10,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
+      name: 'Shopping List',
       component: ShoppingListView,
       meta: {requiresAuth: true},
     },

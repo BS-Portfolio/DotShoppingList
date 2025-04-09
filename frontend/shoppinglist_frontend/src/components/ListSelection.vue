@@ -2,6 +2,8 @@
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
+const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
 const shoppingLists = ref<{
   shoppingListId: string;
   shoppingListName: string;
@@ -23,7 +25,7 @@ const fetchShoppingLists = async () => {
   try {
     const { userID, apiKey } = getUserData();
     const response = await fetch(
-      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/all`,
+      `${baseUrl}/User/${userID}/ShoppingList/all`,
       {
         method: 'GET',
         headers: {
@@ -60,7 +62,7 @@ const createNewList = async () => {
   try {
     const { userID, apiKey } = getUserData();
     const response = await fetch(
-      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList`,
+      `${baseUrl}/User/${userID}/ShoppingList`,
       {
         method: 'POST',
         headers: {
@@ -92,7 +94,7 @@ const removeList = async (listId: string) => {
     if (!confirmed) return;
 
     const response = await fetch(
-      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}`,
+      `${baseUrl}/User/${userID}/ShoppingList/${listId}`,
       {
         method: 'DELETE',
         headers: {
@@ -154,7 +156,7 @@ onMounted(fetchShoppingLists);
 
     <!-- No lists -->
     <div v-else>
-      <p>No shopping lists found.</p>
+      <p class="no-list-found">No shopping lists found.</p>
     </div>
 
     <!-- Always show add list input -->
@@ -182,6 +184,11 @@ li.list-item {
 li.list-item:hover {
   background-color: #f5a4b8;
   cursor: pointer;
+}
+
+.no-list-found {
+  font-size: 1rem;
+  text-align: center;
 }
 
 .list-name {
