@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import {onMounted, ref} from 'vue';
+import { onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 const shoppingList = ref<{
   shoppingListName: string;
@@ -12,7 +13,8 @@ const shoppingList = ref<{
 const error = ref<string | null>(null);
 const successMessage = ref<string | null>(null);
 const newItemInput = ref<string>('');
-const listId = 'b54c4bd7-0d64-4a2d-bef0-58e8b1002561';
+const route = useRoute();
+const listId = route.query.listId as string;
 
 const getUserData = () => {
   const userData = localStorage.getItem('userData');
@@ -21,7 +23,7 @@ const getUserData = () => {
 };
 
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
-  const {userID, apiKey} = getUserData();
+  const { userID, apiKey } = getUserData();
 
   const mergedOptions: RequestInit = {
     ...options,
@@ -50,7 +52,7 @@ const handleSuccess = async (message: string) => {
 
 const loadShoppingList = async (listId: string) => {
   try {
-    const {userID} = getUserData();
+    const { userID } = getUserData();
     const response = await fetchWithAuth(
       `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}`
     );
@@ -129,9 +131,12 @@ const deleteItem = async (itemID: string) => {
     error.value = (err as Error).message;
   }
 };
-
 onMounted(() => {
-  void loadShoppingList(listId);
+  if (listId) {
+    void loadShoppingList(listId);
+  } else {
+    error.value = 'No list selected.';
+  }
 });
 </script>
 

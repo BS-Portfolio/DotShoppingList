@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import {onMounted, ref} from 'vue';
+import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 const shoppingLists = ref<{
   shoppingListId: string;
@@ -10,6 +11,7 @@ const shoppingLists = ref<{
 }[]>([]);
 const error = ref<string | null>(null);
 const newListName = ref<string>('');
+const router = useRouter();
 
 const getUserData = () => {
   const userData = localStorage.getItem('userData');
@@ -19,17 +21,17 @@ const getUserData = () => {
 
 const fetchShoppingLists = async () => {
   try {
-    const {userID, apiKey} = getUserData();
+    const { userID, apiKey } = getUserData();
     const response = await fetch(
-        `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/all`,
-        {
-          method: 'GET',
-          headers: {
-            accept: 'text/plain',
-            'USER-KEY': apiKey,
-            'USER-ID': userID,
-          },
-        }
+      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/all`,
+      {
+        method: 'GET',
+        headers: {
+          accept: 'text/plain',
+          'USER-KEY': apiKey,
+          'USER-ID': userID,
+        },
+      }
     );
 
     if (!response.ok) {
@@ -44,7 +46,7 @@ const fetchShoppingLists = async () => {
       listOwner: `${list.listOwner.firstName} ${list.listOwner.lastName}`,
       itemCount: list.items.length,
       collaborators: list.collaborators.map(
-          (collaborator: any) => `${collaborator.firstName} ${collaborator.lastName}`
+        (collaborator: any) => `${collaborator.firstName} ${collaborator.lastName}`
       ),
     }));
   } catch (err) {
@@ -56,19 +58,19 @@ const createNewList = async () => {
   if (!newListName.value.trim()) return;
 
   try {
-    const {userID, apiKey} = getUserData();
+    const { userID, apiKey } = getUserData();
     const response = await fetch(
-        `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList`,
-        {
-          method: 'POST',
-          headers: {
-            accept: 'text/plain',
-            'USER-KEY': apiKey,
-            'USER-ID': userID,
-            'Content-Type': 'application/json-patch+json',
-          },
-          body: JSON.stringify(newListName.value),
-        }
+      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList`,
+      {
+        method: 'POST',
+        headers: {
+          accept: 'text/plain',
+          'USER-KEY': apiKey,
+          'USER-ID': userID,
+          'Content-Type': 'application/json-patch+json',
+        },
+        body: JSON.stringify(newListName.value),
+      }
     );
 
     if (!response.ok) {
@@ -85,20 +87,20 @@ const createNewList = async () => {
 
 const removeList = async (listId: string) => {
   try {
-    const {userID, apiKey} = getUserData();
+    const { userID, apiKey } = getUserData();
     const confirmed = confirm('Are you sure you want to delete this list?');
     if (!confirmed) return;
 
     const response = await fetch(
-        `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            accept: 'text/plain',
-            'USER-KEY': apiKey,
-            'USER-ID': userID,
-          },
-        }
+      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          accept: 'text/plain',
+          'USER-KEY': apiKey,
+          'USER-ID': userID,
+        },
+      }
     );
 
     if (!response.ok) {
@@ -111,6 +113,10 @@ const removeList = async (listId: string) => {
   }
 };
 
+const selectList = (listId: string) => {
+  router.push({ path: '/shopping-list', query: { listId } });
+};
+
 onMounted(fetchShoppingLists);
 </script>
 
@@ -120,10 +126,15 @@ onMounted(fetchShoppingLists);
 
     <!-- Show existing lists -->
     <ul v-if="shoppingLists.length">
-      <li v-for="(list, index) in shoppingLists" :key="index" class="list-item">
+      <li
+        v-for="(list, index) in shoppingLists"
+        :key="index"
+        class="list-item"
+        @click="selectList(list.shoppingListId)"
+      >
         <div class="list-name">
           {{ list.shoppingListName }}
-          <button class="remove-button" @click="removeList(list.shoppingListId)">x</button>
+          <button class="remove-button" @click.stop="removeList(list.shoppingListId)">x</button>
         </div>
         <div class="list-details">
           <span><strong>Owner:</strong> {{ list.listOwner }}</span>
@@ -149,9 +160,9 @@ onMounted(fetchShoppingLists);
     <!-- Always show add list input -->
     <div class="add-list">
       <input
-          v-model="newListName"
-          placeholder="Enter new list name"
-          @keyup.enter="createNewList"
+        v-model="newListName"
+        placeholder="Enter new list name"
+        @keyup.enter="createNewList"
       />
       <button @click="createNewList">Add List</button>
     </div>

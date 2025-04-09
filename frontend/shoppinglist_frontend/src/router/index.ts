@@ -4,7 +4,7 @@ import LoginView from '../views/LoginView.vue'
 import {useAuthStore} from '@/stores/auth'
 import DashboardView from "@/views/DashboardView.vue";
 import RegistrationView from "@/views/RegistrationView.vue";
-
+import ShoppingList from "@/components/ShoppingList.vue";
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -29,6 +29,12 @@ const router = createRouter({
       path: '/registration',
       name: 'registration',
       component: RegistrationView
+    },
+    {
+      path: '/shopping-list',
+      name: 'shopping-list',
+      component: ShoppingList,
+      meta: {requiresAuth: true},
     },
   ],
 })
