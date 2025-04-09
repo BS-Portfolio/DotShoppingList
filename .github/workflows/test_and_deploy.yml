@@ -53,29 +53,33 @@ jobs:
           Remove-Item appsettings.json -Force
           Write-Output "🧹 appsettings.json removed from ShoppingListApi"
 
-  deploy:
-    needs: test # Ensures this job runs only after the 'test' job is successful
+    deploy:
+    needs: test
     runs-on: windows-latest
-    environment: production # Can define your environment name if needed (for deployment tracking)
-    env:
-      AZURE_HTTP_LOGGING: true # Enable HTTP logging for Azure CLI
-      ACTIONS_STEP_DEBUG: true # Enable debug logging for the GitHub actions steps
-
+    environment: production
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 # Updated to v4
+        uses: actions/checkout@v4
 
-      - name: Set up Azure CLI
-        uses: azure/azure-cli-action@v1 # Corrected to azure/azure-cli-action@v1
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Publish the API
+        working-directory: ShoppingListApi
+        run: |
+          echo "🔧 Publishing API..."
+          dotnet publish -c Release -o publish
+          echo "✅ API published to /publish folder"
 
       - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2 # Latest version
+        uses: azure/webapps-deploy@v2
         with:
           publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
-          package: ./ShoppingListApi/bin/Release/net8.0/publish # Adjust the path to the published app package
+          package: ./ShoppingListApi/publish
 
-      - name: Verify Deployment
+      - name: Confirm Deployment
         run: |
-          echo "✅ Verifying the deployment..."
-          # You can use curl or another command to verify the app is running, e.g.,:
-          # curl https://$AZURE_WEBAPP_NAME.azurewebsites.net
+          echo "🚀 Deployment triggered to Azure App Service."
+          echo "You can check your web app in the Azure Portal or via the app's URL."
