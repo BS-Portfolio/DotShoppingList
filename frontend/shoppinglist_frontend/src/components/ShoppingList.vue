@@ -1,90 +1,186 @@
 <script setup lang="ts">
 import {onMounted, ref} from 'vue';
-import {useRouter} from 'vue-router';
 
-const router = useRouter();
+const shoppingList = ref<{
+  shoppingListName: string;
+  items: { itemID: string; name: string; quantity: string }[];
+}>({
+  shoppingListName: '',
+  items: [],
+});
+const error = ref<string | null>(null);
+const successMessage = ref<string | null>(null);
+const newItemName = ref<string>('');
+const newItemAmount = ref<string>('');
+const listId = '442f79cd-3724-4938-9ad2-4f5920b8bab6';
 
-const newItem = ref('');
-const items = ref<string[]>([]);
-const quantities = ref<string[]>([]);
-const editingState = ref<{
-  itemIndex: number | null,
-  quantityIndex: number | null
-}>({itemIndex: null, quantityIndex: null});
-
-const loadFromSession = (key: string) => JSON.parse(sessionStorage.getItem(key) || '[]');
-const saveToSession = (key: string, value: any) => sessionStorage.setItem(key, JSON.stringify(value));
-
-const loadItems = () => {
-  items.value = loadFromSession('shopping-list');
-  quantities.value = loadFromSession('shopping-list-quantities');
+const getUserData = () => {
+  const userData = localStorage.getItem('userData');
+  if (!userData) throw new Error('User data not found in session storage.');
+  return JSON.parse(userData);
 };
 
-const saveItems = () => {
-  saveToSession('shopping-list', items.value);
-  saveToSession('shopping-list-quantities', quantities.value);
-};
+const loadShoppingList = async (listId: string) => {
+  try {
+    const {userID, apiKey} = getUserData();
 
-const addItem = () => {
-  if (!newItem.value.trim()) return;
-  const [item, quantity] = newItem.value.split(',').map(part => part.trim());
-  items.value.push(item);
-  quantities.value.push(quantity || '1');
-  newItem.value = '';
-  saveItems();
-};
+    const response = await fetch(
+      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}`,
+      {
+        method: 'GET',
+        headers: {
+          accept: 'application/json',
+          'USER-KEY': apiKey,
+          'USER-ID': userID,
+        },
+      }
+    );
 
-const removeItem = (index: number) => {
-  items.value.splice(index, 1);
-  quantities.value.splice(index, 1);
-  saveItems();
-};
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
 
-const updateQuantity = (index: number, event: KeyboardEvent) => {
-  if (event.key === 'Enter' && editingState.value.quantityIndex === index) {
-    const target = event.target as HTMLInputElement;
-    quantities.value[index] = target.value.trim() || '1';
-    editingState.value.quantityIndex = null;
-    saveItems();
+    const data = await response.json();
+    shoppingList.value = {
+      shoppingListName: data.shoppingListName,
+      items: data.items.map((item: { itemID: string; itemName: string; itemAmount: string }) => ({
+        itemID: item.itemID,
+        name: item.itemName,
+        quantity: item.itemAmount,
+      })),
+    };
+  } catch (err) {
+    error.value = (err as Error).message;
   }
 };
 
-const updateItem = (index: number, event: KeyboardEvent) => {
-  if (event.key === 'Enter' && editingState.value.itemIndex === index) {
-    const target = event.target as HTMLInputElement;
-    items.value[index] = target.value.trim();
-    editingState.value.itemIndex = null;
-    saveItems();
+const addItem = async (name: string, quantity: string) => {
+  if (!name.trim() || !quantity.trim()) return;
+
+  try {
+    const {userID, apiKey} = getUserData();
+
+    const response = await fetch(
+      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}/Item`,
+      {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'USER-KEY': apiKey,
+          'USER-ID': userID,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({itemName: name, itemAmount: quantity}),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
+
+    successMessage.value = 'Item added successfully!';
+    setTimeout(() => (successMessage.value = null), 3000);
+    newItemName.value = '';
+    newItemAmount.value = '';
+    await loadShoppingList(listId);
+  } catch (err) {
+    error.value = (err as Error).message;
   }
 };
 
-const enableEditing = (index: number, type: 'item' | 'quantity') => {
-  if (type === 'item') {
-    editingState.value.itemIndex = index;
-  } else if (type === 'quantity') {
-    editingState.value.quantityIndex = index;
+const updateItem = async (itemID: string, name: string, quantity: string) => {
+  if (!name.trim() || !quantity.trim()) return;
+
+  try {
+    const {userID, apiKey} = getUserData();
+
+    const response = await fetch(
+      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}/Item/${itemID}`,
+      {
+        method: 'PATCH',
+        headers: {
+          accept: 'text/plain',
+          'USER-KEY': apiKey,
+          'USER-ID': userID,
+          'Content-Type': 'application/json-patch+json',
+        },
+        body: JSON.stringify({newItemName: name, newItemAmount: quantity}),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
+
+    successMessage.value = 'Item updated successfully!';
+    setTimeout(() => (successMessage.value = null), 3000);
+    await loadShoppingList(listId);
+  } catch (err) {
+    error.value = (err as Error).message;
   }
 };
 
-onMounted(loadItems);
+const deleteItem = async (itemID: string) => {
+  try {
+    const {userID, apiKey} = getUserData();
+
+    const response = await fetch(
+      `https://localhost:7191/ShoppingListApi/User/${userID}/ShoppingList/${listId}/Item/${itemID}`,
+      {
+        method: 'DELETE',
+        headers: {
+          accept: 'text/plain',
+          'USER-KEY': apiKey,
+          'USER-ID': userID,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
+
+    successMessage.value = 'Item deleted successfully!';
+    setTimeout(() => (successMessage.value = null), 3000);
+    await loadShoppingList(listId);
+  } catch (err) {
+    error.value = (err as Error).message;
+  }
+};
+
+onMounted(() => {
+  void loadShoppingList(listId);
+});
 </script>
 
 <template>
   <div>
-    <h1 class="caveat-brush-regular">Shopping List</h1>
-    <input v-model="newItem" @keyup.enter="addItem"
-           placeholder="Add a new item (e.g., 'Apples, 2 kg') &#9166"/>
-    <ul>
-      <li v-for="(item, index) in items" :key="index">
-        <input v-if="editingState.itemIndex === index" type="text" v-model="items[index]"
-               @keyup.enter="updateItem(index, $event)" class="item-input"/>
-        <span v-else @click="enableEditing(index, 'item')" class="item-name">{{ item }}</span>
-        <input v-if="editingState.quantityIndex === index" type="text" v-model="quantities[index]"
-               @keyup.enter="updateQuantity(index, $event)" class="quantity-input"/>
-        <span v-else @click="enableEditing(index, 'quantity')">{{ quantities[index] }}</span>
-        <button @click="removeItem(index)" class="remove-button">&times;</button>
-      </li>
-    </ul>
+    <h1 class="caveat-brush-regular">Edit Shopping List</h1>
+    <div v-if="error" class="error">{{ error }}</div>
+    <div v-else>
+      <input
+        v-model="shoppingList.shoppingListName"
+        placeholder="Shopping List Name"
+        class="list-name-input"
+      />
+      <ul>
+        <li v-for="(item, index) in shoppingList.items" :key="index" class="list-item">
+          <form @submit.prevent="updateItem(item.itemID, item.name, item.quantity)"
+                class="item-form">
+            <input v-model="item.name" placeholder="Item Name" class="item-input"/>
+            <input v-model="item.quantity" placeholder="Quantity" class="quantity-input"/>
+            <button type="submit">Update</button>
+          </form>
+          <button class="remove-button" @click="deleteItem(item.itemID)">x</button>
+        </li>
+      </ul>
+      <form @submit.prevent="addItem(newItemName, newItemAmount)">
+        <input v-model="newItemName" placeholder="Item Name"/>
+        <input v-model="newItemAmount" placeholder="Item Amount"/>
+        <button type="submit">Add Item</button>
+      </form>
+      <div v-if="successMessage" class="success">{{ successMessage }}</div>
+    </div>
   </div>
 </template>
 
@@ -118,13 +214,6 @@ li {
   justify-content: space-between;
   align-items: center;
   color: var(--color-primary);
-}
-
-.item-name {
-  width: 60%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 li:nth-child(even) {
