@@ -66,7 +66,7 @@ jobs:
         uses: actions/checkout@v4 # Updated to v4
 
       - name: Set up Azure CLI
-        uses: azure/setup-azure-cli@v2 # Latest version
+        uses: azure/azure-cli-action@v1 # Corrected to azure/azure-cli-action@v1
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2 # Latest version
