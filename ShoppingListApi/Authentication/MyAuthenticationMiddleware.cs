@@ -4,7 +4,6 @@ using System.Text.Json.Serialization.Metadata;
 using Newtonsoft.Json;
 using ShoppingListApi.Attributes;
 using ShoppingListApi.Configs;
-using ShoppingListApi.Controllers;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.ReturnTypes;
@@ -15,16 +14,16 @@ namespace ShoppingListApi.Authentication;
 public class MyAuthenticationMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly DatabaseService _databaseService;
+    private readonly MyAuthenticationService _myAuthenticationService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<MyAuthenticationMiddleware> _logger;
 
-    public MyAuthenticationMiddleware(RequestDelegate next, DatabaseService databaseService,
+    public MyAuthenticationMiddleware(RequestDelegate next, MyAuthenticationService myAuthenticationService,
         IConfiguration configuration,
         ILogger<MyAuthenticationMiddleware> logger)
     {
         _next = next;
-        _databaseService = databaseService;
+        _myAuthenticationService = myAuthenticationService;
         _configuration = configuration;
         _logger = logger;
     }
@@ -50,7 +49,7 @@ public class MyAuthenticationMiddleware
         {
             if (!context.Request.Headers.TryGetValue("X-API-KEY", out var extractedMasterKey))
             {
-                await HM.HandleAuthenticationResponse(401, AuthorizationErrorEnum.ApiKeyIsMissing, context);
+                await HM.HandleAuthenticationResponseAsync(401, AuthorizationErrorEnum.ApiKeyIsMissing, context);
                 return;
             }
 
@@ -58,13 +57,13 @@ public class MyAuthenticationMiddleware
 
             if (storedKey is null)
             {
-                await HM.HandleAuthenticationResponse(500, AuthorizationErrorEnum.ServiceNotAvailable, context);
+                await HM.HandleAuthenticationResponseAsync(500, AuthorizationErrorEnum.ServiceNotAvailable, context);
                 return;
             }
 
             if (!storedKey.Equals(extractedMasterKey))
             {
-                await HM.HandleAuthenticationResponse(401, AuthorizationErrorEnum.WrongApiKey, context);
+                await HM.HandleAuthenticationResponseAsync(401, AuthorizationErrorEnum.WrongApiKey, context);
                 return;
             }
 
@@ -78,7 +77,7 @@ public class MyAuthenticationMiddleware
 
         if (userIdExists is false || userKeyExists is false)
         {
-            await HM.HandleAuthenticationResponse(401, AuthorizationErrorEnum.UserCredentialsMissing, context);
+            await HM.HandleAuthenticationResponseAsync(401, AuthorizationErrorEnum.UserCredentialsMissing, context);
             return;
         }
 
@@ -86,7 +85,7 @@ public class MyAuthenticationMiddleware
         {
             Guid userId = Guid.Parse(userIdSv.ToString());
             string userApiKey = userApiKeySv.ToString();
-            var result = await _databaseService.AuthenticateAsync(userId, userApiKey);
+            var result = await _myAuthenticationService.AuthenticateAsync(userId, userApiKey);
 
             if (result.IsAuthenticated)
             {
@@ -96,19 +95,19 @@ public class MyAuthenticationMiddleware
 
             if (result.AccountExists is false)
             {
-                await HM.HandleAuthenticationResponse(401, AuthorizationErrorEnum.UserAccountNotFound, context);
+                await HM.HandleAuthenticationResponseAsync(401, AuthorizationErrorEnum.UserAccountNotFound, context);
                 return;
             }
 
             if (result.ApiKeyWasEqual is false)
             {
-                await HM.HandleAuthenticationResponse(401, AuthorizationErrorEnum.InvalidUserApiKey, context);
+                await HM.HandleAuthenticationResponseAsync(401, AuthorizationErrorEnum.InvalidUserApiKey, context);
                 return;
             }
 
             if (result.ApiKeyIsValid is false)
             {
-                await HM.HandleAuthenticationResponse(401, AuthorizationErrorEnum.ExpiredApiKey, context);
+                await HM.HandleAuthenticationResponseAsync(401, AuthorizationErrorEnum.ExpiredApiKey, context);
                 return;
             }
         }
@@ -116,7 +115,7 @@ public class MyAuthenticationMiddleware
         {
             _logger.LogWithLevel(LogLevel.Error, fEx, "0", fEx.Message,
                 nameof(MyAuthenticationMiddleware), nameof(InvokeAsync));
-            await HM.HandleAuthenticationResponse(40, AuthorizationErrorEnum.WrongFormat, context);
+            await HM.HandleAuthenticationResponseAsync(40, AuthorizationErrorEnum.WrongFormat, context);
         }
         catch (NumberedException nEx)
         {

@@ -8,7 +8,7 @@ namespace ShoppingListApi.Configs;
 
 public class HelperMethods
 {
-    internal static string GenerateApiKey()
+    public static string GenerateApiKey()
     {
         var randomBytes = new byte[32];
         using var rng = RandomNumberGenerator.Create();
@@ -16,7 +16,7 @@ public class HelperMethods
         return BitConverter.ToString(randomBytes).Replace("-", "");
     }
 
-    internal static async Task HandleAuthenticationResponse(int httpResponseCode, AuthorizationErrorEnum authEnum, HttpContext context)
+    internal static async Task HandleAuthenticationResponseAsync(int httpResponseCode, AuthorizationErrorEnum authEnum, HttpContext context)
     {
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = httpResponseCode;

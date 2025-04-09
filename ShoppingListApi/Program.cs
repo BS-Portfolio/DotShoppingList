@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.OpenApi.Models;
 using NLog;
 using NLog.Extensions.Logging;
@@ -24,7 +25,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Shopping List API", Version = "v1" });
-
 
     // 🔐 API Key Authentication (Only API Key)
     options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
@@ -53,7 +53,8 @@ builder.Services.AddSwaggerGen(options =>
         Type = SecuritySchemeType.ApiKey,
         Description = "Enter your User ID",
         Scheme = "UserIdScheme"
-    });
+    }
+    );
 
     // 🔐 Apply Security Policies
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -82,25 +83,32 @@ builder.Services.AddSwaggerGen(options =>
             new string[] { }
         }
     });
+    
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath);
+    
 });
 
 builder.Services.AddTransient<ConnectionStringService>();
 builder.Services.AddTransient<DatabaseService>();
+builder.Services.AddTransient<MyAuthenticationService>();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
         policy.AllowAnyOrigin() // allow specific origin
-            .WithMethods("GET");
+            .WithMethods("GET").WithHeaders("USER-ID", "USER-KEY", "X-API-KEY");
         policy.AllowAnyOrigin()
-            .WithMethods("POST").WithMethods("PATCH").WithMethods("DELETE").WithHeaders("X-Frontend")
-            .WithHeaders("accept")
-            .WithHeaders("content-type");
+            .WithMethods("POST", "PATCH", "DELETE")
+            .WithHeaders("X-Frontend", "accept", "content-type");
     });
 });
 
 var app = builder.Build();
+
+app.UseCors("AllowSpecificOrigins");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

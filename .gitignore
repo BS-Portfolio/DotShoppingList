@@ -144,5 +144,7 @@ ShoppingListApi/appsettings.json
 ShoppingListApi/appsettings.Development.json
 ShoppingListApi/appsettings.json
 
-# Node Modules
-/frontend/shoppinglist_frontend/node_modules
+
+# node modules
+
+frontend/shoppinglist_frontend/node_modules
