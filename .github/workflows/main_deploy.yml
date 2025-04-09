@@ -1,11 +1,11 @@
-name: Testing
+name: Run Testing and Deploy to Azure
 
 on:
   workflow_dispatch:
-#  push:
-#    branches: [main]
-#  pull_request:
-#    branches: [main]
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   test:
