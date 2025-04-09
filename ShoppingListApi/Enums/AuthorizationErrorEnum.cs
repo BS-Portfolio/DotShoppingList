@@ -23,5 +23,7 @@ public enum AuthorizationErrorEnum
     [Description("You are not part of this list!")]
     ListAccessNotGranted = 8,
     [Description("Your are not allowed to execute the requested action!")]
-    ActionNotAllowed = 9
+    ActionNotAllowed = 9,
+    [Description("Login failure!")]
+    LoginFailure = 10
 }

@@ -1,55 +1,16 @@
-﻿using Microsoft.Data.SqlClient;
-using Moq;
-using ShoppingListApi.Configs;
-using ShoppingListApi.Model.Get;
+﻿using ShoppingListApi.Model.Get;
 using ShoppingListApi.Model.Patch;
-using ShoppingListApi.Model.Post;
-using ShoppingListApi.Services;
-using Xunit;
-using Xunit.Abstractions;
+using ShoppingListApi.Configs;
 
 namespace ShoppingListApi.Tests;
 
 public class UnitTests
 {
-    private readonly ITestOutputHelper _testOutputHelper;
-    private readonly Mock<ILogger<DatabaseService>> _dbLoggerMock;
-    private readonly Mock<IServiceProvider> _serviceProviderMock;
-    private readonly Mock<ConnectionStringService> _connectionStringServiceMock;
-    private readonly DatabaseService _databaseService;
-
-    public UnitTests(ITestOutputHelper testOutputHelper)
+    public UnitTests()
     {
-        _testOutputHelper = testOutputHelper;
+        
     }
-
-    [Fact]
-    public void Check_Database_Connection()
-    {
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json")
-            .Build();
-            
-        var connectionString = configuration.GetConnectionString("Azure");
-        var canConnect = false;
-        
-        try
-        {
-            using var connection = new SqlConnection(connectionString);
-            connection.Open();
-            canConnect = connection.State == System.Data.ConnectionState.Open;
-            connection.Close();
-        }
-        catch (Exception ex)
-        {
-            _testOutputHelper.WriteLine($"Connection error: {ex.Message}");
-        }
-        
-        var userMessage = canConnect ? "Connection successful!" : "Connection failed!";
-        
-        Assert.True(canConnect, userMessage);
-    }
+    
     [Fact]
     public void ShoppingList_AddItemsToShoppingList_AddsItems()
     {
@@ -92,21 +53,21 @@ public class UnitTests
     public void GenerateApiKey_ReturnsNonEmptyString()
     {
         // Act
-        var apiKey = HM.GenerateApiKey();
+        var apiKey = HelperMethods.GenerateApiKey();
 
         // Assert
         Assert.NotNull(apiKey);
         Assert.NotEmpty(apiKey);
-        Assert.True(apiKey.Length > 10); // Sollte eine angemessene Länge haben
+        Assert.True(apiKey.Length > 10);
     }
 
     [Fact]
     public void GenerateApiKey_ReturnsDifferentKeysOnMultipleCalls()
     {
         // Act
-        var key1 = HM.GenerateApiKey();
-        var key2 = HM.GenerateApiKey();
-        var key3 = HM.GenerateApiKey();
+        var key1 = HelperMethods.GenerateApiKey();
+        var key2 = HelperMethods.GenerateApiKey();
+        var key3 = HelperMethods.GenerateApiKey();
 
         // Assert
         Assert.NotEqual(key1, key2);

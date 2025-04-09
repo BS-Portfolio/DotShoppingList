@@ -4,9 +4,14 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);1591</NoWarn> <!-- optional: suppress warnings about missing docs -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);1591</NoWarn> <!-- optional: suppress warnings about missing docs -->
     </PropertyGroup>
 
     <ItemGroup>
+<<<<<<< HEAD
         <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
         <PackageReference Include="coverlet.collector" Version="6.0.4">
           <PrivateAssets>all</PrivateAssets>
@@ -28,6 +33,19 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+=======
+        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3"/>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.14"/>
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1"/>
+        <PackageReference Include="NLog" Version="5.4.0"/>
+        <PackageReference Include="NLog.Web.AspNetCore" Version="5.4.0"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
+>>>>>>> develop_backend_Feature_ControllerEndpoints
+        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3"/>
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.14"/>
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1"/>
+        <PackageReference Include="NLog" Version="5.4.0"/>
+        <PackageReference Include="NLog.Web.AspNetCore" Version="5.4.0"/>
     </ItemGroup>
 
 </Project>
