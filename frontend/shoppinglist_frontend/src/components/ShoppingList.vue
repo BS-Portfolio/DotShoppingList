@@ -12,7 +12,7 @@ const shoppingList = ref<{
 const error = ref<string | null>(null);
 const successMessage = ref<string | null>(null);
 const newItemInput = ref<string>('');
-const listId = '442f79cd-3724-4938-9ad2-4f5920b8bab6';
+const listId = 'b54c4bd7-0d64-4a2d-bef0-58e8b1002561';
 
 const getUserData = () => {
   const userData = localStorage.getItem('userData');
@@ -144,27 +144,28 @@ onMounted(() => {
       <h2 class="list-name-header">{{ shoppingList.shoppingListName }}</h2>
       <input
         v-model="newItemInput"
-        placeholder="Add a new item (e.g., 'Apples, 2 kg') &#9166"
+        placeholder="Add a new item (e.g., 'Apples, 2 kg') ↵"
         @keyup.enter="addItem(newItemInput)"
+        class="new-item-input"
       />
       <ul>
         <li v-for="(item, index) in shoppingList.items" :key="index" class="list-item">
-          <form @submit.prevent="updateItem(item.itemID, item.name, item.quantity)"
-                class="item-form">
-            <input
-              v-model="item.name"
-              placeholder="Item Name"
-              class="item-input"
-              @keyup.enter="updateItem(item.itemID, item.name, item.quantity)"
-            />
-            <input
-              v-model="item.quantity"
-              placeholder="Quantity"
-              class="quantity-input"
-              @keyup.enter="updateItem(item.itemID, item.name, item.quantity)"
-            />
-          </form>
-          <button class="remove-button" @click="deleteItem(item.itemID)">x</button>
+          <!-- Item Name -->
+          <input
+            v-model="item.name"
+            class="editable-field"
+            @keyup.enter="updateItem(item.itemID, item.name, item.quantity)"
+          />
+
+          <!-- Item Quantity -->
+          <input
+            v-model="item.quantity"
+            class="editable-field"
+            @keyup.enter="updateItem(item.itemID, item.name, item.quantity)"
+          />
+
+          <!-- Delete Button -->
+          <button class="remove-button" @click="deleteItem(item.itemID)">×</button>
         </li>
       </ul>
       <div v-if="successMessage" class="success">{{ successMessage }}</div>
@@ -180,27 +181,16 @@ div {
   position: relative;
 }
 
-input {
-  width: 90%;
+.new-item-input {
+  width: 230%;
   height: 5vh;
   font-size: 25px;
-}
-
-.list-name-header {
-  font-size: 1.5rem;
-  color: var(--color-primary);
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-button {
-  margin-left: 0.5em;
 }
 
 ul {
   list-style-type: none;
   padding: 0;
-  width: 90%;
+  width: 230%;
 }
 
 li {
@@ -215,11 +205,21 @@ li:nth-child(even) {
   background-color: #fff8dc;
 }
 
-.item-input, .quantity-input {
-  width: 60%;
-  height: auto;
-  font-size: inherit;
-  margin: 0;
+.editable-field {
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--color-primary);
+  padding: 4px 8px;
+  width: 40%;
+  cursor: text;
+}
+
+.editable-field:focus {
+  background: transparent;
+  border: 1px solid var(--color-primary);
+  border-radius: 4px;
+  outline: none;
 }
 
 .remove-button {
@@ -228,5 +228,20 @@ li:nth-child(even) {
   border: none;
   cursor: pointer;
   font-size: 1.5em;
+}
+
+h1.caveat-brush-regular,
+h2.list-name-header {
+  color: var(--color-primary);
+}
+
+.error {
+  color: red;
+  margin-top: 1rem;
+}
+
+.success {
+  color: green;
+  margin-top: 1rem;
 }
 </style>
