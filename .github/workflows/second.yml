@@ -27,7 +27,7 @@ jobs:
         working-directory: ./ShoppingListApi
       
       - name: Generate appsettings.json in ShoppingListApi
-        working-directory: ShoppingListApi
+        working-directory: ./ShoppingListApi
         run: |
           Write-Output "✅ Generating appsettings.json..."
           $appsettings = @{
