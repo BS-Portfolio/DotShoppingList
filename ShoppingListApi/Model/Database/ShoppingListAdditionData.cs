@@ -4,9 +4,8 @@ namespace ShoppingListApi.Model.Database;
 
 public class ShoppingListAdditionData
 {
-    [Required] public string ShoppingListName { get; set; }
-
-    [Required] public Guid UserId { get; set; }
+    public string ShoppingListName { get; set; }
+    public Guid UserId { get; set; }
 
     public ShoppingListAdditionData(string shoppingListName, Guid userId)
     {
