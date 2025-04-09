@@ -44,3 +44,16 @@ username: dGVzdEB0ZXN0LnRlc3Q=
 pass: dGVzdDEyMzQ=
 
 id: 5224e325-ab2f-4bc8-b243-a6fcb0bad75b
+
+unit test user:
+
+UnitTester@admin.slp
+
+email: VW5pdFRlc3RlckBhZG1pbi5zbHA=
+password: YWRtaW5eI0AwN0tHdSY=
+
+id: 63ffeed9-3739-44a4-848b-447ce92b2817
+
+shoppingListId: 484d297a-228c-4631-9a26-cd56ac2ef8ec
+ItemId: 1e829305-850b-4fce-a6eb-58c83c984645 (Remove)
+

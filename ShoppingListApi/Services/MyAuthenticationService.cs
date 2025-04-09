@@ -1,5 +1,4 @@
 using ShoppingListApi.Configs;
-using ShoppingListApi.Controllers;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.ReturnTypes;
 
