@@ -33,7 +33,7 @@ const login = async () => {
     if (keyExpiryLogoutTimer) clearTimeout(keyExpiryLogoutTimer);
 
     keyExpiryWarningTimer = setTimeout(() => {
-      alert('Dein API Key läuft in 5 Minuten ab. In 3 Minuten wirst du automatisch ausgeloggt.');
+      alert('Your API key will expire in 5 minutes. You will be automatically logged out in 3 minutes.');
     }, 21300 * 1000);
 
     keyExpiryLogoutTimer = setTimeout(() => {
