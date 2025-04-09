@@ -7,7 +7,6 @@ public class NewItemData
 {
     public ItemPost ItemPost { get; }
     public Guid ShoppingListId { get; }
-
     public Guid ListOwnerId { get; }
     public Guid? RequestingUserId { get; }
 

@@ -6,7 +6,6 @@ public class AuthenticationReturn
     public bool IsAuthenticated { get; }
     public bool ApiKeyWasEqual { get; }
     public bool ApiKeyIsValid { get; }
-
     public bool? ProgramFailure { get; }
 
     public AuthenticationReturn(bool accountExists, bool isAuthenticated, bool apiKeyWasEqual, bool apiKeyIsValid,

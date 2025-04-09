@@ -110,7 +110,7 @@ public class ShoppingListApiController : ControllerBase
     }
 
     /// <summary>
-    /// user endpoint to get all the shopping lists for a user
+    /// user endpoint to get all the shopping lists for a user. The variable userId points to the list owner ID.
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="requestingUserId"></param>
@@ -165,7 +165,7 @@ public class ShoppingListApiController : ControllerBase
     }
 
     /// <summary>
-    /// user endpoint for retrieving a single shopping list by id 
+    /// user endpoint for retrieving a single shopping list by id. The variable userId points to the list owner ID.
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="shoppingListId"></param>
@@ -494,7 +494,7 @@ public class ShoppingListApiController : ControllerBase
     }
 
     /// <summary>
-    /// user endpoint to add a shopping list for a user. The max allowed amount of shopping lists for every user as list owner is 5.  
+    /// user endpoint to add a shopping list for a user. The max allowed amount of shopping lists for every user as list owner is 5. The variable userId points to the list owner ID.
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="shoppingListName"></param>
@@ -577,7 +577,7 @@ public class ShoppingListApiController : ControllerBase
     }
 
     /// <summary>
-    /// user endpoint to add a new item to a shopping list. The maximum allowed amount of items for any shopping list is 20.
+    /// user endpoint to add a new item to a shopping list. The maximum allowed amount of items for any shopping list is 20. The variable userId points to the list owner ID.
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="shoppingListId"></param>
@@ -640,7 +640,7 @@ public class ShoppingListApiController : ControllerBase
     }
 
     /// <summary>
-    /// user endpoint to add collaborators to a shopping list by the list admin.
+    /// user endpoint to add collaborators to a shopping list by the list admin. The variable userId points to the list owner ID.
     /// </summary>
     /// <param name="requestingUserId"></param>
     /// <param name="userId"></param>
@@ -770,7 +770,7 @@ public class ShoppingListApiController : ControllerBase
     }
 
     /// <summary>
-    /// user endpoint to modify the name of the shopping list by list owner.
+    /// user endpoint to modify the name of the shopping list by list owner. The variable userId points to the list owner ID.
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="shoppingListId"></param>
@@ -782,7 +782,7 @@ public class ShoppingListApiController : ControllerBase
     [ProducesResponseType<AuthenticationErrorResponse>(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType<string>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
-    [Route("User/{userId:Guid}/ShoppingList/{shoppingListId}")]
+    [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}")]
     public async Task<ActionResult> ModifyShoppingListName([FromRoute] Guid userId, [FromRoute] Guid shoppingListId,
         [FromBody] ShoppingListPatch shoppingListPatch, [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
     {
@@ -834,7 +834,7 @@ public class ShoppingListApiController : ControllerBase
     }
 
     /// <summary>
-    /// user endpoint to modify the detais of an item in the shopping list.
+    /// user endpoint to modify the details of an item in the shopping list. The variable userId points to the list owner ID.
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="shoppingListId"></param>
@@ -948,7 +948,7 @@ public class ShoppingListApiController : ControllerBase
     }
 
     /// <summary>
-    /// user endpoint to remove a shopping list for list owner
+    /// user endpoint to remove a shopping list for list owner. The variable userId points to the list owner ID.
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="shoppingListId"></param>
@@ -1014,7 +1014,7 @@ public class ShoppingListApiController : ControllerBase
     }
 
     /// <summary>
-    /// user endpoint to remove an item from the shopping list.
+    /// user endpoint to remove an item from the shopping list. The variable userId points to the list owner ID.
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="shoppingListId"></param>
@@ -1070,7 +1070,7 @@ public class ShoppingListApiController : ControllerBase
     }
 
     /// <summary>
-    /// user endpoint to remove a collaborator from a shopping list. Either the list owner kicks a collaborator or a collaborator leaves the list.
+    /// user endpoint to remove a collaborator from a shopping list. Either the list owner kicks a collaborator or a collaborator leaves the list. The variable userId points to the list owner ID.
     /// </summary>
     /// <param name="requestingUserId"></param>
     /// <param name="userId"></param>

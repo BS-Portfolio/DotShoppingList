@@ -1,12 +1,7 @@
-﻿using System.Net.Mime;
-using System.Text;
-using System.Text.Json.Serialization.Metadata;
-using Newtonsoft.Json;
-using ShoppingListApi.Attributes;
+﻿using ShoppingListApi.Attributes;
 using ShoppingListApi.Configs;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
-using ShoppingListApi.Model.ReturnTypes;
 using ShoppingListApi.Services;
 
 namespace ShoppingListApi.Authentication;
@@ -85,7 +80,7 @@ public class MyAuthenticationMiddleware
         {
             Guid userId = Guid.Parse(userIdSv.ToString());
             string userApiKey = userApiKeySv.ToString();
-            var result = await _myAuthenticationService.AuthenticateAsync(userId, userApiKey);
+            var result = await _myAuthenticationService .AuthenticateAsync(userId, userApiKey);
 
             if (result.IsAuthenticated)
             {

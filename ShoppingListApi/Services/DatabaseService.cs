@@ -365,88 +365,6 @@ public class DatabaseService
         }
     }
 
-    public async Task<int> GetShoppingListCountForUserAsync(Guid userId, SqlConnection sqlConnection)
-    {
-        int count = 0;
-        string query = "SELECT COUNT(DISTINCT ShoppingListID) FROM ListMember " +
-                       "WHERE UserRoleID IN (SELECT UserRoleID FROM UserRole WHERE UserRole.EnumIndex = @AdminUserRoleIndex) " +
-                       "AND UserID = @UserID";
-
-        await using SqlCommand countCommand = new(query, sqlConnection);
-
-        countCommand.Parameters.AddRange([
-            new SqlParameter() { ParameterName = "@UserID", Value = userId },
-            new SqlParameter() { ParameterName = "@AdminUserRoleIndex", Value = (int)UserRoleEnum.ListAdmin }
-        ]);
-
-        try
-        {
-            if (sqlConnection.State != ConnectionState.Open)
-            {
-                await sqlConnection.OpenAsync();
-            }
-
-            await using SqlDataReader sqlReader = await countCommand.ExecuteReaderAsync();
-
-            while (sqlReader.Read())
-            {
-                count = sqlReader.GetInt32(0);
-            }
-
-            return count;
-        }
-        catch (NumberedException)
-        {
-            throw;
-        }
-        catch (Exception e)
-        {
-            var numberedException = new NumberedException(e);
-            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetShoppingListCountForUserAsync));
-            throw numberedException;
-        }
-    }
-
-    public async Task<int> GetItemsCountForShoppingListAsync(Guid shoppingListId, SqlConnection sqlConnection)
-    {
-        int count = 0;
-        string query = "SELECT Count(DISTINCT ItemID) FROM Item " +
-                       "WHERE ShoppingListID = @ShoppingListID ";
-
-        await using SqlCommand countCommand = new(query, sqlConnection);
-
-        countCommand.Parameters.Add(new SqlParameter() { ParameterName = "@ShoppingListID", Value = shoppingListId });
-
-        try
-        {
-            if (sqlConnection.State != ConnectionState.Open)
-            {
-                await sqlConnection.OpenAsync();
-            }
-
-            await using SqlDataReader sqlReader = await countCommand.ExecuteReaderAsync();
-
-            while (sqlReader.Read())
-            {
-                count = sqlReader.GetInt32(0);
-            }
-
-            return count;
-        }
-        catch (NumberedException)
-        {
-            throw;
-        }
-        catch (Exception e)
-        {
-            var numberedException = new NumberedException(e);
-            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetItemsCountForShoppingListAsync));
-            throw numberedException;
-        }
-    }
-
     public async Task<CredentialsCheckReturn> CheckCredentialsAsync(LoginData loginData, SqlConnection sqlConnection)
     {
         string loginQuery =
@@ -563,60 +481,6 @@ public class DatabaseService
         }
     }
 
-    public async Task<Guid?> GetUserIdByEmailAsync(string emailAddress, SqlConnection sqlConnection)
-    {
-        List<Guid> loadedIds = [];
-
-        string query = "SELECT UserID FROM ListUser WHERE EmailAddress = @EmailAddress";
-
-        await using SqlCommand sqlCommand = new(query, sqlConnection);
-        sqlCommand.Parameters.Add(new SqlParameter() { ParameterName = "@EmailAddress", Value = emailAddress });
-
-
-        try
-        {
-            if (sqlConnection.State != ConnectionState.Open)
-            {
-                await sqlConnection.OpenAsync();
-            }
-
-            await using SqlDataReader sqlReader = await sqlCommand.ExecuteReaderAsync();
-
-            if (sqlReader.HasRows)
-            {
-                while (sqlReader.Read())
-                {
-                    loadedIds.Add(sqlReader.GetGuid(0));
-                }
-            }
-
-            sqlReader.Close();
-
-            if (loadedIds.Count == 0)
-            {
-                throw new RecordNotFoundException<string>(emailAddress);
-            }
-
-            if (loadedIds.Count > 1)
-            {
-                throw new MultipleUsersForEmailException(emailAddress, loadedIds);
-            }
-
-            return loadedIds[0];
-        }
-        catch (NumberedException)
-        {
-            throw;
-        }
-        catch (Exception e)
-        {
-            var numberedException = new NumberedException(e);
-            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetUserIdByEmailAsync));
-            throw numberedException;
-        }
-    }
-
     public async Task<ListUser?> GetUserAsync<T>(T identifier, string whereClause, SqlConnection sqlConnection)
     {
         var query =
@@ -673,7 +537,7 @@ public class DatabaseService
             throw numberedException;
         }
     }
-
+    
     public async Task<ListUser?> GetUserByEmailAddressAsync(string emailAddress, SqlConnection sqlConnection)
     {
         try
@@ -712,6 +576,60 @@ public class DatabaseService
         }
     }
 
+    public async Task<Guid?> GetUserIdByEmailAsync(string emailAddress, SqlConnection sqlConnection)
+    {
+        List<Guid> loadedIds = [];
+
+        string query = "SELECT UserID FROM ListUser WHERE EmailAddress = @EmailAddress";
+
+        await using SqlCommand sqlCommand = new(query, sqlConnection);
+        sqlCommand.Parameters.Add(new SqlParameter() { ParameterName = "@EmailAddress", Value = emailAddress });
+
+
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+
+            await using SqlDataReader sqlReader = await sqlCommand.ExecuteReaderAsync();
+
+            if (sqlReader.HasRows)
+            {
+                while (sqlReader.Read())
+                {
+                    loadedIds.Add(sqlReader.GetGuid(0));
+                }
+            }
+
+            sqlReader.Close();
+
+            if (loadedIds.Count == 0)
+            {
+                throw new RecordNotFoundException<string>(emailAddress);
+            }
+
+            if (loadedIds.Count > 1)
+            {
+                throw new MultipleUsersForEmailException(emailAddress, loadedIds);
+            }
+
+            return loadedIds[0];
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(GetUserIdByEmailAsync));
+            throw numberedException;
+        }
+    }
+    
     public async Task<ShoppingList?> GetShoppingListByIdAsync(Guid shoppingListId, SqlConnection sqlConnection)
     {
         var query =
@@ -1003,6 +921,88 @@ public class DatabaseService
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(DatabaseService), nameof(GetAllUsersAsync));
+            throw numberedException;
+        }
+    }
+
+    public async Task<int> GetShoppingListCountForUserAsync(Guid userId, SqlConnection sqlConnection)
+    {
+        int count = 0;
+        string query = "SELECT COUNT(DISTINCT ShoppingListID) FROM ListMember " +
+                       "WHERE UserRoleID IN (SELECT UserRoleID FROM UserRole WHERE UserRole.EnumIndex = @AdminUserRoleIndex) " +
+                       "AND UserID = @UserID";
+
+        await using SqlCommand countCommand = new(query, sqlConnection);
+
+        countCommand.Parameters.AddRange([
+            new SqlParameter() { ParameterName = "@UserID", Value = userId },
+            new SqlParameter() { ParameterName = "@AdminUserRoleIndex", Value = (int)UserRoleEnum.ListAdmin }
+        ]);
+
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+
+            await using SqlDataReader sqlReader = await countCommand.ExecuteReaderAsync();
+
+            while (sqlReader.Read())
+            {
+                count = sqlReader.GetInt32(0);
+            }
+
+            return count;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(GetShoppingListCountForUserAsync));
+            throw numberedException;
+        }
+    }
+
+    public async Task<int> GetItemsCountForShoppingListAsync(Guid shoppingListId, SqlConnection sqlConnection)
+    {
+        int count = 0;
+        string query = "SELECT Count(DISTINCT ItemID) FROM Item " +
+                       "WHERE ShoppingListID = @ShoppingListID ";
+
+        await using SqlCommand countCommand = new(query, sqlConnection);
+
+        countCommand.Parameters.Add(new SqlParameter() { ParameterName = "@ShoppingListID", Value = shoppingListId });
+
+        try
+        {
+            if (sqlConnection.State != ConnectionState.Open)
+            {
+                await sqlConnection.OpenAsync();
+            }
+
+            await using SqlDataReader sqlReader = await countCommand.ExecuteReaderAsync();
+
+            while (sqlReader.Read())
+            {
+                count = sqlReader.GetInt32(0);
+            }
+
+            return count;
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(GetItemsCountForShoppingListAsync));
             throw numberedException;
         }
     }
@@ -1920,7 +1920,10 @@ public class DatabaseService
             var parameters = new List<SqlParameter>
             {
                 new() { ParameterName = "@ItemID", Value = itemId, SqlDbType = SqlDbType.UniqueIdentifier },
-                new() { ParameterName = "@ShoppingListID", Value = shoppingListId, SqlDbType = SqlDbType.UniqueIdentifier }
+                new()
+                {
+                    ParameterName = "@ShoppingListID", Value = shoppingListId, SqlDbType = SqlDbType.UniqueIdentifier
+                }
             };
 
             if (!string.IsNullOrEmpty(itemPatch.NewItemName))
@@ -1940,7 +1943,8 @@ public class DatabaseService
                 return success;
             }
 
-            var query = $"UPDATE Item SET {string.Join(", ", updateParts)} WHERE ItemID = @ItemID AND ShoppingListID = @ShoppingListID";
+            var query =
+                $"UPDATE Item SET {string.Join(", ", updateParts)} WHERE ItemID = @ItemID AND ShoppingListID = @ShoppingListID";
 
             await using SqlCommand sqlCommand = new(query, sqlConnection);
             sqlCommand.Parameters.AddRange(parameters.ToArray());

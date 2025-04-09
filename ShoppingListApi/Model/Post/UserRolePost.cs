@@ -6,7 +6,7 @@ namespace ShoppingListApi.Model.Post;
 public class UserRolePost
 {
     [Required] public string UserRoleTitle { get; }
-    public UserRoleEnum UserRoleEnum { get; }
+    [Required] public UserRoleEnum UserRoleEnum { get; }
 
     public UserRolePost(string userRoleTitle, UserRoleEnum userRoleEnum)
     {
