@@ -1,4 +1,4 @@
-# LF8 - Shopping List
+# IT3b - LF8 Shoppinglist
 
 # Scrum Team Rollen
 Dieses Dokument beschreibt die Rollen innerhalb unseres Scrum-Teams im Rahmen des LF8-Projekts.  
