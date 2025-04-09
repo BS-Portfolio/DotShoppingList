@@ -40,16 +40,19 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore()
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
+  const authStore = useAuthStore();
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated && !isAuthenticated) {
-    next({name: 'login'})
+    next({ name: 'login' });
+  } else if (to.path === '/shopping-list' && !to.query.listId) {
+    next({ name: 'dashboard' });
   } else {
     if (isAuthenticated) {
-      authStore.isAuthenticated = true
+      authStore.isAuthenticated = true;
     }
-    next()
+    next();
   }
-})
+});
 
 export default router
