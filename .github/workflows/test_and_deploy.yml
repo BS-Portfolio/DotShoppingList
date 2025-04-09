@@ -23,6 +23,7 @@ jobs:
       - name: Generate appsettings.json in ShoppingListApi
         working-directory: ShoppingListApi
         run: |
+          Write-Output "✅ Generating appsettings.json..."
           $appsettings = @{
             "ConnectionStrings" = @{
               "Azure" = "$env:DB_CONNECTION_STRING"
@@ -48,6 +49,7 @@ jobs:
         if: always()
         working-directory: ShoppingListApi
         run: |
+          Write-Output "🧹 Removing appsettings.json..."
           Remove-Item appsettings.json -Force
           Write-Output "🧹 appsettings.json removed from ShoppingListApi"
 
@@ -55,16 +57,31 @@ jobs:
     needs: test # Ensures this job runs only after the 'test' job is successful
     runs-on: windows-latest
     environment: production # Can define your environment name if needed (for deployment tracking)
+    env:
+      AZURE_HTTP_LOGGING: true # Enable HTTP logging for Azure CLI
+      ACTIONS_STEP_DEBUG: true # Enable debug logging for the GitHub actions steps
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4 # Updated to v4
+        run: |
+          echo "✅ Checked out repository"
 
       - name: Set up Azure CLI
         uses: azure/setup-azure-cli@v2 # Latest version
+        run: |
+          echo "✅ Azure CLI setup completed"
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2 # Latest version
         with:
           publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
           package: ./ShoppingListApi/bin/Release/net8.0/publish # Adjust the path to the published app package
+        run: |
+          echo "✅ Deploying to Azure Web App..."
+          # You can use additional logging here if needed.
+
+      - name: Verify Deployment
+        run: |
+          echo "✅ Verifying the deployment..."
+          # Add any additional deployment verification commands if needed, such as curl to check app availability.
