@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import {ref} from 'vue';
 import {useAuthHelpers} from '@/composables/useAuthHelpers';
+import {useAuthStore} from '@/stores/auth';
 
 const username = ref('');
 const password = ref('');
+const authStore = useAuthStore();
 
 const {encode, handleLoginSuccess} = useAuthHelpers();
+let keyExpiryWarningTimer: ReturnType<typeof setTimeout> | null = null;
+let keyExpiryLogoutTimer: ReturnType<typeof setTimeout> | null = null;
 
 const login = async () => {
   const encodedEmail = encode(username.value);
@@ -24,6 +28,17 @@ const login = async () => {
         password: encodedPassword
       })
     });
+
+    if (keyExpiryWarningTimer) clearTimeout(keyExpiryWarningTimer);
+    if (keyExpiryLogoutTimer) clearTimeout(keyExpiryLogoutTimer);
+
+    keyExpiryWarningTimer = setTimeout(() => {
+      alert('Dein API Key läuft in 5 Minuten ab. In 3 Minuten wirst du automatisch ausgeloggt.');
+    }, 21300 * 1000);
+
+    keyExpiryLogoutTimer = setTimeout(() => {
+      authStore.logout();
+    }, 21600 * 1000);
 
     if (response.status === 200) {
       const responseData = await response.json();
