@@ -1,10 +1,11 @@
 name: main.yml
 
 on:
-  push:
-    branches: [ main, develop_backend ]
-  pull_request:
-    branches: [ main, develop_backend ]
+  workflow_dispatch:
+  # push:
+  #   branches: [main, develop_backend]
+  # pull_request:
+  #   branches: [main, develop_backend]
 
 jobs:
   build-test-deploy:
@@ -22,7 +23,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: "8.0.x"
 
       # Restore dependencies
       - name: Restore dependencies
