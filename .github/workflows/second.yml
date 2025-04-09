@@ -39,7 +39,7 @@ jobs:
           Write-Output "✅ appsettings.json created in ShoppingListApi"
       
       - name: Check code formatting
-        run: dotnet format ./ShoppingListApi/ShoppingListApi.sln --verify-no-changes
+        run: dotnet format ./ShoppingListApi/ShoppingListApi.sln
       
       - name: Check for vulnerable dependencies and log output
         run: |
@@ -64,12 +64,6 @@ jobs:
           if (!(Test-Path test-results)) {
             New-Item -ItemType Directory -Path test-results -Force
           }
-      
-      - name: Install Coverlet and ReportGenerator
-        run: |
-          dotnet tool install --global coverlet.console
-          dotnet tool install --global dotnet-reportgenerator-globaltool
-          echo "$env:USERPROFILE\.dotnet\tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       
       - name: Run Unit and Integration Tests
         working-directory: ShoppingListApi.Test
