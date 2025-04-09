@@ -143,3 +143,8 @@ src/.vs/config/applicationhost.config
 ShoppingListApi/appsettings.json
 ShoppingListApi/appsettings.Development.json
 ShoppingListApi/appsettings.json
+
+
+# node modules
+
+frontend/shoppinglist_frontend/node_modules
