@@ -101,6 +101,34 @@ public class DatabaseService
         }
     }
 
+    public async Task<T2> TestTransactionHandlerAsync<T2>(Func<SqlConnection, SqlTransaction, Task<T2>> action)
+    {
+        await using SqlConnection sqlConnection = new(_connectionString);
+        SqlTransaction? transaction = null;
+
+        try
+        {
+            await sqlConnection.OpenAsync();
+            transaction = sqlConnection.BeginTransaction(IsolationLevel.Snapshot);
+            var result = await action.Invoke(sqlConnection, transaction);
+
+            return result;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(DatabaseService), nameof(SqlConnectionHandlerAsync));
+            throw numberedException;
+        }
+        finally
+        {
+            transaction?.Rollback();
+            transaction?.Dispose();
+            await sqlConnection.CloseAsync();
+        }
+    }
+
     #endregion
 
     #region Checkers
@@ -419,10 +447,6 @@ public class DatabaseService
         }
     }
 
-    #endregion
-
-    #region Data-Reader
-
     public async Task<CredentialsCheckReturn> CheckCredentialsAsync(LoginData loginData, SqlConnection sqlConnection)
     {
         string loginQuery =
@@ -492,6 +516,10 @@ public class DatabaseService
             throw numberedException;
         }
     }
+
+    #endregion
+
+    #region Data-Reader
 
     public async Task<List<UserRole>> GetUserRolesAsync(SqlConnection sqlConnection)
     {
@@ -1165,11 +1193,16 @@ public class DatabaseService
     {
         const bool success = true;
 
+        if (newItemData.RequestingUserId is null)
+        {
+            return new ItemAdditionResult();
+        }
+
         try
         {
             var userRole =
                 await CheckUsersRoleInListAsync(
-                    new ShoppingListIdentificationData(newItemData.UserId, newItemData.ShoppingListId),
+                    new ShoppingListIdentificationData((Guid)newItemData.RequestingUserId, newItemData.ShoppingListId),
                     sqlConnection);
 
             if (userRole is null)
@@ -1220,7 +1253,7 @@ public class DatabaseService
                     modificationData.Identifier.shoppingListId),
                 sqlConnection);
 
-            if (userRole is null || userRole != UserRoleEnum.ListAdmin)
+            if (userRole is null or not UserRoleEnum.ListAdmin)
             {
                 return new UpdateResult(!success, !accessGranted);
             }
@@ -1270,7 +1303,9 @@ public class DatabaseService
             }
 
             var updateSuccess = await ModifyItemAsync(
-                new ModificationData<Guid, ItemPatch>(modificationData.Identifier.itemId, modificationData.Payload),
+                new ModificationData<(Guid itemId, Guid shoppingListId), ItemPatch>(
+                    (modificationData.Identifier.itemId, modificationData.Identifier.shoppingListId),
+                    modificationData.Payload),
                 sqlConnection);
 
             if (updateSuccess is false)
@@ -1311,7 +1346,7 @@ public class DatabaseService
 
             var userRole = await CheckUsersRoleInListAsync(data, sqlConnection);
 
-            if (userRole is null || userRole is not UserRoleEnum.ListAdmin)
+            if (userRole is null or not UserRoleEnum.ListAdmin)
             {
                 return new(!success, exists, !accessGranted);
             }
@@ -1355,7 +1390,7 @@ public class DatabaseService
                 return new UpdateResult(!success, !accessGranted);
             }
 
-            var result = await RemoveItemAsync(data.itemId, sqlConnection);
+            var result = await RemoveItemAsync(data, sqlConnection);
 
             if (result is false)
             {
@@ -1618,7 +1653,7 @@ public class DatabaseService
     }
 
     public async Task<(bool success, Guid? listID)> AddShoppingListAsync(string shoppingListName,
-        SqlConnection sqlConnection)
+        SqlConnection sqlConnection, SqlTransaction? transaction = null)
     {
         var addQuery =
             "INSERT INTO ShoppingList (ShoppingListID, ShoppingListName) "
@@ -1635,7 +1670,7 @@ public class DatabaseService
 
         try
         {
-            bool successCheck = await AddRecordAsync(addQuery, parameters, sqlConnection);
+            bool successCheck = await AddRecordAsync(addQuery, parameters, sqlConnection, transaction);
 
             if (successCheck is false)
             {
@@ -1658,7 +1693,7 @@ public class DatabaseService
     }
 
     public async Task<(bool success, Guid? itemId)> AddItemToShoppingListAsync(NewItemData newItemData,
-        SqlConnection sqlConnection)
+        SqlConnection sqlConnection, SqlTransaction? transaction = null)
     {
         var addQuery =
             "INSERT INTO Item (ItemID, ShoppingListID, ItemName, ItemAmount) "
@@ -1681,7 +1716,7 @@ public class DatabaseService
 
         try
         {
-            var successCheck = await AddRecordAsync(addQuery, parameters, sqlConnection);
+            var successCheck = await AddRecordAsync(addQuery, parameters, sqlConnection, transaction);
 
             if (successCheck is false)
             {
@@ -1817,7 +1852,7 @@ public class DatabaseService
 
     public async Task<bool> ModifyShoppingListNameAsync(
         ModificationData<Guid, ShoppingListPatch> shoppingListModificationData,
-        SqlConnection sqlConnection)
+        SqlConnection sqlConnection, SqlTransaction? transaction = null)
     {
         var listId = shoppingListModificationData.Identifier;
         var listPatch = shoppingListModificationData.Payload;
@@ -1835,6 +1870,11 @@ public class DatabaseService
 
         await using SqlCommand sqlCommand = new(query, sqlConnection);
         sqlCommand.Parameters.AddRange(parameters.ToArray());
+
+        if (transaction is not null)
+        {
+            sqlCommand.Transaction = transaction;
+        }
 
         try
         {
@@ -1865,10 +1905,12 @@ public class DatabaseService
         }
     }
 
-    public async Task<bool> ModifyItemAsync(ModificationData<Guid, ItemPatch> itemModificationData,
+    public async Task<bool> ModifyItemAsync(
+        ModificationData<(Guid itemId, Guid shoppingListId), ItemPatch> itemModificationData,
         SqlConnection sqlConnection)
     {
-        Guid itemId = itemModificationData.Identifier;
+        Guid itemId = itemModificationData.Identifier.itemId;
+        Guid shoppingListId = itemModificationData.Identifier.shoppingListId;
         ItemPatch itemPatch = itemModificationData.Payload;
         const bool success = true;
 
@@ -1877,7 +1919,8 @@ public class DatabaseService
             var updateParts = new List<string>();
             var parameters = new List<SqlParameter>
             {
-                new() { ParameterName = "@ItemID", Value = itemId, SqlDbType = SqlDbType.UniqueIdentifier }
+                new() { ParameterName = "@ItemID", Value = itemId, SqlDbType = SqlDbType.UniqueIdentifier },
+                new() { ParameterName = "@ShoppingListID", Value = shoppingListId, SqlDbType = SqlDbType.UniqueIdentifier }
             };
 
             if (!string.IsNullOrEmpty(itemPatch.NewItemName))
@@ -1897,7 +1940,7 @@ public class DatabaseService
                 return success;
             }
 
-            var query = $"UPDATE Item SET {string.Join(", ", updateParts)} WHERE ItemID = @ItemID";
+            var query = $"UPDATE Item SET {string.Join(", ", updateParts)} WHERE ItemID = @ItemID AND ShoppingListID = @ShoppingListID";
 
             await using SqlCommand sqlCommand = new(query, sqlConnection);
             sqlCommand.Parameters.AddRange(parameters.ToArray());
@@ -2066,17 +2109,28 @@ public class DatabaseService
         }
     }
 
-    public async Task<bool> RemoveItemAsync(Guid itemId, SqlConnection sqlConnection)
+    public async Task<bool> RemoveItemAsync(ItemIdentificationData data, SqlConnection sqlConnection,
+        SqlTransaction? transaction = null)
     {
-        var query = "DELETE FROM Item WHERE ItemID = @ItemID";
+        var query = "DELETE FROM Item WHERE ItemID = @ItemID AND ShoppingListID = @ShoppingListID";
 
         List<SqlParameter> parameters =
         [
-            new SqlParameter() { ParameterName = "@ItemID", Value = itemId, SqlDbType = SqlDbType.UniqueIdentifier }
+            new SqlParameter()
+                { ParameterName = "@ItemID", Value = data.itemId, SqlDbType = SqlDbType.UniqueIdentifier },
+            new SqlParameter()
+            {
+                ParameterName = "@ShoppingListID", Value = data.ShoppingListId, SqlDbType = SqlDbType.UniqueIdentifier
+            }
         ];
 
         await using SqlCommand sqlCommand = new(query, sqlConnection);
         sqlCommand.Parameters.AddRange(parameters.ToArray());
+
+        if (transaction is not null)
+        {
+            sqlCommand.Transaction = transaction;
+        }
 
         try
         {
@@ -2087,7 +2141,7 @@ public class DatabaseService
 
             var result = await sqlCommand.ExecuteNonQueryAsync();
 
-            return result > 0;
+            return result == 1;
         }
         catch (NumberedException)
         {

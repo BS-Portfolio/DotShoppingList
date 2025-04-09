@@ -9,7 +9,7 @@ public class ItemPost
     [Required]
     public string ItemAmount { get; set; }
 
-    public ItemPost(string itemName, string itemUnit, string itemAmount)
+    public ItemPost(string itemName, string itemAmount)
     {
         ItemName = itemName;
         ItemAmount = itemAmount;

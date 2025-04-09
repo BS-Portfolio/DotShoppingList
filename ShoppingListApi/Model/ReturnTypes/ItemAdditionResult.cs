@@ -4,7 +4,7 @@ public class ItemAdditionResult
 {
     public bool Success { get; private set; }
     public Guid? ItemId { get; private set; }
-    public bool MaximumCountReached { get; private set; }
+    public bool? MaximumCountReached { get; private set; }
     public bool AccessGranted { get; }
 
     public ItemAdditionResult(bool success, bool maximumCountReached, Guid? itemId, bool accessGranted = true)
@@ -13,5 +13,13 @@ public class ItemAdditionResult
         MaximumCountReached = maximumCountReached;
         ItemId = itemId;
         AccessGranted = accessGranted;
+    }
+
+    public ItemAdditionResult()
+    {
+        Success = false;
+        ItemId = null;
+        MaximumCountReached = null;
+        AccessGranted = false;
     }
 }
