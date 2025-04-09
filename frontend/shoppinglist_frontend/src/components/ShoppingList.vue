@@ -11,8 +11,7 @@ const shoppingList = ref<{
 
 const error = ref<string | null>(null);
 const successMessage = ref<string | null>(null);
-const newItemName = ref<string>('');
-const newItemAmount = ref<string>('');
+const newItemInput = ref<string>('');
 const listId = '442f79cd-3724-4938-9ad2-4f5920b8bab6';
 
 const getUserData = () => {
@@ -69,8 +68,12 @@ const loadShoppingList = async (listId: string) => {
   }
 };
 
-const addItem = async (name: string, quantity: string) => {
-  if (!name.trim() || !quantity.trim()) return;
+const addItem = async (input: string) => {
+  const [name, quantity] = input.split(',').map((str) => str.trim());
+  if (!name || !quantity) {
+    error.value = 'Invalid input. Use the format "ItemName, Amount".';
+    return;
+  }
 
   try {
     const {userID} = getUserData();
@@ -82,8 +85,7 @@ const addItem = async (name: string, quantity: string) => {
         body: JSON.stringify({itemName: name, itemAmount: quantity}),
       }
     );
-    newItemName.value = '';
-    newItemAmount.value = '';
+    newItemInput.value = '';
     await handleSuccess('Item added successfully!');
   } catch (err) {
     error.value = (err as Error).message;
@@ -136,30 +138,35 @@ onMounted(() => {
 
 <template>
   <div>
-    <h1 class="caveat-brush-regular">Edit Shopping List</h1>
+    <h1 class="caveat-brush-regular">Shopping List</h1>
     <div v-if="error" class="error">{{ error }}</div>
     <div v-else>
+      <h2 class="list-name-header">{{ shoppingList.shoppingListName }}</h2>
       <input
-        v-model="shoppingList.shoppingListName"
-        placeholder="Shopping List Name"
-        class="list-name-input"
+        v-model="newItemInput"
+        placeholder="Add a new item (e.g., 'Apples, 2 kg') &#9166"
+        @keyup.enter="addItem(newItemInput)"
       />
       <ul>
         <li v-for="(item, index) in shoppingList.items" :key="index" class="list-item">
           <form @submit.prevent="updateItem(item.itemID, item.name, item.quantity)"
                 class="item-form">
-            <input v-model="item.name" placeholder="Item Name" class="item-input"/>
-            <input v-model="item.quantity" placeholder="Quantity" class="quantity-input"/>
-            <button type="submit">Update</button>
+            <input
+              v-model="item.name"
+              placeholder="Item Name"
+              class="item-input"
+              @keyup.enter="updateItem(item.itemID, item.name, item.quantity)"
+            />
+            <input
+              v-model="item.quantity"
+              placeholder="Quantity"
+              class="quantity-input"
+              @keyup.enter="updateItem(item.itemID, item.name, item.quantity)"
+            />
           </form>
           <button class="remove-button" @click="deleteItem(item.itemID)">x</button>
         </li>
       </ul>
-      <form @submit.prevent="addItem(newItemName, newItemAmount)">
-        <input v-model="newItemName" placeholder="Item Name"/>
-        <input v-model="newItemAmount" placeholder="Item Amount"/>
-        <button type="submit">Add Item</button>
-      </form>
       <div v-if="successMessage" class="success">{{ successMessage }}</div>
     </div>
   </div>
@@ -177,6 +184,13 @@ input {
   width: 90%;
   height: 5vh;
   font-size: 25px;
+}
+
+.list-name-header {
+  font-size: 1.5rem;
+  color: var(--color-primary);
+  text-align: center;
+  margin-bottom: 1rem;
 }
 
 button {
