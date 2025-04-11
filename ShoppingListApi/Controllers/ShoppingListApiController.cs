@@ -4,6 +4,7 @@ using ShoppingListApi.Configs;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.Database;
+using ShoppingListApi.Model.Delete;
 using ShoppingListApi.Model.Get;
 using ShoppingListApi.Model.Patch;
 using ShoppingListApi.Model.Post;
@@ -910,9 +911,11 @@ public class ShoppingListApiController : ControllerBase
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<int>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
-    [Route("User/{emailAddress}")]
-    public async Task<ActionResult> RemoveUserByEmailAddress([FromRoute] string emailAddress)
+    [Route("User")]
+    public async Task<ActionResult> RemoveUserByEmailAddress([FromBody] ListUserDelete listUser)
     {
+        string emailAddress = listUser.EmailAddress;
+        
         try
         {
             var result = await _databaseService
