@@ -911,8 +911,8 @@ public class ShoppingListApiController : ControllerBase
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<int>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
-    [Route("User/{emailAddress}")]
-    public async Task<ActionResult> RemoveUserByEmailAddress([FromRoute] string emailAddress)
+    [Route("User")]
+    public async Task<ActionResult> RemoveUserByEmailAddress([FromQuery] string emailAddress)
     {
         try
         {
