@@ -1,7 +1,7 @@
-# IT3b - LF810 Shoppinglist
+# IT3b - LF8 Shoppinglist
 
 # Scrum Team Rollen
-Dieses Dokument beschreibt die Rollen innerhalb unseres Scrum-Teams im Rahmen des LF10-Projekts.  
+Dieses Dokument beschreibt die Rollen innerhalb unseres Scrum-Teams im Rahmen des LF8-Projekts.  
 Unser Ziel ist es, eine Softwarelösung zu entwickeln, die Daten aus verschiedenen Quellen kombiniert und bereitstellt.
 
 ## Product Owner
@@ -11,7 +11,8 @@ Unser Ziel ist es, eine Softwarelösung zu entwickeln, die Daten aus verschieden
 **Maurice** - Unterstützt das Team, moderiert Meetings und entfernt Blocker.
 
 ## Entwicklungsteam
-- **Milad** - Backend-Entwicklung
+- **Milad** - Lead-Entwicklung
+- **Leon** - Backend-Entwicklung
 - **Fynn** - Frontend-Entwicklung, Untertützung Backend
 - **Maurice** - Frontend-Entwicklung, Unterstützung Backend
 
@@ -23,7 +24,7 @@ Unser Ziel ist es, eine Softwarelösung zu entwickeln, die Daten aus verschieden
 ## Genutzte Tools
 - **GitHub** – Code-Versionierung & Pull Requests
 - **Git Fork / Github Desktop** – GUI für Git
-- **Webex** – Team-Kommunikation
+- **Webex** – Team-Kommunikation  
 - **JetBrains Rider** – IDE für die Entwicklung
 - **Microsoft SQL Server Management Studio / JetBrains Datagrip** - Datenbankverwaltung
 
