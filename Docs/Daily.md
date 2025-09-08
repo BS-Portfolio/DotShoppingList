@@ -1,3 +1,12 @@
+# Montag, 08.09.25
+
+## Tasks:
+- Design thinking Dokumentation fertigstellen
+- Refactoring entity Framework
+
+## Blocker:
+-
+
 # Freitag, 05.09.25
 
 ## Tasks:
