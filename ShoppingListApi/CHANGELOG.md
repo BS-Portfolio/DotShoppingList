@@ -14,7 +14,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Database Provider ADO.NET as the mediator between the API and the database
 - Added Database scheme
 - Added the Class diagram for the API
-- Added front end application in Vue.js with TypeScript
 - Added github workflow to deploy the API as Azure Web App
 - Added activity diagram to depict the deployment workflow
 
