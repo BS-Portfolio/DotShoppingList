@@ -1,4 +1,15 @@
-# Montag, 08.09.25
+# Dienstag, 09.09.25
+
+## Tasks:
+- Azure SPA Deployment
+- Refactoring EF & DB Context
+- Frontend Refactor
+- Github Organisation & Access Management
+
+## Blocker:
+- 
+
+Montag, 08.09.25
 
 ## Tasks:
 - Design thinking Dokumentation fertigstellen
