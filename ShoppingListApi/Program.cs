@@ -1,10 +1,12 @@
 using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using NLog;
 using NLog.Extensions.Logging;
 using ShoppingListApi.Services;
 using Newtonsoft.Json;
 using ShoppingListApi.Authentication;
+using ShoppingListApi.Data.Contexts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -89,6 +91,9 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(xmlPath);
     
 });
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DotShoppingListStoreLocal")));
 
 builder.Services.AddTransient<ConnectionStringService>();
 builder.Services.AddTransient<DatabaseService>();
