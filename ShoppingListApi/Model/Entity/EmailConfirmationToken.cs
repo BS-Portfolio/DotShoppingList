@@ -5,7 +5,8 @@ namespace ShoppingListApi.Model.Entity;
 
 public class EmailConfirmationToken
 {
-    public Guid EmailConfirmationTokeId { get; set; }
+    [Key]
+    public Guid EmailConfirmationTokenId { get; set; }
 
     public Guid UserId { get; set; }
 

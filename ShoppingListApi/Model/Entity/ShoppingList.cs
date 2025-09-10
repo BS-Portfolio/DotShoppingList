@@ -4,6 +4,7 @@ namespace ShoppingListApi.Model.Entity;
 
 public class ShoppingList()
 {
+    [Key]
     public Guid ShoppingListId { get; set; }
 
     [MaxLength(50)]
