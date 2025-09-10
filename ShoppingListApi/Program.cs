@@ -1,7 +1,6 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using NLog;
 using NLog.Extensions.Logging;
 using ShoppingListApi.Services;
 using Newtonsoft.Json;
@@ -21,7 +20,7 @@ builder.Services.AddControllers().AddNewtonsoftJson(options =>
     options.SerializerSettings.Formatting = Formatting.Indented; // Pretty-print JSON
     options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore; // Ignore null values in JSON output
 });
-;
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
