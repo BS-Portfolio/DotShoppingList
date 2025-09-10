@@ -1,3 +1,14 @@
+# Mittwoch, 10.09.25
+
+## Tasks:
+- Peerfeedback
+- Retro
+- Frontend Refactor
+- Refactoring EF & DB Context
+
+## Blocker:
+-
+
 # Dienstag, 09.09.25
 
 ## Tasks:
