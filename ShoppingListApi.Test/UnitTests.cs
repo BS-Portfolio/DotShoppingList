@@ -1,5 +1,5 @@
-﻿using ShoppingListApi.Model.Get;
-using ShoppingListApi.Model.Patch;
+﻿using ShoppingListApi.Model.DTOs.Get;
+using ShoppingListApi.Model.DTOs.Patch;
 using ShoppingListApi.Configs;
 
 namespace ShoppingListApi.Tests;
@@ -16,13 +16,13 @@ public class UnitTests
     {
         // Arrange
         var listId = Guid.NewGuid();
-        var owner = new ListUserMinimal(Guid.NewGuid(), "John", "Doe", "john@example.com");
-        var shoppingList = new ShoppingList(listId, "Grocery List", owner);
+        var owner = new ListUserMinimalGetDto(Guid.NewGuid(), "John", "Doe", "john@example.com");
+        var shoppingList = new ShoppingListGetDto(listId, "Grocery List", owner);
         
-        var items = new List<Item>
+        var items = new List<ItemGetDto>
         {
-            new Item(Guid.NewGuid(), "Milk", "2 liters"),
-            new Item(Guid.NewGuid(), "Bread", "1 loaf")
+            new ItemGetDto(Guid.NewGuid(), "Milk", "2 liters"),
+            new ItemGetDto(Guid.NewGuid(), "Bread", "1 loaf")
         };
 
         // Act
@@ -42,7 +42,7 @@ public class UnitTests
         var newAmount = "New Amount";
 
         // Act
-        var itemPatch = new ItemPatch(newName, newAmount);
+        var itemPatch = new ItemPatchDto(newName, newAmount);
 
         // Assert
         Assert.Equal(newName, itemPatch.NewItemName);
@@ -92,7 +92,7 @@ public class UnitTests
         var enumIndex = (int)Enums.UserRoleEnum.ListAdmin;
 
         // Act
-        var userRole = new UserRole(roleId, roleTitle, enumIndex);
+        var userRole = new UserRoleGetDto(roleId, roleTitle, enumIndex);
 
         // Assert
         Assert.Equal(roleId, userRole.UserRoleId);

@@ -1,11 +1,11 @@
-﻿namespace ShoppingListApi.Model.Patch;
+﻿namespace ShoppingListApi.Model.DTOs.Patch;
 
-public class ItemPatch
+public class ItemPatchDto
 {
     public string? NewItemName { get; set; }
     public string? NewItemAmount { get; set; }
 
-    public ItemPatch(string? newItemName, string? newItemAmount)
+    public ItemPatchDto(string? newItemName, string? newItemAmount)
     {
         NewItemName = newItemName;
         NewItemAmount = newItemAmount;

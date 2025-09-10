@@ -1,18 +1,18 @@
-using ShoppingListApi.Enums;
-using ShoppingListApi.Model.Post;
+
+using ShoppingListApi.Model.DTOs.Post;
 
 namespace ShoppingListApi.Model.Database;
 
 public class NewItemData
 {
-    public ItemPost ItemPost { get; }
+    public ItemPostDto ItemPostDto { get; }
     public Guid ShoppingListId { get; }
     public Guid ListOwnerId { get; }
     public Guid? RequestingUserId { get; }
 
-    public NewItemData(ItemPost itemPost, Guid shoppingListId, Guid listOwnerId, Guid? requestingUserId = null)
+    public NewItemData(ItemPostDto itemPostDto, Guid shoppingListId, Guid listOwnerId, Guid? requestingUserId = null)
     {
-        this.ItemPost = itemPost;
+        this.ItemPostDto = itemPostDto;
         ShoppingListId = shoppingListId;
         ListOwnerId = listOwnerId;
         RequestingUserId = requestingUserId;

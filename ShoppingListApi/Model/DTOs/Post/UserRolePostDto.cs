@@ -1,14 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using ShoppingListApi.Enums;
 
-namespace ShoppingListApi.Model.Post;
+namespace ShoppingListApi.Model.DTOs.Post;
 
-public class UserRolePost
+public class UserRolePostDto
 {
     [Required] public string UserRoleTitle { get; }
     [Required] public UserRoleEnum UserRoleEnum { get; }
 
-    public UserRolePost(string userRoleTitle, UserRoleEnum userRoleEnum)
+    public UserRolePostDto(string userRoleTitle, UserRoleEnum userRoleEnum)
     {
         UserRoleTitle = userRoleTitle;
         UserRoleEnum = userRoleEnum;

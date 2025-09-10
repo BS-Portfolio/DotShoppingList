@@ -1,13 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ShoppingListApi.Model.Patch;
+namespace ShoppingListApi.Model.DTOs.Patch;
 
-public class ShoppingListPatch
+public class ShoppingListPatchDto
 {
     [Required]
     public string NewShoppingListName { get; }
 
-    public ShoppingListPatch(string newShoppingListName)
+    public ShoppingListPatchDto(string newShoppingListName)
     {
         NewShoppingListName = newShoppingListName;
     }

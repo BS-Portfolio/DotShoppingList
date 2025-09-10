@@ -1,12 +1,12 @@
-﻿namespace ShoppingListApi.Model.Get;
+﻿namespace ShoppingListApi.Model.DTOs.Get;
 
-public class UserRole
+public class UserRoleGetDto
 {
     public Guid UserRoleId { get; set; }
     public string UserRoleTitle { get; set; }
     public int EnumIndex { get; set; }
 
-    public UserRole(Guid userRoleId, string userRoleTitle, int enumIndex)
+    public UserRoleGetDto(Guid userRoleId, string userRoleTitle, int enumIndex)
     {
         UserRoleId = userRoleId;
         UserRoleTitle = userRoleTitle;

@@ -7,9 +7,9 @@ using NLog;
 using NLog.Extensions.Logging;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.Database;
-using ShoppingListApi.Model.Get;
-using ShoppingListApi.Model.Patch;
-using ShoppingListApi.Model.Post;
+using ShoppingListApi.Model.DTOs.Get;
+using ShoppingListApi.Model.DTOs.Patch;
+using ShoppingListApi.Model.DTOs.Post;
 using ShoppingListApi.Services;
 using Xunit;
 using Xunit.Abstractions;
@@ -108,7 +108,7 @@ public class DatabaseIntegrationTests
             // Arrange
             var databaseService = new DatabaseService(_serviceProvider);
 
-            var result = await databaseService.SqlConnectionHandlerAsync<List<UserRole>>(
+            var result = await databaseService.SqlConnectionHandlerAsync<List<UserRoleGetDto>>(
                 async (connection) => await databaseService.GetUserRolesAsync(connection));
 
             bool hasTwo = result.Count == 2;
@@ -138,29 +138,29 @@ public class DatabaseIntegrationTests
             // Arrange
             var databaseService = new DatabaseService(_serviceProvider);
 
-            var listUserPost1 = new ListUserPost("Milad", "Test1", "TWlsYWRAbWFzdGVyLmNvbQ==", "bWFzdGVyNjUkdWhnJg==");
-            var lu1Ex = new ListUserPostExtended(listUserPost1);
+            var listUserPost1 = new ListUserPostDto("Milad", "Test1", "TWlsYWRAbWFzdGVyLmNvbQ==", "bWFzdGVyNjUkdWhnJg==");
+            var lu1Ex = new ListUserPostExtendedDto(listUserPost1);
 
-            var listUserPost2 = new ListUserPost("Milad", "Test2", "bWlsYWRAdGVzdDIuY29t", "bWFzdGVyNjUkdWhnJg==");
-            var lu2Ex = new ListUserPostExtended(listUserPost2);
+            var listUserPost2 = new ListUserPostDto("Milad", "Test2", "bWlsYWRAdGVzdDIuY29t", "bWFzdGVyNjUkdWhnJg==");
+            var lu2Ex = new ListUserPostExtendedDto(listUserPost2);
 
-            var listUserPost3 = new ListUserPost("Milad", "Test3", "bWlsYWRAdGVzdDMuY29t", "bWFzdGVyNjUkdWhnJg==");
-            var lu3Ex = new ListUserPostExtended(listUserPost3);
+            var listUserPost3 = new ListUserPostDto("Milad", "Test3", "bWlsYWRAdGVzdDMuY29t", "bWFzdGVyNjUkdWhnJg==");
+            var lu3Ex = new ListUserPostExtendedDto(listUserPost3);
 
             // Act
             var result1 = await databaseService
-                .TestTransactionHandlerAsync<ListUserPostExtended, (bool succes, Guid? userId)>(
+                .TestTransactionHandlerAsync<ListUserPostExtendedDto, (bool succes, Guid? userId)>(
                     async (input, connection, tx) => await databaseService.AddUserAsync(input, connection, tx),
                     lu1Ex);
 
 
             var result2 = await databaseService
-                .TestTransactionHandlerAsync<ListUserPostExtended, (bool succes, Guid? userId)>(
+                .TestTransactionHandlerAsync<ListUserPostExtendedDto, (bool succes, Guid? userId)>(
                     async (input, connection, tx) => await databaseService.AddUserAsync(input, connection, tx),
                     lu2Ex);
 
             var result3 = await databaseService
-                .TestTransactionHandlerAsync<ListUserPostExtended, (bool succes, Guid? userId)>(
+                .TestTransactionHandlerAsync<ListUserPostExtendedDto, (bool succes, Guid? userId)>(
                     async (input, connection, tx) => await databaseService.AddUserAsync(input, connection, tx),
                     lu3Ex);
 
@@ -229,7 +229,7 @@ public class DatabaseIntegrationTests
 
             // Arrange
             var databaseService = new DatabaseService(_serviceProvider);
-            var newItemPost = new ItemPost("tempItem", "tempAmount");
+            var newItemPost = new ItemPostDto("tempItem", "tempAmount");
 
             var listOwnerId = Guid.Parse("63ffeed9-3739-44a4-848b-447ce92b2817");
             var existingShoppingListId = Guid.Parse("484d297a-228c-4631-9a26-cd56ac2ef8ec");
@@ -282,18 +282,18 @@ public class DatabaseIntegrationTests
 
             // Act
             var resultExpectTrue = await databaseService
-                .TestTransactionHandlerAsync<ModificationData<Guid, ShoppingListPatch>, bool>(
+                .TestTransactionHandlerAsync<ModificationData<Guid, ShoppingListPatchDto>, bool>(
                     async (input, connection, tx) =>
                         await databaseService.ModifyShoppingListNameAsync(input, connection, tx),
-                    new ModificationData<Guid, ShoppingListPatch>(existingShoppingListId,
-                        new ShoppingListPatch("Hanky")));
+                    new ModificationData<Guid, ShoppingListPatchDto>(existingShoppingListId,
+                        new ShoppingListPatchDto("Hanky")));
 
             var resultExpectFalse = await databaseService
-                .TestTransactionHandlerAsync<ModificationData<Guid, ShoppingListPatch>, bool>(
+                .TestTransactionHandlerAsync<ModificationData<Guid, ShoppingListPatchDto>, bool>(
                     async (input, connection, tx) =>
                         await databaseService.ModifyShoppingListNameAsync(input, connection, tx),
-                    new ModificationData<Guid, ShoppingListPatch>(Guid.NewGuid(),
-                        new ShoppingListPatch("Hanky")));
+                    new ModificationData<Guid, ShoppingListPatchDto>(Guid.NewGuid(),
+                        new ShoppingListPatchDto("Hanky")));
 
             //Assert
             Assert.True(resultExpectTrue, "failed to modify existing shopping list!");

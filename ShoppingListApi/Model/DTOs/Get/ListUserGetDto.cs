@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ShoppingListApi.Model.Get;
+namespace ShoppingListApi.Model.DTOs.Get;
 
-public class ListUser
+public class ListUserGetDto
 {
     public Guid UserID { get; set; }
     public string FirstName { get; }
@@ -12,7 +12,7 @@ public class ListUser
     public string ApiKey { get; }
     public DateTimeOffset ApiKeyExpirationDateTime { get; }
 
-    public ListUser(Guid userId, string firstName, string lastName, string emailAddress, DateTimeOffset creationDateTime,
+    public ListUserGetDto(Guid userId, string firstName, string lastName, string emailAddress, DateTimeOffset creationDateTime,
         string apiKey, DateTimeOffset apiKeyExpirationDateTime)
     {
         UserID = userId;

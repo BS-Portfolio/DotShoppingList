@@ -1,15 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ShoppingListApi.Model.Post;
+namespace ShoppingListApi.Model.DTOs.Post;
 
-public class ItemPost
+public class ItemPostDto
 {
     [Required]
     public string ItemName { get; set; }
     [Required]
     public string ItemAmount { get; set; }
 
-    public ItemPost(string itemName, string itemAmount)
+    public ItemPostDto(string itemName, string itemAmount)
     {
         ItemName = itemName;
         ItemAmount = itemAmount;

@@ -1,5 +1,4 @@
-﻿using ShoppingListApi.Model.Get;
-
+﻿
 namespace ShoppingListApi.Model.ReturnTypes;
 
 public class CredentialsCheckReturn

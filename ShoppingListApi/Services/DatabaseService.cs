@@ -3,9 +3,9 @@ using ShoppingListApi.Configs;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.Database;
-using ShoppingListApi.Model.Get;
-using ShoppingListApi.Model.Post;
-using ShoppingListApi.Model.Patch;
+using ShoppingListApi.Model.DTOs.Get;
+using ShoppingListApi.Model.DTOs.Post;
+using ShoppingListApi.Model.DTOs.Patch;
 using ShoppingListApi.Model.ReturnTypes;
 
 namespace ShoppingListApi.Services;
@@ -365,7 +365,7 @@ public class DatabaseService
         }
     }
 
-    public async Task<CredentialsCheckReturn> CheckCredentialsAsync(LoginData loginData, SqlConnection sqlConnection)
+    public async Task<CredentialsCheckReturn> CheckCredentialsAsync(LoginDataDto loginDataDto, SqlConnection sqlConnection)
     {
         string loginQuery =
             "SELECT UserID, PasswordHash FROM ListUser WHERE ListUser.EmailAddress = @EmailAddress";
@@ -373,7 +373,7 @@ public class DatabaseService
         await using SqlCommand loginCommand = new(loginQuery, sqlConnection);
 
         loginCommand.Parameters.Add(new SqlParameter()
-            { ParameterName = "@EmailAddress", Value = loginData.EmailAddress });
+            { ParameterName = "@EmailAddress", Value = loginDataDto.EmailAddress });
 
         List<Guid> loadedUserIdsForEmail = [];
 
@@ -402,16 +402,16 @@ public class DatabaseService
             if (loadedUserIdsForEmail.Count == 0)
             {
                 throw new NoContentFoundException<string>("No user found for the provided email address.",
-                    loginData.EmailAddress);
+                    loginDataDto.EmailAddress);
             }
 
             if (loadedUserIdsForEmail.Count > 1)
             {
                 throw new MultipleUsersForEmailException("The email address is registered for more than one user!",
-                    loginData.EmailAddress, loadedUserIdsForEmail);
+                    loginDataDto.EmailAddress, loadedUserIdsForEmail);
             }
 
-            bool verified = BCrypt.Net.BCrypt.EnhancedVerify(loginData.Password, loadedPasswordHash);
+            bool verified = BCrypt.Net.BCrypt.EnhancedVerify(loginDataDto.Password, loadedPasswordHash);
 
             if (verified is false)
             {
@@ -439,9 +439,9 @@ public class DatabaseService
 
     #region Data-Reader
 
-    public async Task<List<UserRole>> GetUserRolesAsync(SqlConnection sqlConnection)
+    public async Task<List<UserRoleGetDto>> GetUserRolesAsync(SqlConnection sqlConnection)
     {
-        List<UserRole> userRoles = [];
+        List<UserRoleGetDto> userRoles = [];
 
         string query = "SELECT UserRoleID, UserRoleTitle, EnumIndex FROM UserRole";
 
@@ -460,7 +460,7 @@ public class DatabaseService
             {
                 while (await sqlReader.ReadAsync())
                 {
-                    userRoles.Add(new UserRole(sqlReader.GetGuid(0), sqlReader.GetString(1), sqlReader.GetInt32(2)));
+                    userRoles.Add(new UserRoleGetDto(sqlReader.GetGuid(0), sqlReader.GetString(1), sqlReader.GetInt32(2)));
                 }
             }
 
@@ -481,7 +481,7 @@ public class DatabaseService
         }
     }
 
-    public async Task<ListUser?> GetUserAsync<T>(T identifier, string whereClause, SqlConnection sqlConnection)
+    public async Task<ListUserGetDto?> GetUserAsync<T>(T identifier, string whereClause, SqlConnection sqlConnection)
     {
         var query =
             "SELECT UserID, FirstName, LastName, EmailAddress, CreationDateTime, ApiKey, ApiKeyExpirationDateTime FROM ListUser WHERE " +
@@ -494,7 +494,7 @@ public class DatabaseService
             sqlCommand.Parameters.Add(new SqlParameter() { ParameterName = "@Identifier", Value = identifier });
         }
 
-        ListUser? user = null;
+        ListUserGetDto? user = null;
 
         try
         {
@@ -509,7 +509,7 @@ public class DatabaseService
             {
                 while (await sqlReader.ReadAsync())
                 {
-                    user = new ListUser(
+                    user = new ListUserGetDto(
                         sqlReader.GetGuid(0),
                         sqlReader.GetString(1),
                         sqlReader.GetString(2),
@@ -538,7 +538,7 @@ public class DatabaseService
         }
     }
     
-    public async Task<ListUser?> GetUserByEmailAddressAsync(string emailAddress, SqlConnection sqlConnection)
+    public async Task<ListUserGetDto?> GetUserByEmailAddressAsync(string emailAddress, SqlConnection sqlConnection)
     {
         try
         {
@@ -557,7 +557,7 @@ public class DatabaseService
         }
     }
 
-    public async Task<ListUser?> GetUserByIdAsync(Guid userId, SqlConnection sqlConnection)
+    public async Task<ListUserGetDto?> GetUserByIdAsync(Guid userId, SqlConnection sqlConnection)
     {
         try
         {
@@ -630,7 +630,7 @@ public class DatabaseService
         }
     }
     
-    public async Task<ShoppingList?> GetShoppingListByIdAsync(Guid shoppingListId, SqlConnection sqlConnection)
+    public async Task<ShoppingListGetDto?> GetShoppingListByIdAsync(Guid shoppingListId, SqlConnection sqlConnection)
     {
         var query =
             "SELECT sl.ShoppingListName, lu.UserID, lu.FirstName, lu.LastName, lu.EmailAddress " +
@@ -662,18 +662,18 @@ public class DatabaseService
                 return null;
             }
 
-            ShoppingList? targetShoppingList = null;
+            ShoppingListGetDto? targetShoppingList = null;
 
             while (await sqlReader.ReadAsync())
             {
-                var listOwner = new ListUserMinimal(
+                var listOwner = new ListUserMinimalGetDto(
                     sqlReader.GetGuid(1),
                     sqlReader.GetString(2),
                     sqlReader.GetString(3),
                     sqlReader.GetString(4)
                 );
 
-                targetShoppingList = new ShoppingList(
+                targetShoppingList = new ShoppingListGetDto(
                     shoppingListId,
                     sqlReader.GetString(0),
                     listOwner
@@ -697,9 +697,9 @@ public class DatabaseService
         }
     }
 
-    public async Task<List<ShoppingList>> GetShoppingListsForUserAsync(Guid userId, SqlConnection sqlConnection)
+    public async Task<List<ShoppingListGetDto>> GetShoppingListsForUserAsync(Guid userId, SqlConnection sqlConnection)
     {
-        var shoppingLists = new List<ShoppingList>();
+        var shoppingLists = new List<ShoppingListGetDto>();
 
         var query =
             "SELECT sl.ShoppingListID, sl.ShoppingListName, lu.UserID, lu.FirstName, lu.LastName, lu.EmailAddress " +
@@ -733,14 +733,14 @@ public class DatabaseService
             {
                 while (await sqlReader.ReadAsync())
                 {
-                    var listOwner = new ListUserMinimal(
+                    var listOwner = new ListUserMinimalGetDto(
                         sqlReader.GetGuid(2),
                         sqlReader.GetString(3),
                         sqlReader.GetString(4),
                         sqlReader.GetString(5)
                     );
 
-                    var shoppingList = new ShoppingList(
+                    var shoppingList = new ShoppingListGetDto(
                         sqlReader.GetGuid(0),
                         sqlReader.GetString(1),
                         listOwner
@@ -765,9 +765,9 @@ public class DatabaseService
         }
     }
 
-    public async Task<List<Item>> GetItemsForShoppingListAsync(Guid shoppingListId, SqlConnection sqlConnection)
+    public async Task<List<ItemGetDto>> GetItemsForShoppingListAsync(Guid shoppingListId, SqlConnection sqlConnection)
     {
-        var items = new List<Item>();
+        var items = new List<ItemGetDto>();
 
         var query = "SELECT ItemID, ItemName, ItemAmount FROM Item WHERE ShoppingListID = @ShoppingListID";
 
@@ -789,7 +789,7 @@ public class DatabaseService
             {
                 while (await sqlReader.ReadAsync())
                 {
-                    var item = new Item(
+                    var item = new ItemGetDto(
                         sqlReader.GetGuid(0),
                         sqlReader.GetString(1),
                         sqlReader.GetString(2)
@@ -814,10 +814,10 @@ public class DatabaseService
         }
     }
 
-    public async Task<List<ListUserMinimal>> GetShoppingListCollaboratorsAsync(Guid shoppingListId,
+    public async Task<List<ListUserMinimalGetDto>> GetShoppingListCollaboratorsAsync(Guid shoppingListId,
         SqlConnection sqlConnection)
     {
-        List<ListUserMinimal> collaborators = [];
+        List<ListUserMinimalGetDto> collaborators = [];
 
         string getQuery = "SELECT LU.UserID, LU.FirstName, LU.LastName, LU.EmailAddress " +
                           "FROM ListUser AS LU " +
@@ -852,7 +852,7 @@ public class DatabaseService
             {
                 while (await sqlReader.ReadAsync())
                 {
-                    collaborators.Add(new ListUserMinimal(
+                    collaborators.Add(new ListUserMinimalGetDto(
                         sqlReader.GetGuid(0),
                         sqlReader.GetString(1),
                         sqlReader.GetString(2),
@@ -878,9 +878,9 @@ public class DatabaseService
         }
     }
 
-    public async Task<List<ListUserMinimal>> GetAllUsersAsync(SqlConnection sqlConnection)
+    public async Task<List<ListUserMinimalGetDto>> GetAllUsersAsync(SqlConnection sqlConnection)
     {
-        List<ListUserMinimal> users = [];
+        List<ListUserMinimalGetDto> users = [];
 
         string query = "SELECT UserID, FirstName, LastName, EmailAddress " +
                        "FROM ListUser";
@@ -900,7 +900,7 @@ public class DatabaseService
             {
                 while (sqlReader.Read())
                 {
-                    users.Add(new ListUserMinimal(
+                    users.Add(new ListUserMinimalGetDto(
                         sqlReader.GetGuid(0),
                         sqlReader.GetString(1),
                         sqlReader.GetString(2),
@@ -1018,7 +1018,7 @@ public class DatabaseService
     /// <param name="sqlConnection"></param>
     /// <returns></returns>
     /// <exception cref="NumberedException"></exception>
-    public async Task<RecordFetchResult<ShoppingList?>> HandleShoppingListFetchForUserAsync(
+    public async Task<RecordFetchResult<ShoppingListGetDto?>> HandleShoppingListFetchForUserAsync(
         ShoppingListIdentificationData data, SqlConnection sqlConnection)
     {
         try
@@ -1027,21 +1027,21 @@ public class DatabaseService
 
             if (exists is false)
             {
-                return new RecordFetchResult<ShoppingList?>(null, null, false);
+                return new RecordFetchResult<ShoppingListGetDto?>(null, null, false);
             }
 
             var requestingUsersRole = await CheckUsersRoleInListAsync(data, sqlConnection);
 
             if (requestingUsersRole is null)
             {
-                return new RecordFetchResult<ShoppingList?>(null, false, true);
+                return new RecordFetchResult<ShoppingListGetDto?>(null, false, true);
             }
 
             var shoppingList = await GetShoppingListByIdAsync(data.ShoppingListId, sqlConnection);
 
             if (shoppingList is null)
             {
-                return new RecordFetchResult<ShoppingList?>(null, true, true);
+                return new RecordFetchResult<ShoppingListGetDto?>(null, true, true);
             }
 
             var items = await GetItemsForShoppingListAsync(shoppingList.ShoppingListId, sqlConnection);
@@ -1050,7 +1050,7 @@ public class DatabaseService
             var collaborators = await GetShoppingListCollaboratorsAsync(shoppingList.ShoppingListId, sqlConnection);
             shoppingList.AddCollaboratorsToShoppingList(collaborators);
 
-            return new RecordFetchResult<ShoppingList?>(shoppingList, true, true);
+            return new RecordFetchResult<ShoppingListGetDto?>(shoppingList, true, true);
         }
         catch (NumberedException)
         {
@@ -1065,7 +1065,7 @@ public class DatabaseService
         }
     }
 
-    public async Task<List<ShoppingList>> HandleShoppingListsFetchForUserAsync(Guid userId, SqlConnection sqlConnection)
+    public async Task<List<ShoppingListGetDto>> HandleShoppingListsFetchForUserAsync(Guid userId, SqlConnection sqlConnection)
     {
         try
         {
@@ -1095,11 +1095,11 @@ public class DatabaseService
         }
     }
 
-    public async Task<ListUser?> HandleLoginAsync(LoginData loginData, SqlConnection sqlConnection)
+    public async Task<ListUserGetDto?> HandleLoginAsync(LoginDataDto loginDataDto, SqlConnection sqlConnection)
     {
         try
         {
-            var credentialsCheckResult = await CheckCredentialsAsync(loginData, sqlConnection);
+            var credentialsCheckResult = await CheckCredentialsAsync(loginDataDto, sqlConnection);
 
             if (credentialsCheckResult.LoginSuccessful is false || credentialsCheckResult.UserId is null)
             {
@@ -1240,7 +1240,7 @@ public class DatabaseService
     }
 
     public async Task<UpdateResult> HandleShoppingListNameUpdateAsync(
-        ModificationData<(Guid userId, Guid shoppingListId), ShoppingListPatch> modificationData,
+        ModificationData<(Guid userId, Guid shoppingListId), ShoppingListPatchDto> modificationData,
         SqlConnection sqlConnection)
     {
         const bool success = true;
@@ -1259,7 +1259,7 @@ public class DatabaseService
             }
 
             var updateSuccess = await ModifyShoppingListNameAsync(
-                new ModificationData<Guid, ShoppingListPatch>(modificationData.Identifier.shoppingListId,
+                new ModificationData<Guid, ShoppingListPatchDto>(modificationData.Identifier.shoppingListId,
                     modificationData.Payload),
                 sqlConnection);
 
@@ -1284,7 +1284,7 @@ public class DatabaseService
     }
 
     public async Task<UpdateResult> HandleShoppingListItemUpdateAsync(
-        ModificationData<(Guid userId, Guid shoppingListId, Guid itemId), ItemPatch> modificationData,
+        ModificationData<(Guid userId, Guid shoppingListId, Guid itemId), ItemPatchDto> modificationData,
         SqlConnection sqlConnection)
     {
         const bool success = true;
@@ -1303,7 +1303,7 @@ public class DatabaseService
             }
 
             var updateSuccess = await ModifyItemAsync(
-                new ModificationData<(Guid itemId, Guid shoppingListId), ItemPatch>(
+                new ModificationData<(Guid itemId, Guid shoppingListId), ItemPatchDto>(
                     (modificationData.Identifier.itemId, modificationData.Identifier.shoppingListId),
                     modificationData.Payload),
                 sqlConnection);
@@ -1566,7 +1566,7 @@ public class DatabaseService
     }
 
     public async Task<(bool success, Guid? userRoleId)> AddUserRoleAsync(SqlConnection sqlConnection,
-        UserRolePost userRolePost)
+        UserRolePostDto userRolePostDto)
     {
         var addQuery = "INSERT INTO UserRole (UserRoleID, UserRoleTitle, EnumIndex)"
                        + " VALUES (@UserRoleID, @UserRoleTitle, @EnumIndex)";
@@ -1578,8 +1578,8 @@ public class DatabaseService
             new SqlParameter()
                 { ParameterName = "@UserRoleID", Value = userRoleId, SqlDbType = SqlDbType.UniqueIdentifier },
 
-            new SqlParameter() { ParameterName = "@UserRoleTitle", Value = userRolePost.UserRoleTitle },
-            new SqlParameter() { ParameterName = "@EnumIndex", Value = (int)userRolePost.UserRoleEnum }
+            new SqlParameter() { ParameterName = "@UserRoleTitle", Value = userRolePostDto.UserRoleTitle },
+            new SqlParameter() { ParameterName = "@EnumIndex", Value = (int)userRolePostDto.UserRoleEnum }
         ];
 
         try
@@ -1606,7 +1606,7 @@ public class DatabaseService
         }
     }
 
-    public async Task<(bool succes, Guid? userId)> AddUserAsync(ListUserPostExtended userPostExtended,
+    public async Task<(bool succes, Guid? userId)> AddUserAsync(ListUserPostExtendedDto userPostExtendedDto,
         SqlConnection sqlConnection, SqlTransaction? transaction = null)
     {
         var addQuery =
@@ -1618,14 +1618,14 @@ public class DatabaseService
         List<SqlParameter> parameters =
         [
             new SqlParameter() { ParameterName = "@UserID", Value = userId, SqlDbType = SqlDbType.UniqueIdentifier },
-            new SqlParameter() { ParameterName = "@FirstName", Value = userPostExtended.FirstName },
-            new SqlParameter() { ParameterName = "@LastName", Value = userPostExtended.LastName },
-            new SqlParameter() { ParameterName = "@EmailAddress", Value = userPostExtended.EmailAddress },
-            new SqlParameter() { ParameterName = "@PasswordHash", Value = userPostExtended.PasswordHash },
-            new SqlParameter() { ParameterName = "@CreationDateTime", Value = userPostExtended.CreationDateTime },
-            new SqlParameter() { ParameterName = "@ApiKey", Value = userPostExtended.ApiKey },
+            new SqlParameter() { ParameterName = "@FirstName", Value = userPostExtendedDto.FirstName },
+            new SqlParameter() { ParameterName = "@LastName", Value = userPostExtendedDto.LastName },
+            new SqlParameter() { ParameterName = "@EmailAddress", Value = userPostExtendedDto.EmailAddress },
+            new SqlParameter() { ParameterName = "@PasswordHash", Value = userPostExtendedDto.PasswordHash },
+            new SqlParameter() { ParameterName = "@CreationDateTime", Value = userPostExtendedDto.CreationDateTime },
+            new SqlParameter() { ParameterName = "@ApiKey", Value = userPostExtendedDto.ApiKey },
             new SqlParameter()
-                { ParameterName = "@ApiKeyExpirationDateTime", Value = userPostExtended.ApiKeyExpirationDateTime }
+                { ParameterName = "@ApiKeyExpirationDateTime", Value = userPostExtendedDto.ApiKeyExpirationDateTime }
         ];
 
         try
@@ -1710,8 +1710,8 @@ public class DatabaseService
                 Value = newItemData.ShoppingListId,
                 SqlDbType = SqlDbType.UniqueIdentifier
             },
-            new SqlParameter() { ParameterName = "@ItemName", Value = newItemData.ItemPost.ItemName },
-            new SqlParameter() { ParameterName = "@ItemAmount", Value = newItemData.ItemPost.ItemAmount }
+            new SqlParameter() { ParameterName = "@ItemName", Value = newItemData.ItemPostDto.ItemName },
+            new SqlParameter() { ParameterName = "@ItemAmount", Value = newItemData.ItemPostDto.ItemAmount }
         ];
 
         try
@@ -1787,7 +1787,7 @@ public class DatabaseService
 
     #region Data-Modifier
 
-    public async Task<bool> ModifyUserDetailsAsync(ModificationData<Guid, ListUserPatch> userDetailsModificationData,
+    public async Task<bool> ModifyUserDetailsAsync(ModificationData<Guid, ListUserPatchDto> userDetailsModificationData,
         SqlConnection sqlConnection)
     {
         const bool success = true;
@@ -1851,7 +1851,7 @@ public class DatabaseService
     }
 
     public async Task<bool> ModifyShoppingListNameAsync(
-        ModificationData<Guid, ShoppingListPatch> shoppingListModificationData,
+        ModificationData<Guid, ShoppingListPatchDto> shoppingListModificationData,
         SqlConnection sqlConnection, SqlTransaction? transaction = null)
     {
         var listId = shoppingListModificationData.Identifier;
@@ -1906,12 +1906,12 @@ public class DatabaseService
     }
 
     public async Task<bool> ModifyItemAsync(
-        ModificationData<(Guid itemId, Guid shoppingListId), ItemPatch> itemModificationData,
+        ModificationData<(Guid itemId, Guid shoppingListId), ItemPatchDto> itemModificationData,
         SqlConnection sqlConnection)
     {
         Guid itemId = itemModificationData.Identifier.itemId;
         Guid shoppingListId = itemModificationData.Identifier.shoppingListId;
-        ItemPatch itemPatch = itemModificationData.Payload;
+        ItemPatchDto itemPatchDto = itemModificationData.Payload;
         const bool success = true;
 
         try
@@ -1926,16 +1926,16 @@ public class DatabaseService
                 }
             };
 
-            if (!string.IsNullOrEmpty(itemPatch.NewItemName))
+            if (!string.IsNullOrEmpty(itemPatchDto.NewItemName))
             {
                 updateParts.Add("ItemName = @ItemName");
-                parameters.Add(new SqlParameter("@ItemName", itemPatch.NewItemName));
+                parameters.Add(new SqlParameter("@ItemName", itemPatchDto.NewItemName));
             }
 
-            if (!string.IsNullOrEmpty(itemPatch.NewItemAmount))
+            if (!string.IsNullOrEmpty(itemPatchDto.NewItemAmount))
             {
                 updateParts.Add("ItemAmount = @ItemAmount");
-                parameters.Add(new SqlParameter("@ItemAmount", itemPatch.NewItemAmount));
+                parameters.Add(new SqlParameter("@ItemAmount", itemPatchDto.NewItemAmount));
             }
 
             if (updateParts.Count == 0)

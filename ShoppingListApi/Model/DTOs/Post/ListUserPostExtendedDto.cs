@@ -3,9 +3,9 @@ using System.Text;
 using BCrypt.Net;
 using Newtonsoft.Json;
 
-namespace ShoppingListApi.Model.Post;
+namespace ShoppingListApi.Model.DTOs.Post;
 
-public class ListUserPostExtended
+public class ListUserPostExtendedDto
 {
     [Required] public string FirstName { get; set; }
     [Required] public string LastName { get; set; }
@@ -15,7 +15,7 @@ public class ListUserPostExtended
     public string ApiKey { get; set; }
     public DateTimeOffset ApiKeyExpirationDateTime { get; set; }
 
-    public ListUserPostExtended(string firstName, string lastName, string emailAddress, string password)
+    public ListUserPostExtendedDto(string firstName, string lastName, string emailAddress, string password)
     {
         FirstName = firstName;
         LastName = lastName;
@@ -26,16 +26,16 @@ public class ListUserPostExtended
         ApiKeyExpirationDateTime = CreationDateTime + TimeSpan.FromHours(6);
     }
 
-    public ListUserPostExtended(ListUserPost listUserPost)
+    public ListUserPostExtendedDto(ListUserPostDto listUserPostDto)
     {
-        FirstName = listUserPost.FirstName;
-        LastName = listUserPost.LastName;
+        FirstName = listUserPostDto.FirstName;
+        LastName = listUserPostDto.LastName;
 
-        byte[] decodedEmail64StringBytes = Convert.FromBase64String(listUserPost.EmailAddress64);
+        byte[] decodedEmail64StringBytes = Convert.FromBase64String(listUserPostDto.EmailAddress64);
         string decodedEmailAddress = Encoding.UTF8.GetString(decodedEmail64StringBytes);
         EmailAddress = decodedEmailAddress;
 
-        byte[] decodedPassword64StringBytes = Convert.FromBase64String(listUserPost.Password64);
+        byte[] decodedPassword64StringBytes = Convert.FromBase64String(listUserPostDto.Password64);
         string decodedPassword = Encoding.UTF8.GetString(decodedPassword64StringBytes);
         PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(decodedPassword, 13);
 
