@@ -8,13 +8,13 @@ public class MyAuthenticationService
 {
     private readonly string _connectionString;
     private readonly ConnectionStringService _connectionStringService;
-    private readonly ILogger<ShoppingListApiController> _logger;
+    private readonly ILogger<MyAuthenticationService> _logger;
 
     public MyAuthenticationService(IServiceProvider serviceProvider)
     {
         _connectionStringService = serviceProvider.GetRequiredService<ConnectionStringService>();
         _connectionString = _connectionStringService.GetConnectionString();
-        _logger = serviceProvider.GetRequiredService<ILogger<ShoppingListApiController>>();
+        _logger = serviceProvider.GetRequiredService<ILogger<MyAuthenticationService>>();
     }
     
         public async Task<AuthenticationReturn> AuthenticateAsync(Guid userId, string apiKey)

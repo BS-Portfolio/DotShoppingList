@@ -19,5 +19,37 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         modelBuilder.Entity<Model.Entity.ListMembership>()
             .HasKey(lm => new { lm.ShoppingListId, lm.UserId, lm.UserRoleId });
+        
+        // ApiKey
+        modelBuilder.Entity<Model.Entity.ApiKey>()
+            .HasIndex(x => x.UserId);
+        modelBuilder.Entity<Model.Entity.ApiKey>()
+            .HasIndex(x => x.Key);
+        modelBuilder.Entity<Model.Entity.ApiKey>()
+            .HasIndex(x => x.ExpirationDateTime);
+        modelBuilder.Entity<Model.Entity.ApiKey>()
+            .HasIndex(x => x.IsValid);
+
+        // EmailConfirmationToken
+        modelBuilder.Entity<Model.Entity.EmailConfirmationToken>()
+            .HasIndex(x => x.UserId);
+        modelBuilder.Entity<Model.Entity.EmailConfirmationToken>()
+            .HasIndex(x => x.Token);
+        modelBuilder.Entity<Model.Entity.EmailConfirmationToken>()
+            .HasIndex(x => x.ExpirationDateTime);
+        modelBuilder.Entity<Model.Entity.EmailConfirmationToken>()
+            .HasIndex(x => x.IsUsed);
+
+        // Item
+        modelBuilder.Entity<Model.Entity.Item>()
+            .HasIndex(x => x.ShoppingListId);
+
+        // ListUser
+        modelBuilder.Entity<Model.Entity.ListUser>()
+            .HasIndex(x => x.EmailAddress);
+        
+        // UserRole
+        modelBuilder.Entity<Model.Entity.UserRole>()
+            .HasIndex(x => x.EnumIndex);
     }
 }

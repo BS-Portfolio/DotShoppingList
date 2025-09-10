@@ -4,13 +4,14 @@ using ShoppingListApi.Configs;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.Database;
-using ShoppingListApi.Model.Delete;
 using ShoppingListApi.Model.Get;
 using ShoppingListApi.Model.Patch;
 using ShoppingListApi.Model.Post;
 using ShoppingListApi.Model.ReturnTypes;
 using ShoppingListApi.Services;
 
+namespace ShoppingListApi.Controllers;
+    
 [ApiController]
 [Route("[controller]")]
 public class ShoppingListApiController : ControllerBase
