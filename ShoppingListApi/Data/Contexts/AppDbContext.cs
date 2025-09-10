@@ -30,7 +30,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<Model.Entity.ApiKey>()
             .HasIndex(x => x.IsValid);
 
-        // EmailConfirmationToke
+        // EmailConfirmationToken
         modelBuilder.Entity<Model.Entity.EmailConfirmationToken>()
             .HasIndex(x => x.UserId);
         modelBuilder.Entity<Model.Entity.EmailConfirmationToken>()
