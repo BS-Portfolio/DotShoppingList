@@ -1,3 +1,14 @@
+# Donnerstag, 11.09.25
+
+## Tasks:
+- Retro
+- Frontend Refactor / redesign
+- Vorbereitung MVC Präsentation
+- DB Context, Services, Repositorys und Controllers Definierung
+
+## Blocker:
+-
+
 # Mittwoch, 10.09.25
 
 ## Tasks:
