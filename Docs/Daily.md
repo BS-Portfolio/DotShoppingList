@@ -1,3 +1,12 @@
+# Freitag, 12.09.25
+
+## Tasks:
+- Präsentation MVC
+- Präsentationen anhören und Feedback geben
+
+## Blocker:
+-
+
 # Donnerstag, 11.09.25
 
 ## Tasks:
