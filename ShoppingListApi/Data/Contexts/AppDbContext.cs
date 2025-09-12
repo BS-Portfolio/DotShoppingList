@@ -25,7 +25,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<ApiKey>()
             .HasIndex(x => x.UserId);
         modelBuilder.Entity<ApiKey>()
-            .HasIndex(x => x.Key);
+            .HasIndex(x => x.Key)
+            .IsUnique();
         modelBuilder.Entity<ApiKey>()
             .HasIndex(x => x.ExpirationDateTime);
         modelBuilder.Entity<ApiKey>()

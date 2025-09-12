@@ -15,5 +15,5 @@ public class UserRole
     [Required]
     public int EnumIndex { get; set; }
 
-    public virtual List<ListMembership> ListMemberships { get; set; } = [];
+    public virtual ICollection<ListMembership> ListMemberships { get; set; } = [];
 }

@@ -23,7 +23,7 @@ public class ListUser
     [MaxLength(500)]
     public Guid PasswordHash { get; set; }
 
-    public virtual List<ApiKey> ApiKeys { get; set; } = [];
-    public virtual List<EmailConfirmationToken> EmailConfirmationTokens { get; set; } = [];
-    public virtual List<ListMembership> ListMemberships { get; set; } = [];
+    public virtual ICollection<ApiKey> ApiKeys { get; set; } = new List<ApiKey>();
+    public virtual ICollection<EmailConfirmationToken> EmailConfirmationTokens { get; set; } = new List<EmailConfirmationToken>();
+    public virtual ICollection<ListMembership> ListMemberships { get; set; } = new List<ListMembership>();
 }
