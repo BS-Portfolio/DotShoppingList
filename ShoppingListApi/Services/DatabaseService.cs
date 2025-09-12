@@ -439,6 +439,7 @@ public class DatabaseService
 
     #region Data-Reader
 
+    [Obsolete]
     public async Task<List<UserRoleGetDto>> GetUserRolesAsync(SqlConnection sqlConnection)
     {
         List<UserRoleGetDto> userRoles = [];
@@ -1565,6 +1566,7 @@ public class DatabaseService
         }
     }
 
+    [Obsolete]
     public async Task<(bool success, Guid? userRoleId)> AddUserRoleAsync(SqlConnection sqlConnection,
         UserRolePostDto userRolePostDto)
     {

@@ -36,7 +36,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<EmailConfirmationToken>()
             .HasIndex(x => x.UserId);
         modelBuilder.Entity<EmailConfirmationToken>()
-            .HasIndex(x => x.Token);
+            .HasIndex(x => x.Token)
+            .IsUnique();
         modelBuilder.Entity<EmailConfirmationToken>()
             .HasIndex(x => x.ExpirationDateTime);
         modelBuilder.Entity<EmailConfirmationToken>()
@@ -52,6 +53,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         // UserRole
         modelBuilder.Entity<UserRole>()
-            .HasIndex(x => x.EnumIndex);
+            .HasIndex(x => x.EnumIndex)
+            .IsUnique();
+        modelBuilder.Entity<UserRole>()
+            .HasIndex(x => x.UserRoleTitle)
+            .IsUnique();
     }
 }
