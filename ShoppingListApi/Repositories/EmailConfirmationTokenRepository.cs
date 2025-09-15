@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using ShoppingListApi.Data.Contexts;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Interfaces.Repositories;
@@ -34,10 +35,20 @@ public class EmailConfirmationTokenRepository(
         return await query.ToListAsync(ct);
     }
 
-    public async Task<EmailConfirmationToken?> GetByIdWithUserDetails(Guid emailConfirmationTokenId,
+    public async Task<EmailConfirmationToken?> GetByIdWithUserDetails(Guid userId, Guid emailConfirmationTokenId,
         CancellationToken ct = default)
     {
-        return await _appDbContext.EmailConfirmationTokens.FindAsync([emailConfirmationTokenId], ct);
+        return await _appDbContext.EmailConfirmationTokens
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(
+                t => t.UserId == userId && t.EmailConfirmationTokenId == emailConfirmationTokenId, ct);
+    }
+
+    public async Task<EmailConfirmationToken?> GetByIdWithoutUserDetails(Guid userId, Guid emailConfirmationTokenId,
+        CancellationToken ct = default)
+    {
+        return await _appDbContext.EmailConfirmationTokens.FirstOrDefaultAsync(
+            t => t.UserId == userId && t.EmailConfirmationTokenId == emailConfirmationTokenId, ct);
     }
 
     public async Task<EmailConfirmationToken?> GetByTokenValue(Guid userId, string token,
@@ -72,26 +83,20 @@ public class EmailConfirmationTokenRepository(
         return newToken;
     }
 
-    public async Task<UpdateRecordResult<object?>> MarkTokenAsUsedAsync(Guid userId, Guid emailConfirmationTokenId,
+    public async Task<bool> MarkTokenAsUsedAsync(EmailConfirmationToken targetEmailConfirmationToken,
         CancellationToken ct = default)
     {
-        var existingToken = await _appDbContext.EmailConfirmationTokens
-            .FirstOrDefaultAsync(t => t.UserId == userId && t.EmailConfirmationTokenId == emailConfirmationTokenId, ct);
+        targetEmailConfirmationToken.IsUsed = true;
 
-        if (existingToken is null)
-            return new(false, false, false, null);
-
-        existingToken.IsUsed = true;
-
-        if (existingToken.ExpirationDateTime > DateTimeOffset.UtcNow)
-            existingToken.ExpirationDateTime = DateTimeOffset.UtcNow;
+        if (targetEmailConfirmationToken.ExpirationDateTime > DateTimeOffset.UtcNow)
+            targetEmailConfirmationToken.ExpirationDateTime = DateTimeOffset.UtcNow;
 
         var checkResult = await _appDbContext.SaveChangesAsync(ct);
 
         if (checkResult <= 0)
-            return new(true, false, false, null);
+            return false;
 
-        return new(true, true, false, null);
+        return true;
     }
 
     public async Task<bool> InvalidateAllByUserIdAsync(Guid userId, CancellationToken ct = default)
@@ -117,23 +122,17 @@ public class EmailConfirmationTokenRepository(
         return true;
     }
 
-    public async Task<RemoveRecordResult> DeleteAsync(Guid userId, Guid emailConfirmationTokenId,
+    public async Task<bool> DeleteAsync(EmailConfirmationToken targetEmailConfirmationToken,
         CancellationToken ct = default)
     {
-        var existingToken = await _appDbContext.EmailConfirmationTokens
-            .FirstOrDefaultAsync(t => t.UserId == userId && t.EmailConfirmationTokenId == emailConfirmationTokenId, ct);
-
-        if (existingToken is null)
-            return new RemoveRecordResult(false, false, 0);
-
-        _appDbContext.EmailConfirmationTokens.Remove(existingToken);
+        _appDbContext.EmailConfirmationTokens.Remove(targetEmailConfirmationToken);
 
         var checkResult = await _appDbContext.SaveChangesAsync(ct);
 
-        if (checkResult <= 0)
-            return new RemoveRecordResult(true, false, 0);
+        if (checkResult != 1)
+            return false;
 
-        return new RemoveRecordResult(true, true, checkResult);
+        return true;
     }
 
     public async Task<RemoveRecordResult> DeleteBatchAsync(List<Guid> emailConfirmationTokenIds,

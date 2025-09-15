@@ -12,8 +12,8 @@ public interface IApiKeyRepository
     Task<List<ApiKey>> GetAllByUserId(Guid userId, ValidityCheck validityCheck, CancellationToken ct = default);
     Task<ApiKey?> GetByKeyAsync(Guid userId, string apiKey, CancellationToken ct = default);
     Task<(bool Success, ApiKey? apiKey)> CreateAsync(Guid userId, string newKey, CancellationToken ct = default);
-    Task<bool> InvalidateAsync(Guid userId, Guid apiKeyId, CancellationToken ct = default);
-    Task<bool> InvalidateAllAsync(Guid userId, CancellationToken ct = default);
-    Task<RemoveRecordResult> DeleteAsync(Guid userId, Guid apiKeyId, CancellationToken ct = default);
+    Task<bool> InvalidateAsync(ApiKey targetApiKey, CancellationToken ct = default);
+    Task<bool> InvalidateAllByUserIdAsync(Guid userId, CancellationToken ct = default);
+    Task<RemoveRecordResult> DeleteAsync(ApiKey targetApiKey, CancellationToken ct = default);
     Task<RemoveRecordResult> DeleteBatchAsync(List<Guid> apiKeyIds, CancellationToken ct = default);
 }

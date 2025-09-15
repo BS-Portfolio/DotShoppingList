@@ -41,7 +41,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<EmailConfirmationToken>()
             .HasIndex(x => x.ExpirationDateTime);
         modelBuilder.Entity<EmailConfirmationToken>()
-            .HasIndex(x => x.IsUsed);
+            .HasIndex(x => x.IsUsed)
+            .IsUnique()
+            .HasFilter("[IsUsed] = 0");
 
         // Item
         modelBuilder.Entity<Item>()

@@ -7,7 +7,7 @@ using ShoppingListApi.Model.ReturnTypes;
 
 namespace ShoppingListApi.Repositories;
 
-public class ApiKeyRepository(AppDbContext dbContext, ILogger<ApiKeyRepository> logger): IApiKeyRepository
+public class ApiKeyRepository(AppDbContext dbContext, ILogger<ApiKeyRepository> logger) : IApiKeyRepository
 {
     private readonly AppDbContext _dbContext = dbContext;
     private readonly ILogger<ApiKeyRepository> _logger = logger;
@@ -59,7 +59,8 @@ public class ApiKeyRepository(AppDbContext dbContext, ILogger<ApiKeyRepository> 
         return await _dbContext.ApiKeys.FirstOrDefaultAsync(ak => ak.Key == apiKey && ak.UserId == userId, ct);
     }
 
-    public async Task<(bool Success, ApiKey? apiKey)> CreateAsync(Guid userId, string newKey, CancellationToken ct = default)
+    public async Task<(bool Success, ApiKey? apiKey)> CreateAsync(Guid userId, string newKey,
+        CancellationToken ct = default)
     {
         var key = ApiKey.GenerateKey();
 
@@ -85,33 +86,25 @@ public class ApiKeyRepository(AppDbContext dbContext, ILogger<ApiKeyRepository> 
         return (true, apiKey);
     }
 
-    public async Task<bool> InvalidateAsync(Guid userId, Guid apiKeyId, CancellationToken ct = default)
+    public async Task<bool> InvalidateAsync(ApiKey targetApiKey, CancellationToken ct = default)
     {
-        var apiKey = await GetWithoutDetailsByIdAsync(userId, apiKeyId, ct);
+        targetApiKey.IsValid = false;
+        targetApiKey.ExpirationDateTime = DateTimeOffset.UtcNow;
 
-        if (apiKey == null)
-        {
-            _logger.LogWarning("API key {ApiKeyId} not found for invalidation", apiKeyId);
-            return false;
-        }
-
-        apiKey.IsValid = false;
-        apiKey.ExpirationDateTime = DateTimeOffset.UtcNow;
-
-        _dbContext.ApiKeys.Update(apiKey);
+        _dbContext.ApiKeys.Update(targetApiKey);
 
         var checkResult = await _dbContext.SaveChangesAsync(ct);
 
         if (checkResult == 0)
         {
-            _logger.LogWarning("Failed to invalidate API key {ApiKeyId}", apiKeyId);
+            _logger.LogWarning("Failed to invalidate API key {ApiKeyId}", targetApiKey.ApiKeyId);
             return false;
         }
 
         return true;
     }
 
-    public async Task<bool> InvalidateAllAsync(Guid userId, CancellationToken ct = default)
+    public async Task<bool> InvalidateAllByUserIdAsync(Guid userId, CancellationToken ct = default)
     {
         var apiKeys = await _dbContext.ApiKeys.Where(ak => ak.UserId == userId && ak.IsValid).ToListAsync(ct);
 
@@ -139,28 +132,21 @@ public class ApiKeyRepository(AppDbContext dbContext, ILogger<ApiKeyRepository> 
         return true;
     }
 
-    public async Task<RemoveRecordResult> DeleteAsync(Guid userId, Guid apiKeyId, CancellationToken ct = default)
+    public async Task<RemoveRecordResult> DeleteAsync(ApiKey targetApiKey, CancellationToken ct = default)
     {
-        var apiKey = await GetWithoutDetailsByIdAsync(userId, apiKeyId, ct);
-
-        if (apiKey is null)
-        {
-            _logger.LogWarning("API key {ApiKeyId} not found for deletion", apiKeyId);
-            return new(false, false, 0);
-        }
-
-        _dbContext.ApiKeys.Remove(apiKey);
+        _dbContext.ApiKeys.Remove(targetApiKey);
 
         var checkResult = await _dbContext.SaveChangesAsync(ct);
 
         if (checkResult is not 1)
         {
-            _logger.LogWarning("Failed to delete API key {ApiKeyId}", apiKeyId);
+            _logger.LogWarning("Failed to delete API key {ApiKeyId}", targetApiKey.ApiKeyId);
             return new RemoveRecordResult(true, false, checkResult);
         }
 
         return new RemoveRecordResult(true, true, 1);
     }
+
     public async Task<RemoveRecordResult> DeleteBatchAsync(List<Guid> apiKeyIds, CancellationToken ct = default)
     {
         var checkResult = await _dbContext.ApiKeys
@@ -174,7 +160,7 @@ public class ApiKeyRepository(AppDbContext dbContext, ILogger<ApiKeyRepository> 
             else
                 _logger.LogWarning("Only deleted {DeletedCount} out of {TotalCount} API keys in the provided list",
                     checkResult, apiKeyIds.Count);
-            
+
             return new RemoveRecordResult(true, false, checkResult);
         }
 
