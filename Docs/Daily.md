@@ -1,3 +1,14 @@
+# Montag, 15.09.25
+
+## Tasks:
+- Präsentationen anhören und Feedback geben
+- Projektantrag für die Abschlussprüfung 
+- Frontend Refactor
+- Weitere Entwicklung der API
+
+## Blocker:
+-
+
 # Freitag, 12.09.25
 
 ## Tasks:
