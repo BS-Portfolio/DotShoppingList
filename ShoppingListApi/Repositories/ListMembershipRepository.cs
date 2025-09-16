@@ -24,7 +24,6 @@ public class ListMembershipRepository(AppDbContext appDbContext, ILogger<ListMem
         return targetMembership.UserRole;
     }
 
-
     public async Task<List<ShoppingList>> GetAllShoppingListsForUserAsync(Guid listUserId,
         CancellationToken ct = default)
     {
@@ -55,7 +54,6 @@ public class ListMembershipRepository(AppDbContext appDbContext, ILogger<ListMem
                 .ToListAsync(ct))
             .Select(lm => lm.ShoppingList!).ToList();
     }
-
 
     public async Task<bool> AssignUserToShoppingListByUserRoleIdAsync(Guid listUserId, Guid shoppingListId,
         Guid userRoleId,
