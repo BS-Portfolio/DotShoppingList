@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShoppingListApi.Data.Contexts;
 
@@ -11,9 +12,11 @@ using ShoppingListApi.Data.Contexts;
 namespace ShoppingListApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250915101023_uniqueActiveEmailConfirmationToken")]
+    partial class uniqueActiveEmailConfirmationToken
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -150,9 +153,6 @@ namespace ShoppingListApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTimeOffset>("CreationDateTime")
-                        .HasColumnType("datetimeoffset");
-
                     b.Property<string>("EmailAddress")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -168,10 +168,9 @@ namespace ShoppingListApi.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
+                    b.Property<Guid>("PasswordHash")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("UserId");
 
@@ -246,7 +245,7 @@ namespace ShoppingListApi.Migrations
             modelBuilder.Entity("ShoppingListApi.Model.Entity.Item", b =>
                 {
                     b.HasOne("ShoppingListApi.Model.Entity.ShoppingList", "ShoppingList")
-                        .WithMany("Items")
+                        .WithMany()
                         .HasForeignKey("ShoppingListId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -292,8 +291,6 @@ namespace ShoppingListApi.Migrations
 
             modelBuilder.Entity("ShoppingListApi.Model.Entity.ShoppingList", b =>
                 {
-                    b.Navigation("Items");
-
                     b.Navigation("ListMemberships");
                 });
 
