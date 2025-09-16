@@ -1,9 +1,20 @@
+# Dienstag, 16.09.25
+
+## Tasks:
+- Frontend Refactor stores
+- Abgabe Projektantrag für die Abschlussprüfung
+- Weitere Entwicklung der API
+- Mobile Responsive Design
+
+## Blocker:
+-
+
 # Montag, 15.09.25
 
 ## Tasks:
 - Präsentationen anhören und Feedback geben
 - Projektantrag für die Abschlussprüfung 
-- Frontend Refactor
+- Frontend error handling
 - Weitere Entwicklung der API
 
 ## Blocker:
