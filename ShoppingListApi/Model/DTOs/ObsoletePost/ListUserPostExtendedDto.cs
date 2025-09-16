@@ -3,31 +3,17 @@ using System.Text;
 using BCrypt.Net;
 using Newtonsoft.Json;
 
-namespace ShoppingListApi.Model.DTOs.Post;
+namespace ShoppingListApi.Model.DTOs.ObsoletePost;
 
 public record ListUserPostExtendedDto
 {
-    public void Deconstruct(out string firstName, out string lastName, out string emailAddress, out string passwordHash,
-        out DateTimeOffset creationDateTime)
-    {
-        firstName = FirstName;
-        lastName = LastName;
-        emailAddress = EmailAddress;
-        passwordHash = PasswordHash;
-        creationDateTime = CreationDateTime;
-    }
-
-    [Required]
-    public string FirstName { get; set; }
-
-    [Required]
-    public string LastName { get; set; }
-
-    [Required]
-    public string EmailAddress { get; set; }
-
+    [Required] public string FirstName { get; set; }
+    [Required] public string LastName { get; set; }
+    [Required] public string EmailAddress { get; set; }
     public string PasswordHash { get; private set; }
     public DateTimeOffset CreationDateTime { get; private set; }
+    public string ApiKey { get; set; }
+    public DateTimeOffset ApiKeyExpirationDateTime { get; set; }
 
     public ListUserPostExtendedDto(string firstName, string lastName, string emailAddress, string password)
     {
@@ -36,6 +22,8 @@ public record ListUserPostExtendedDto
         EmailAddress = emailAddress;
         PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(password, 13);
         CreationDateTime = DateTimeOffset.UtcNow;
+        ApiKey = HM.GenerateApiKey();
+        ApiKeyExpirationDateTime = CreationDateTime + TimeSpan.FromHours(6);
     }
 
     public ListUserPostExtendedDto(ListUserPostDto listUserPostDto)
@@ -52,5 +40,7 @@ public record ListUserPostExtendedDto
         PasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(decodedPassword, 13);
 
         CreationDateTime = DateTimeOffset.UtcNow;
+        ApiKey = HM.GenerateApiKey();
+        ApiKeyExpirationDateTime = CreationDateTime.AddHours(6);
     }
 }

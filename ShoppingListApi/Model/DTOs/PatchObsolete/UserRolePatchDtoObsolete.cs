@@ -1,8 +1,8 @@
 using ShoppingListApi.Enums;
 
-namespace ShoppingListApi.Model.DTOs.Patch;
+namespace ShoppingListApi.Model.DTOs.PatchObsolete;
 
-public record UserRolePatchDto(
+public record UserRolePatchDtoObsolete(
     string? UserRoleTitle,
     UserRoleEnum? UserRoleEnum
     );

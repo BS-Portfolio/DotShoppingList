@@ -4,22 +4,22 @@ using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.Database;
 using ShoppingListApi.Model.DTOs.Get;
-using ShoppingListApi.Model.DTOs.Post;
-using ShoppingListApi.Model.DTOs.Patch;
+using ShoppingListApi.Model.DTOs.ObsoletePost;
+using ShoppingListApi.Model.DTOs.PatchObsolete;
 using ShoppingListApi.Model.ReturnTypes;
 
 namespace ShoppingListApi.Services;
 
-public class DatabaseService
+public class DatabaseServiceObsolete
 {
     private readonly ConnectionStringService _connectionStringService;
-    private readonly ILogger<DatabaseService> _logger;
+    private readonly ILogger<DatabaseServiceObsolete> _logger;
     private readonly string _connectionString;
 
-    public DatabaseService(IServiceProvider serviceProvider)
+    public DatabaseServiceObsolete(IServiceProvider serviceProvider)
     {
         _connectionStringService = serviceProvider.GetRequiredService<ConnectionStringService>();
-        _logger = serviceProvider.GetRequiredService<ILogger<DatabaseService>>();
+        _logger = serviceProvider.GetRequiredService<ILogger<DatabaseServiceObsolete>>();
         _connectionString = _connectionStringService.GetConnectionString();
     }
 
@@ -40,7 +40,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(SqlConnectionHandlerAsync));
+                nameof(DatabaseServiceObsolete), nameof(SqlConnectionHandlerAsync));
             throw numberedException;
         }
         finally
@@ -63,7 +63,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(SqlConnectionHandlerAsync));
+                nameof(DatabaseServiceObsolete), nameof(SqlConnectionHandlerAsync));
             throw numberedException;
         }
         finally
@@ -90,7 +90,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(SqlConnectionHandlerAsync));
+                nameof(DatabaseServiceObsolete), nameof(SqlConnectionHandlerAsync));
             throw numberedException;
         }
         finally
@@ -118,7 +118,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(SqlConnectionHandlerAsync));
+                nameof(DatabaseServiceObsolete), nameof(SqlConnectionHandlerAsync));
             throw numberedException;
         }
         finally
@@ -133,6 +133,7 @@ public class DatabaseService
 
     #region Checkers
 
+    [Obsolete]
     public async Task<bool> CheckUserExistenceAsync(string emailAddress, SqlConnection sqlConnection)
     {
         bool existenceCheck = true;
@@ -173,7 +174,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(CheckUserExistenceAsync));
+                nameof(DatabaseServiceObsolete), nameof(CheckUserExistenceAsync));
             throw numberedException;
         }
     }
@@ -219,7 +220,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(CheckShoppingListNameExistenceAsync));
+                nameof(DatabaseServiceObsolete), nameof(CheckShoppingListNameExistenceAsync));
             throw numberedException;
         }
     }
@@ -267,11 +268,12 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(CheckShoppingListNameExistenceAsync));
+                nameof(DatabaseServiceObsolete), nameof(CheckShoppingListNameExistenceAsync));
             throw numberedException;
         }
     }
 
+    [Obsolete]
     public async Task<bool> CheckUserRoleExistenceAsync(int enumIndex, SqlConnection sqlConnection)
     {
         string checkQuery = "SELECT UserRoleID FROM UserRole WHERE UserRole.EnumIndex = @EnumIndex";
@@ -303,7 +305,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(CheckUserRoleExistenceAsync));
+                nameof(DatabaseServiceObsolete), nameof(CheckUserRoleExistenceAsync));
             throw numberedException;
         }
     }
@@ -360,12 +362,14 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(CheckUsersRoleInListAsync));
+                nameof(DatabaseServiceObsolete), nameof(CheckUsersRoleInListAsync));
             throw numberedException;
         }
     }
 
-    public async Task<CredentialsCheckReturn> CheckCredentialsAsync(LoginDataDto loginDataDto, SqlConnection sqlConnection)
+    [Obsolete]
+    public async Task<CredentialsCheckReturn> CheckCredentialsAsync(LoginDataDto loginDataDto,
+        SqlConnection sqlConnection)
     {
         string loginQuery =
             "SELECT UserID, PasswordHash FROM ListUser WHERE ListUser.EmailAddress = @EmailAddress";
@@ -430,7 +434,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(CheckCredentialsAsync));
+                nameof(DatabaseServiceObsolete), nameof(CheckCredentialsAsync));
             throw numberedException;
         }
     }
@@ -461,7 +465,8 @@ public class DatabaseService
             {
                 while (await sqlReader.ReadAsync())
                 {
-                    userRoles.Add(new UserRoleGetDto(sqlReader.GetGuid(0), sqlReader.GetString(1), sqlReader.GetInt32(2)));
+                    userRoles.Add(new UserRoleGetDto(sqlReader.GetGuid(0), sqlReader.GetString(1),
+                        sqlReader.GetInt32(2)));
                 }
             }
 
@@ -477,11 +482,12 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetUserRolesAsync));
+                nameof(DatabaseServiceObsolete), nameof(GetUserRolesAsync));
             throw numberedException;
         }
     }
 
+    [Obsolete]
     public async Task<ListUserGetDto?> GetUserAsync<T>(T identifier, string whereClause, SqlConnection sqlConnection)
     {
         var query =
@@ -534,11 +540,12 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetUserAsync));
+                nameof(DatabaseServiceObsolete), nameof(GetUserAsync));
             throw numberedException;
         }
     }
-    
+
+    [Obsolete]
     public async Task<ListUserGetDto?> GetUserByEmailAddressAsync(string emailAddress, SqlConnection sqlConnection)
     {
         try
@@ -553,11 +560,12 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetUserByEmailAddressAsync));
+                nameof(DatabaseServiceObsolete), nameof(GetUserByEmailAddressAsync));
             throw numberedException;
         }
     }
 
+    [Obsolete]
     public async Task<ListUserGetDto?> GetUserByIdAsync(Guid userId, SqlConnection sqlConnection)
     {
         try
@@ -572,11 +580,12 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetUserByIdAsync));
+                nameof(DatabaseServiceObsolete), nameof(GetUserByIdAsync));
             throw numberedException;
         }
     }
 
+    [Obsolete]
     public async Task<Guid?> GetUserIdByEmailAsync(string emailAddress, SqlConnection sqlConnection)
     {
         List<Guid> loadedIds = [];
@@ -626,11 +635,11 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetUserIdByEmailAsync));
+                nameof(DatabaseServiceObsolete), nameof(GetUserIdByEmailAsync));
             throw numberedException;
         }
     }
-    
+
     public async Task<ShoppingListGetDto?> GetShoppingListByIdAsync(Guid shoppingListId, SqlConnection sqlConnection)
     {
         var query =
@@ -693,7 +702,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetShoppingListByIdAsync));
+                nameof(DatabaseServiceObsolete), nameof(GetShoppingListByIdAsync));
             throw numberedException;
         }
     }
@@ -761,7 +770,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetShoppingListsForUserAsync));
+                nameof(DatabaseServiceObsolete), nameof(GetShoppingListsForUserAsync));
             throw numberedException;
         }
     }
@@ -810,7 +819,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetItemsForShoppingListAsync));
+                nameof(DatabaseServiceObsolete), nameof(GetItemsForShoppingListAsync));
             throw numberedException;
         }
     }
@@ -874,7 +883,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetShoppingListCollaboratorsAsync));
+                nameof(DatabaseServiceObsolete), nameof(GetShoppingListCollaboratorsAsync));
             throw numberedException;
         }
     }
@@ -921,7 +930,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetAllUsersAsync));
+                nameof(DatabaseServiceObsolete), nameof(GetAllUsersAsync));
             throw numberedException;
         }
     }
@@ -964,7 +973,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetShoppingListCountForUserAsync));
+                nameof(DatabaseServiceObsolete), nameof(GetShoppingListCountForUserAsync));
             throw numberedException;
         }
     }
@@ -1003,7 +1012,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(GetItemsCountForShoppingListAsync));
+                nameof(DatabaseServiceObsolete), nameof(GetItemsCountForShoppingListAsync));
             throw numberedException;
         }
     }
@@ -1061,12 +1070,13 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(HandleShoppingListsFetchForUserAsync));
+                nameof(DatabaseServiceObsolete), nameof(HandleShoppingListsFetchForUserAsync));
             throw numberedException;
         }
     }
 
-    public async Task<List<ShoppingListGetDto>> HandleShoppingListsFetchForUserAsync(Guid userId, SqlConnection sqlConnection)
+    public async Task<List<ShoppingListGetDto>> HandleShoppingListsFetchForUserAsync(Guid userId,
+        SqlConnection sqlConnection)
     {
         try
         {
@@ -1091,7 +1101,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(HandleShoppingListsFetchForUserAsync));
+                nameof(DatabaseServiceObsolete), nameof(HandleShoppingListsFetchForUserAsync));
             throw numberedException;
         }
     }
@@ -1127,7 +1137,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(HandleLoginAsync));
+                nameof(DatabaseServiceObsolete), nameof(HandleLoginAsync));
             throw numberedException;
         }
     }
@@ -1184,7 +1194,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(HandleAddingShoppingListAsync));
+                nameof(DatabaseServiceObsolete), nameof(HandleAddingShoppingListAsync));
             throw numberedException;
         }
     }
@@ -1235,13 +1245,13 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(HandleAddingItemToShoppingListAsync));
+                nameof(DatabaseServiceObsolete), nameof(HandleAddingItemToShoppingListAsync));
             throw numberedException;
         }
     }
 
     public async Task<UpdateResult> HandleShoppingListNameUpdateAsync(
-        ModificationData<(Guid userId, Guid shoppingListId), ShoppingListPatchDto> modificationData,
+        ModificationData<(Guid userId, Guid shoppingListId), ShoppingListPatchDtoObsolete> modificationData,
         SqlConnection sqlConnection)
     {
         const bool success = true;
@@ -1260,7 +1270,7 @@ public class DatabaseService
             }
 
             var updateSuccess = await ModifyShoppingListNameAsync(
-                new ModificationData<Guid, ShoppingListPatchDto>(modificationData.Identifier.shoppingListId,
+                new ModificationData<Guid, ShoppingListPatchDtoObsolete>(modificationData.Identifier.shoppingListId,
                     modificationData.Payload),
                 sqlConnection);
 
@@ -1279,13 +1289,13 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(HandleShoppingListNameUpdateAsync));
+                nameof(DatabaseServiceObsolete), nameof(HandleShoppingListNameUpdateAsync));
             throw numberedException;
         }
     }
 
     public async Task<UpdateResult> HandleShoppingListItemUpdateAsync(
-        ModificationData<(Guid userId, Guid shoppingListId, Guid itemId), ItemPatchDto> modificationData,
+        ModificationData<(Guid userId, Guid shoppingListId, Guid itemId), ItemPatchDtoObsolete> modificationData,
         SqlConnection sqlConnection)
     {
         const bool success = true;
@@ -1304,7 +1314,7 @@ public class DatabaseService
             }
 
             var updateSuccess = await ModifyItemAsync(
-                new ModificationData<(Guid itemId, Guid shoppingListId), ItemPatchDto>(
+                new ModificationData<(Guid itemId, Guid shoppingListId), ItemPatchDtoObsolete>(
                     (modificationData.Identifier.itemId, modificationData.Identifier.shoppingListId),
                     modificationData.Payload),
                 sqlConnection);
@@ -1324,7 +1334,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(HandleShoppingListItemUpdateAsync));
+                nameof(DatabaseServiceObsolete), nameof(HandleShoppingListItemUpdateAsync));
             throw numberedException;
         }
     }
@@ -1369,7 +1379,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(HandleShoppingListRemovalAsync));
+                nameof(DatabaseServiceObsolete), nameof(HandleShoppingListRemovalAsync));
             throw numberedException;
         }
     }
@@ -1408,7 +1418,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(HandleItemRemovalFromShoppingListAsync));
+                nameof(DatabaseServiceObsolete), nameof(HandleItemRemovalFromShoppingListAsync));
             throw numberedException;
         }
     }
@@ -1514,7 +1524,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(HandleAddingCollaboratorToShoppingListAsync));
+                nameof(DatabaseServiceObsolete), nameof(HandleAddingCollaboratorToShoppingListAsync));
             throw numberedException;
         }
     }
@@ -1561,7 +1571,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(AddRecordAsync));
+                nameof(DatabaseServiceObsolete), nameof(AddRecordAsync));
             throw numberedException;
         }
     }
@@ -1603,11 +1613,12 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(AddUserRoleAsync));
+                nameof(DatabaseServiceObsolete), nameof(AddUserRoleAsync));
             throw numberedException;
         }
     }
 
+    [Obsolete]
     public async Task<(bool succes, Guid? userId)> AddUserAsync(ListUserPostExtendedDto userPostExtendedDto,
         SqlConnection sqlConnection, SqlTransaction? transaction = null)
     {
@@ -1649,7 +1660,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(AddUserAsync));
+                nameof(DatabaseServiceObsolete), nameof(AddUserAsync));
             throw numberedException;
         }
     }
@@ -1689,7 +1700,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(AddShoppingListAsync));
+                nameof(DatabaseServiceObsolete), nameof(AddShoppingListAsync));
             throw numberedException;
         }
     }
@@ -1735,7 +1746,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(AddItemToShoppingListAsync));
+                nameof(DatabaseServiceObsolete), nameof(AddItemToShoppingListAsync));
             throw numberedException;
         }
     }
@@ -1780,7 +1791,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(AssignUserToShoppingListAsync));
+                nameof(DatabaseServiceObsolete), nameof(AssignUserToShoppingListAsync));
             throw numberedException;
         }
     }
@@ -1789,7 +1800,7 @@ public class DatabaseService
 
     #region Data-Modifier
 
-    public async Task<bool> ModifyUserDetailsAsync(ModificationData<Guid, ListUserPatchDto> userDetailsModificationData,
+    public async Task<bool> ModifyUserDetailsAsync(ModificationData<Guid, ListUserPatchDtoObsolete> userDetailsModificationData,
         SqlConnection sqlConnection)
     {
         const bool success = true;
@@ -1847,13 +1858,13 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(ModifyUserDetailsAsync));
+                nameof(DatabaseServiceObsolete), nameof(ModifyUserDetailsAsync));
             throw numberedException;
         }
     }
 
     public async Task<bool> ModifyShoppingListNameAsync(
-        ModificationData<Guid, ShoppingListPatchDto> shoppingListModificationData,
+        ModificationData<Guid, ShoppingListPatchDtoObsolete> shoppingListModificationData,
         SqlConnection sqlConnection, SqlTransaction? transaction = null)
     {
         var listId = shoppingListModificationData.Identifier;
@@ -1902,18 +1913,18 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(ModifyShoppingListNameAsync));
+                nameof(DatabaseServiceObsolete), nameof(ModifyShoppingListNameAsync));
             throw numberedException;
         }
     }
 
     public async Task<bool> ModifyItemAsync(
-        ModificationData<(Guid itemId, Guid shoppingListId), ItemPatchDto> itemModificationData,
+        ModificationData<(Guid itemId, Guid shoppingListId), ItemPatchDtoObsolete> itemModificationData,
         SqlConnection sqlConnection)
     {
         Guid itemId = itemModificationData.Identifier.itemId;
         Guid shoppingListId = itemModificationData.Identifier.shoppingListId;
-        ItemPatchDto itemPatchDto = itemModificationData.Payload;
+        ItemPatchDtoObsolete itemPatchDtoObsolete = itemModificationData.Payload;
         const bool success = true;
 
         try
@@ -1928,16 +1939,16 @@ public class DatabaseService
                 }
             };
 
-            if (!string.IsNullOrEmpty(itemPatchDto.NewItemName))
+            if (!string.IsNullOrEmpty(itemPatchDtoObsolete.NewItemName))
             {
                 updateParts.Add("ItemName = @ItemName");
-                parameters.Add(new SqlParameter("@ItemName", itemPatchDto.NewItemName));
+                parameters.Add(new SqlParameter("@ItemName", itemPatchDtoObsolete.NewItemName));
             }
 
-            if (!string.IsNullOrEmpty(itemPatchDto.NewItemAmount))
+            if (!string.IsNullOrEmpty(itemPatchDtoObsolete.NewItemAmount))
             {
                 updateParts.Add("ItemAmount = @ItemAmount");
-                parameters.Add(new SqlParameter("@ItemAmount", itemPatchDto.NewItemAmount));
+                parameters.Add(new SqlParameter("@ItemAmount", itemPatchDtoObsolete.NewItemAmount));
             }
 
             if (updateParts.Count == 0)
@@ -1973,11 +1984,12 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(ModifyItemAsync));
+                nameof(DatabaseServiceObsolete), nameof(ModifyItemAsync));
             throw numberedException;
         }
     }
 
+    [Obsolete]
     public async Task<bool> UpdateUsersApiKeyAsync(Guid userId, SqlConnection sqlConnection)
     {
         const bool success = true;
@@ -2020,7 +2032,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(UpdateUsersApiKeyAsync));
+                nameof(DatabaseServiceObsolete), nameof(UpdateUsersApiKeyAsync));
             throw numberedException;
         }
     }
@@ -2076,7 +2088,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(RemoveUserByIdAsync));
+                nameof(DatabaseServiceObsolete), nameof(RemoveUserByIdAsync));
             throw numberedException;
         }
     }
@@ -2110,7 +2122,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(RemoveUserByEmailAsync));
+                nameof(DatabaseServiceObsolete), nameof(RemoveUserByEmailAsync));
             throw numberedException;
         }
     }
@@ -2157,7 +2169,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(RemoveItemAsync));
+                nameof(DatabaseServiceObsolete), nameof(RemoveItemAsync));
             throw numberedException;
         }
     }
@@ -2208,7 +2220,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(RemoveCollaboratorFromShoppingListAsync));
+                nameof(DatabaseServiceObsolete), nameof(RemoveCollaboratorFromShoppingListAsync));
             throw numberedException;
         }
     }
@@ -2251,7 +2263,7 @@ public class DatabaseService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(RemoveShoppingListByIdAsync));
+                nameof(DatabaseServiceObsolete), nameof(RemoveShoppingListByIdAsync));
             throw numberedException;
         }
     }

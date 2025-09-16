@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 using ShoppingListApi.Data.Contexts;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Interfaces.Repositories;

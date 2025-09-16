@@ -51,7 +51,8 @@ namespace ShoppingListApi.Migrations
 
                     b.HasIndex("IsValid");
 
-                    b.HasIndex("Key");
+                    b.HasIndex("Key")
+                        .IsUnique();
 
                     b.HasIndex("UserId");
 
@@ -85,9 +86,12 @@ namespace ShoppingListApi.Migrations
 
                     b.HasIndex("ExpirationDateTime");
 
-                    b.HasIndex("IsUsed");
+                    b.HasIndex("IsUsed")
+                        .IsUnique()
+                        .HasFilter("[IsUsed] = 0");
 
-                    b.HasIndex("Token");
+                    b.HasIndex("Token")
+                        .IsUnique();
 
                     b.HasIndex("UserId");
 
@@ -145,6 +149,9 @@ namespace ShoppingListApi.Migrations
                     b.Property<Guid>("UserId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreationDateTime")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("EmailAddress")
                         .IsRequired()
@@ -204,7 +211,11 @@ namespace ShoppingListApi.Migrations
 
                     b.HasKey("UserRoleId");
 
-                    b.HasIndex("EnumIndex");
+                    b.HasIndex("EnumIndex")
+                        .IsUnique();
+
+                    b.HasIndex("UserRoleTitle")
+                        .IsUnique();
 
                     b.ToTable("UserRoles");
                 });

@@ -1,5 +1,5 @@
 
-using ShoppingListApi.Model.DTOs.Post;
+using ShoppingListApi.Model.DTOs.ObsoletePost;
 
 namespace ShoppingListApi.Model.Database;
 

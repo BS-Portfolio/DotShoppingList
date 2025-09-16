@@ -1,5 +1,5 @@
 ﻿using ShoppingListApi.Model.DTOs.Get;
-using ShoppingListApi.Model.DTOs.Patch;
+using ShoppingListApi.Model.DTOs.PatchObsolete;
 using ShoppingListApi.Configs;
 
 namespace ShoppingListApi.Tests;
@@ -42,7 +42,7 @@ public class UnitTests
         var newAmount = "New Amount";
 
         // Act
-        var itemPatch = new ItemPatchDto(newName, newAmount);
+        var itemPatch = new ItemPatchDtoObsolete(newName, newAmount);
 
         // Assert
         Assert.Equal(newName, itemPatch.NewItemName);

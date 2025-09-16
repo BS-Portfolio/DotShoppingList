@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ShoppingListApi.Data.Contexts;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Interfaces.Repositories;
-using ShoppingListApi.Model.DTOs.Patch;
+using ShoppingListApi.Model.DTOs.PatchObsolete;
 using ShoppingListApi.Model.DTOs.Post;
 using ShoppingListApi.Model.Entity;
 
@@ -54,15 +54,15 @@ public class UserRoleRepository(AppDbContext appDbContext, ILogger<UserRoleRepos
         return newUserRoleId;
     }
 
-    public async Task<bool> UpdateAsync(Guid userRoleId, UserRolePatchDto userRolePatchDto, CancellationToken ct = default)
+    public async Task<bool> UpdateAsync(Guid userRoleId, UserRolePatchDtoObsolete userRolePatchDtoObsolete, CancellationToken ct = default)
     {
         var existingUserRole = await _appDbContext.UserRoles.FirstOrDefaultAsync(ur => ur.UserRoleId == userRoleId, ct);
         
         if (existingUserRole is null)
             return false;
         
-        if (userRolePatchDto.UserRoleTitle is not null) existingUserRole.UserRoleTitle = userRolePatchDto.UserRoleTitle;
-        if (userRolePatchDto.UserRoleEnum.HasValue) existingUserRole.EnumIndex = (int)userRolePatchDto.UserRoleEnum.Value;
+        if (userRolePatchDtoObsolete.UserRoleTitle is not null) existingUserRole.UserRoleTitle = userRolePatchDtoObsolete.UserRoleTitle;
+        if (userRolePatchDtoObsolete.UserRoleEnum.HasValue) existingUserRole.EnumIndex = (int)userRolePatchDtoObsolete.UserRoleEnum.Value;
         
         var checkResult = await _appDbContext.SaveChangesAsync(ct);
         

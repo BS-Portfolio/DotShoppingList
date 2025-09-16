@@ -1,5 +1,5 @@
 using ShoppingListApi.Enums;
-using ShoppingListApi.Model.DTOs.Patch;
+using ShoppingListApi.Model.DTOs.PatchObsolete;
 using ShoppingListApi.Model.DTOs.Post;
 using ShoppingListApi.Model.Entity;
 
@@ -14,5 +14,5 @@ public interface IUserRoleRepository
     Task<UserRole?> GetByTitleAsync(string userRoleTitle, CancellationToken ct = default);
 
     Task<Guid?> AddAsync(UserRolePostDto userRolePostDto, CancellationToken ct = default);
-    Task<bool> UpdateAsync(Guid userRoleId, UserRolePatchDto userRolePatchDto, CancellationToken ct = default);
+    Task<bool> UpdateAsync(Guid userRoleId, UserRolePatchDtoObsolete userRolePatchDtoObsolete, CancellationToken ct = default);
 }

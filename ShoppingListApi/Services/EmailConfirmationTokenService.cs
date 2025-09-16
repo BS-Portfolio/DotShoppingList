@@ -69,7 +69,7 @@ public class EmailConfirmationTokenService(
         try
         {
             var targetUser =
-                await listUserRepository.GetByIdAsync(userId, ct);
+                await listUserRepository.GetWithoutDetailsByIdAsync(userId, ct);
 
             if (targetUser is null)
                 return new(false, false, false, null);
@@ -95,7 +95,7 @@ public class EmailConfirmationTokenService(
         try
         {
             var targetUser =
-                await listUserRepository.GetByEmailAddressAsync(userEmailAddress, ct);
+                await listUserRepository.GetWithoutDetailsByEmailAddressAsync(userEmailAddress, ct);
 
             if (targetUser is null)
                 return new(false, false, false, null);
@@ -215,7 +215,7 @@ public class EmailConfirmationTokenService(
     {
         try
         {
-            var targetUser = await listUserRepository.GetByIdAsync(userId, ct);
+            var targetUser = await listUserRepository.GetWithoutDetailsByIdAsync(userId, ct);
 
             if (targetUser is null)
                 return new(false, false, 0);
@@ -241,7 +241,7 @@ public class EmailConfirmationTokenService(
     {
         try
         {
-            var targetUser = await listUserRepository.GetByEmailAddressAsync(userEmailAddress, ct);
+            var targetUser = await listUserRepository.GetWithoutDetailsByEmailAddressAsync(userEmailAddress, ct);
 
             if (targetUser is null)
                 return new(false, false, 0);

@@ -1,5 +1,5 @@
 using ShoppingListApi.Interfaces.Repositories;
-using ShoppingListApi.Model.DTOs.Patch;
+using ShoppingListApi.Model.DTOs.PatchObsolete;
 using ShoppingListApi.Model.DTOs.Post;
 using ShoppingListApi.Model.Entity;
 using ShoppingListApi.Model.ReturnTypes;
@@ -14,5 +14,5 @@ public interface IUserRoleService
         UserRolePostDto userRolePostDto, CancellationToken ct = default);
 
     Task<UpdateRecordResult<UserRole?>> CheckConflictAndUpdateUserRoleAsync(
-        Guid userRoleId, UserRolePatchDto userRolePatchDto, CancellationToken ct = default);
+        Guid userRoleId, UserRolePatchDtoObsolete userRolePatchDtoObsolete, CancellationToken ct = default);
 }

@@ -1,7 +1,7 @@
 using ShoppingListApi.Enums;
 using ShoppingListApi.Interfaces.Repositories;
 using ShoppingListApi.Interfaces.Services;
-using ShoppingListApi.Model.DTOs.Patch;
+using ShoppingListApi.Model.DTOs.PatchObsolete;
 using ShoppingListApi.Model.DTOs.Post;
 using ShoppingListApi.Model.Entity;
 using ShoppingListApi.Model.ReturnTypes;
@@ -43,7 +43,7 @@ public class UserRoleService(IUserRoleRepository userRoleRepository, ILogger<Use
     }
 
     public async Task<UpdateRecordResult<UserRole?>> CheckConflictAndUpdateUserRoleAsync(
-        Guid userRoleId, UserRolePatchDto userRolePatchDto, CancellationToken ct = default)
+        Guid userRoleId, UserRolePatchDtoObsolete userRolePatchDtoObsolete, CancellationToken ct = default)
     {
         try
         {
@@ -51,22 +51,22 @@ public class UserRoleService(IUserRoleRepository userRoleRepository, ILogger<Use
             if (targetUserRole is null)
                 return new(false, false, false, null);
 
-            if (userRolePatchDto.UserRoleEnum is not null)
+            if (userRolePatchDtoObsolete.UserRoleEnum is not null)
             {
                 var existingRoleByEnum =
-                    await _userRoleRepository.GetByEnumAsync((UserRoleEnum)userRolePatchDto.UserRoleEnum, ct);
+                    await _userRoleRepository.GetByEnumAsync((UserRoleEnum)userRolePatchDtoObsolete.UserRoleEnum, ct);
                 if (existingRoleByEnum is not null && existingRoleByEnum.UserRoleId != userRoleId)
                     return new(true, false, true, existingRoleByEnum);
             }
 
-            if (userRolePatchDto.UserRoleTitle is not null)
+            if (userRolePatchDtoObsolete.UserRoleTitle is not null)
             {
-                var existingRoleByTitle = await _userRoleRepository.GetByTitleAsync(userRolePatchDto.UserRoleTitle, ct);
+                var existingRoleByTitle = await _userRoleRepository.GetByTitleAsync(userRolePatchDtoObsolete.UserRoleTitle, ct);
                 if (existingRoleByTitle is not null && existingRoleByTitle.UserRoleId != userRoleId)
                     return new(true, false, true, existingRoleByTitle);
             }
 
-            var updatedUserRole = await _userRoleRepository.UpdateAsync(userRoleId, userRolePatchDto, ct);
+            var updatedUserRole = await _userRoleRepository.UpdateAsync(userRoleId, userRolePatchDtoObsolete, ct);
 
             if (updatedUserRole is false)
                 return new(true, false, false, null);

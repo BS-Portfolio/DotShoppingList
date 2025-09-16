@@ -8,8 +8,8 @@ using NLog.Extensions.Logging;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.Database;
 using ShoppingListApi.Model.DTOs.Get;
-using ShoppingListApi.Model.DTOs.Patch;
-using ShoppingListApi.Model.DTOs.Post;
+using ShoppingListApi.Model.DTOs.PatchObsolete;
+using ShoppingListApi.Model.DTOs.ObsoletePost;
 using ShoppingListApi.Services;
 using Xunit;
 using Xunit.Abstractions;
@@ -39,7 +39,7 @@ public class DatabaseIntegrationTests
 
         serviceCollection.AddSingleton<ILogger<ConnectionStringService>>(loggerFactory
             .CreateLogger<ConnectionStringService>());
-        serviceCollection.AddSingleton<ILogger<DatabaseService>>(loggerFactory.CreateLogger<DatabaseService>());
+        serviceCollection.AddSingleton<ILogger<DatabaseServiceObsolete>>(loggerFactory.CreateLogger<DatabaseServiceObsolete>());
 
         serviceCollection.AddTransient<ConnectionStringService>();
 
@@ -106,7 +106,7 @@ public class DatabaseIntegrationTests
             _testOutputHelper.WriteLine(nameof(Check_Database_UserRoles_Existence));
 
             // Arrange
-            var databaseService = new DatabaseService(_serviceProvider);
+            var databaseService = new DatabaseServiceObsolete(_serviceProvider);
 
             var result = await databaseService.SqlConnectionHandlerAsync<List<UserRoleGetDto>>(
                 async (connection) => await databaseService.GetUserRolesAsync(connection));
@@ -136,7 +136,7 @@ public class DatabaseIntegrationTests
             _testOutputHelper.WriteLine(nameof(Check_Database_Method_AddUserAsync));
 
             // Arrange
-            var databaseService = new DatabaseService(_serviceProvider);
+            var databaseService = new DatabaseServiceObsolete(_serviceProvider);
 
             var listUserPost1 = new ListUserPostDto("Milad", "Test1", "TWlsYWRAbWFzdGVyLmNvbQ==", "bWFzdGVyNjUkdWhnJg==");
             var lu1Ex = new ListUserPostExtendedDto(listUserPost1);
@@ -186,7 +186,7 @@ public class DatabaseIntegrationTests
             _testOutputHelper.WriteLine(nameof(Check_DatabaseService_AddShoppingListAsync));
 
             // Arrange
-            var databaseService = new DatabaseService(_serviceProvider);
+            var databaseService = new DatabaseServiceObsolete(_serviceProvider);
             var name1 = "Rewe";
             var name2 = "Edeka";
             var name3 = "Bauhaus";
@@ -228,7 +228,7 @@ public class DatabaseIntegrationTests
             _testOutputHelper.WriteLine(nameof(Check_DatabaseService_AddItemToShoppingList));
 
             // Arrange
-            var databaseService = new DatabaseService(_serviceProvider);
+            var databaseService = new DatabaseServiceObsolete(_serviceProvider);
             var newItemPost = new ItemPostDto("tempItem", "tempAmount");
 
             var listOwnerId = Guid.Parse("63ffeed9-3739-44a4-848b-447ce92b2817");
@@ -277,23 +277,23 @@ public class DatabaseIntegrationTests
             _testOutputHelper.WriteLine(nameof(Check_DatabaseService_ModifyShoppingListName));
 
             // Arrange
-            var databaseService = new DatabaseService(_serviceProvider);
+            var databaseService = new DatabaseServiceObsolete(_serviceProvider);
             var existingShoppingListId = Guid.Parse("484d297a-228c-4631-9a26-cd56ac2ef8ec");
 
             // Act
             var resultExpectTrue = await databaseService
-                .TestTransactionHandlerAsync<ModificationData<Guid, ShoppingListPatchDto>, bool>(
+                .TestTransactionHandlerAsync<ModificationData<Guid, ShoppingListPatchDtoObsolete>, bool>(
                     async (input, connection, tx) =>
                         await databaseService.ModifyShoppingListNameAsync(input, connection, tx),
-                    new ModificationData<Guid, ShoppingListPatchDto>(existingShoppingListId,
-                        new ShoppingListPatchDto("Hanky")));
+                    new ModificationData<Guid, ShoppingListPatchDtoObsolete>(existingShoppingListId,
+                        new ShoppingListPatchDtoObsolete("Hanky")));
 
             var resultExpectFalse = await databaseService
-                .TestTransactionHandlerAsync<ModificationData<Guid, ShoppingListPatchDto>, bool>(
+                .TestTransactionHandlerAsync<ModificationData<Guid, ShoppingListPatchDtoObsolete>, bool>(
                     async (input, connection, tx) =>
                         await databaseService.ModifyShoppingListNameAsync(input, connection, tx),
-                    new ModificationData<Guid, ShoppingListPatchDto>(Guid.NewGuid(),
-                        new ShoppingListPatchDto("Hanky")));
+                    new ModificationData<Guid, ShoppingListPatchDtoObsolete>(Guid.NewGuid(),
+                        new ShoppingListPatchDtoObsolete("Hanky")));
 
             //Assert
             Assert.True(resultExpectTrue, "failed to modify existing shopping list!");
@@ -314,7 +314,7 @@ public class DatabaseIntegrationTests
             _testOutputHelper.WriteLine(nameof(Check_DatabaseService_RemoveItemFromShoppingList));
 
             // Arrange
-            var databaseService = new DatabaseService(_serviceProvider);
+            var databaseService = new DatabaseServiceObsolete(_serviceProvider);
             var listOwnerId = Guid.Parse("63ffeed9-3739-44a4-848b-447ce92b2817");
             var existingShoppingListId = Guid.Parse("484d297a-228c-4631-9a26-cd56ac2ef8ec");
             var existingItemIdInExistingShoppingList = Guid.Parse("1e829305-850b-4fce-a6eb-58c83c984645");
