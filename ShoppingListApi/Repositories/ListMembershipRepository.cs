@@ -24,13 +24,18 @@ public class ListMembershipRepository(AppDbContext appDbContext, ILogger<ListMem
         return targetMembership.UserRole;
     }
 
-    public async Task<List<ShoppingList>> GetAllShoppingListsForUserAsync(Guid listUserId,
+    public async Task<ListMembership?> GetListMembershipByCompositePkAsync(Guid listUserId, Guid shoppingListId,
+        CancellationToken ct = default)
+    {
+        return await _appDbContext.ListMemberships.FindAsync([shoppingListId, listUserId], ct);
+    }
+
+    public async Task<List<Guid>> GetAllShoppingListIdsForUserAsync(Guid listUserId,
         CancellationToken ct = default)
     {
         return (await _appDbContext.ListMemberships
-                .Include(lm => lm.ShoppingList)
                 .Where(lm => lm.UserId == listUserId).ToListAsync(ct))
-            .Select(lm => lm.ShoppingList!).ToList();
+            .Select(lm => lm.ShoppingListId).ToList();
     }
 
     public async Task<List<ShoppingList>> GetAllShoppingListsOwnedByUserAsync(Guid listUserId,
@@ -53,6 +58,44 @@ public class ListMembershipRepository(AppDbContext appDbContext, ILogger<ListMem
                 .Where(lm => lm.UserId == listUserId && lm.UserRole!.EnumIndex == (int)UserRoleEnum.Collaborator)
                 .ToListAsync(ct))
             .Select(lm => lm.ShoppingList!).ToList();
+    }
+
+    public async Task<List<ListMembership>> GetAllUsersInShoppingListAsync(Guid shoppingListId,
+        CancellationToken ct = default)
+    {
+        return await _appDbContext.ListMemberships
+            .Include(lm => lm.UserRole)
+            .Include(lm => lm.User)
+            .Where(lm => lm.ShoppingListId == shoppingListId)
+            .ToListAsync(ct);
+    }
+
+    public async Task<ListUser?> GetShoppingListOwner(Guid shoppingListId, CancellationToken ct = default)
+    {
+        var potentialOwnerList = await _appDbContext.ListMemberships
+            .Include(lm => lm.UserRole)
+            .Include(lm => lm.User)
+            .Where(lm => lm.ShoppingListId == shoppingListId && lm.UserRole!.EnumIndex == (int)UserRoleEnum.ListOwner)
+            .ToListAsync(ct);
+
+        if (potentialOwnerList.Count > 1)
+            throw new Exception("Data integrity issue: multiple list owners found for shopping list ID " +
+                                shoppingListId);
+
+        return potentialOwnerList.FirstOrDefault()?.User;
+    }
+
+    public async Task<List<ListUser>> GetShoppingListCollaborators(Guid shoppingListId,
+        CancellationToken ct = default)
+    {
+        var collaboratorsList = await _appDbContext.ListMemberships
+            .Include(lm => lm.UserRole)
+            .Include(lm => lm.User)
+            .Where(lm =>
+                lm.ShoppingListId == shoppingListId && lm.UserRole!.EnumIndex == (int)UserRoleEnum.Collaborator)
+            .ToListAsync(ct);
+
+        return collaboratorsList.Select(lm => lm.User!).ToList();
     }
 
     public async Task<bool> AssignUserToShoppingListByUserRoleIdAsync(Guid listUserId, Guid shoppingListId,

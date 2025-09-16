@@ -1,6 +1,8 @@
+using ShoppingListApi.Model.Entity;
+
 namespace ShoppingListApi.Model.DTOs.Get;
 
-public class ListUserMinimalGetDto
+public record ListUserMinimalGetDto
 {
     public Guid UserId { get; set; }
     public string FirstName { get; }
@@ -13,5 +15,18 @@ public class ListUserMinimalGetDto
         FirstName = firstName;
         LastName = lastName;
         EmailAddress = emailAddress;
+    }
+
+    public ListUserMinimalGetDto(ListUser listUser)
+    {
+        UserId = listUser.UserId;
+        FirstName = listUser.FirstName;
+        LastName = listUser.LastName;
+        EmailAddress = listUser.EmailAddress;
+    }
+
+    public static List<ListUserMinimalGetDto> FromListUserBatch(List<ListUser> listUsers)
+    {
+        return listUsers.Select(listUser => new ListUserMinimalGetDto(listUser)).ToList();
     }
 }

@@ -18,8 +18,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // ListMembership - Composite Key
+        // a user cn either be an owner or a collaborator in a shopping list, not both
         modelBuilder.Entity<ListMembership>()
-            .HasKey(lm => new { lm.ShoppingListId, lm.UserId, lm.UserRoleId });
+            .HasKey(lm => new { lm.ShoppingListId, lm.UserId });
 
         // ApiKey
         modelBuilder.Entity<ApiKey>()

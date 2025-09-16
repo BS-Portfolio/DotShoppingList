@@ -13,5 +13,5 @@ public interface IItemRepository
 
     Task<bool> UpdateByIdAsync(Item targetItem, ItemPatchDto itemPatchDto, CancellationToken ct = default);
 
-    Task<bool> DeleteByIdAsync(Item targetItem, CancellationToken ct = default);
+    Task<bool> DeleteAsync(Item targetItem, CancellationToken ct = default);
 }

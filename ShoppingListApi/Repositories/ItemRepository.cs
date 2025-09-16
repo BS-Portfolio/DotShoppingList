@@ -59,7 +59,7 @@ public class ItemRepository(AppDbContext appDbContext, ILogger<ItemRepository> l
         return true;
     }
 
-    public async Task<bool> DeleteByIdAsync(Item targetItem, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(Item targetItem, CancellationToken ct = default)
     {
         _appDbContext.Items.Remove(targetItem);
 
