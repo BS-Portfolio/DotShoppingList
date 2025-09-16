@@ -97,7 +97,7 @@ public class ListUserRepository(AppDbContext appAppDbContext, ILogger<ListUserRe
 
             if (listMemberships.Any())
             {
-                var ownerLists = listMemberships.Where(lm => lm.UserRole!.EnumIndex == (int)UserRoleEnum.ListAdmin)
+                var ownerLists = listMemberships.Where(lm => lm.UserRole!.EnumIndex == (int)UserRoleEnum.ListOwner)
                     .ToList();
                 var ownerShoppingListIds = ownerLists.Select(lm => lm.ShoppingListId);
 

@@ -194,7 +194,7 @@ public class DatabaseServiceObsolete
         checkCommand.Parameters.AddRange([
             new SqlParameter() { ParameterName = "@ShoppingListName", Value = data.ShoppingListName },
             new SqlParameter() { ParameterName = "@UserID", Value = data.UserId },
-            new SqlParameter() { ParameterName = "@AdminEnumIndex", Value = (int)UserRoleEnum.ListAdmin },
+            new SqlParameter() { ParameterName = "@AdminEnumIndex", Value = (int)UserRoleEnum.ListOwner },
         ]);
 
         try
@@ -242,7 +242,7 @@ public class DatabaseServiceObsolete
         checkCommand.Parameters.AddRange([
             new SqlParameter() { ParameterName = "@ShoppingListID", Value = data.ShoppingListId },
             new SqlParameter() { ParameterName = "@UserID", Value = data.UserId },
-            new SqlParameter() { ParameterName = "@AdminUserRoleIndex", Value = (int)UserRoleEnum.ListAdmin }
+            new SqlParameter() { ParameterName = "@AdminUserRoleIndex", Value = (int)UserRoleEnum.ListOwner }
         ]);
 
         try
@@ -655,7 +655,7 @@ public class DatabaseServiceObsolete
         sqlCommand.Parameters.AddRange([
             new SqlParameter()
                 { ParameterName = "@ShoppingListID", Value = shoppingListId, SqlDbType = SqlDbType.UniqueIdentifier },
-            new SqlParameter() { ParameterName = "@AdminEnumIndex", Value = (int)UserRoleEnum.ListAdmin }
+            new SqlParameter() { ParameterName = "@AdminEnumIndex", Value = (int)UserRoleEnum.ListOwner }
         ]);
 
         try
@@ -727,7 +727,7 @@ public class DatabaseServiceObsolete
         await using SqlCommand sqlCommand = new(query, sqlConnection);
         sqlCommand.Parameters.AddRange([
             new SqlParameter() { ParameterName = "@UserID", Value = userId },
-            new SqlParameter() { ParameterName = "@AdminEnumIndex", Value = (int)UserRoleEnum.ListAdmin },
+            new SqlParameter() { ParameterName = "@AdminEnumIndex", Value = (int)UserRoleEnum.ListOwner },
         ]);
 
         try
@@ -946,7 +946,7 @@ public class DatabaseServiceObsolete
 
         countCommand.Parameters.AddRange([
             new SqlParameter() { ParameterName = "@UserID", Value = userId },
-            new SqlParameter() { ParameterName = "@AdminUserRoleIndex", Value = (int)UserRoleEnum.ListAdmin }
+            new SqlParameter() { ParameterName = "@AdminUserRoleIndex", Value = (int)UserRoleEnum.ListOwner }
         ]);
 
         try
@@ -1177,7 +1177,7 @@ public class DatabaseServiceObsolete
 
             var shoppingListAssigned =
                 await AssignUserToShoppingListAsync(
-                    new(shoppingListAdditionData.UserId, (Guid)shoppingListId, UserRoleEnum.ListAdmin), sqlConnection);
+                    new(shoppingListAdditionData.UserId, (Guid)shoppingListId, UserRoleEnum.ListOwner), sqlConnection);
 
             if (shoppingListAssigned is false)
             {
@@ -1264,7 +1264,7 @@ public class DatabaseServiceObsolete
                     modificationData.Identifier.shoppingListId),
                 sqlConnection);
 
-            if (userRole is null or not UserRoleEnum.ListAdmin)
+            if (userRole is null or not UserRoleEnum.ListOwner)
             {
                 return new UpdateResult(!success, !accessGranted);
             }
@@ -1357,7 +1357,7 @@ public class DatabaseServiceObsolete
 
             var userRole = await CheckUsersRoleInListAsync(data, sqlConnection);
 
-            if (userRole is null or not UserRoleEnum.ListAdmin)
+            if (userRole is null or not UserRoleEnum.ListOwner)
             {
                 return new(!success, exists, !accessGranted);
             }
@@ -1432,7 +1432,7 @@ public class DatabaseServiceObsolete
                 new ShoppingListIdentificationData(data.ListOwnerId,
                     data.ShoppingListId), sqlConnection);
 
-            if (ownerRoleCheck is null or not UserRoleEnum.ListAdmin)
+            if (ownerRoleCheck is null or not UserRoleEnum.ListOwner)
             {
                 return new CollaboratorAddRemoveResult(false, false);
             }
@@ -1487,7 +1487,7 @@ public class DatabaseServiceObsolete
                 await CheckUsersRoleInListAsync(
                     new ShoppingListIdentificationData(data.ListOwnerId, data.ShoppingListId), sqlConnection);
 
-            if (ownerUserRole is null or not UserRoleEnum.ListAdmin)
+            if (ownerUserRole is null or not UserRoleEnum.ListOwner)
             {
                 return new CollaboratorAddRemoveResult(false, false);
             }
@@ -2059,7 +2059,7 @@ public class DatabaseServiceObsolete
             new SqlParameter() { ParameterName = @"userId", Value = userId, SqlDbType = SqlDbType.UniqueIdentifier },
             new SqlParameter()
             {
-                ParameterName = "@listAdminRoleEnumIndex", Value = (int)UserRoleEnum.ListAdmin,
+                ParameterName = "@listAdminRoleEnumIndex", Value = (int)UserRoleEnum.ListOwner,
                 SqlDbType = SqlDbType.Int
             },
             successParam,

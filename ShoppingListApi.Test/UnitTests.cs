@@ -79,7 +79,7 @@ public class UnitTests
     public void UserRoleEnum_HasExpectedValues()
     {
         // Assert
-        Assert.Equal(1, (int)Enums.UserRoleEnum.ListAdmin);
+        Assert.Equal(1, (int)Enums.UserRoleEnum.ListOwner);
         Assert.Equal(2, (int)Enums.UserRoleEnum.Collaborator);
     }
 
@@ -89,7 +89,7 @@ public class UnitTests
         // Arrange
         var roleId = Guid.NewGuid();
         var roleTitle = "Admin";
-        var enumIndex = (int)Enums.UserRoleEnum.ListAdmin;
+        var enumIndex = (int)Enums.UserRoleEnum.ListOwner;
 
         // Act
         var userRole = new UserRoleGetDto(roleId, roleTitle, enumIndex);
