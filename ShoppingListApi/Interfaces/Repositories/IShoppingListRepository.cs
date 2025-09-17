@@ -1,3 +1,4 @@
+using ShoppingListApi.Interfaces.Services;
 using ShoppingListApi.Model.DTOs.Post;
 using ShoppingListApi.Model.Entity;
 using ShoppingListApi.Model.ReturnTypes;
@@ -8,9 +9,13 @@ public interface IShoppingListRepository
 {
     Task<ShoppingList?> GetWithoutItemsByIdAsync(Guid shoppingListId, CancellationToken ct = default);
     Task<ShoppingList?> GetWithItemsByIdAsync(Guid shoppingListId, CancellationToken ct = default);
-    Task<Guid?> CreateAsync(ShoppingListPost shoppingListPost, CancellationToken ct = default);
 
-    Task<bool> UpdateNameAsync(ShoppingList targetShoppingList, ShoppingListPost shoppingListPost,
+    Task<Guid?> CreateAsync(ShoppingListPostDto shoppingListPostDto, CancellationToken ct = default);
+
+    Task<Guid?> CreateAndAssignInTransactionAsync(IListMembershipService listMembershipService,
+        Guid userId, ShoppingListPostDto shoppingListPostDto, Guid ownerUserRoleId, CancellationToken ct = default);
+
+    Task<bool> UpdateNameAsync(ShoppingList targetShoppingList, ShoppingListPostDto shoppingListPostDto,
         CancellationToken ct = default);
 
     /// <summary>
@@ -21,4 +26,6 @@ public interface IShoppingListRepository
     /// <param name="ct"></param>
     /// <returns></returns>
     Task<RemoveRecordResult> DeleteAndCascadeAsync(ShoppingList targetShoppingList, CancellationToken ct = default);
+
+    Task<bool> DeleteAndCascadeByIdAsync(Guid targetShoppingListId, CancellationToken ct = default);
 }

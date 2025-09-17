@@ -10,6 +10,9 @@ public interface IUserRoleService
 {
     IUserRoleRepository USerRoleRepository { get; }
 
+    Task<UserRole?> GetOwnerUserRole(CancellationToken ct = default);
+    Task<UserRole?> GetCollaboratorUserRole(CancellationToken ct = default);
+
     Task<AddRecordResult<Guid?, UserRole?>> CheckConflictAndAddUserRoleAsync(
         UserRolePostDto userRolePostDto, CancellationToken ct = default);
 

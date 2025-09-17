@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ShoppingListApi.Data.Contexts;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Interfaces.Repositories;
+using ShoppingListApi.Model.DTOs.Create;
 using ShoppingListApi.Model.DTOs.Patch;
 using ShoppingListApi.Model.DTOs.Post;
 using ShoppingListApi.Model.Entity;
@@ -26,18 +27,18 @@ public class ListUserRepository(AppDbContext appAppDbContext, ILogger<ListUserRe
         return await _appDbContext.ListUsers.FirstOrDefaultAsync(lu => lu.EmailAddress == emailAddress, ct);
     }
 
-    public async Task<Guid?> CreateAsync(ListUserPostExtendedDto listUserPostExtendedDto, CancellationToken ct)
+    public async Task<Guid?> CreateAsync(ListUserCreateDto listUserCreateDto, CancellationToken ct)
     {
         var newUserId = Guid.NewGuid();
 
         var newUser = new ListUser()
         {
             UserId = newUserId,
-            FirstName = listUserPostExtendedDto.FirstName,
-            LastName = listUserPostExtendedDto.LastName,
-            EmailAddress = listUserPostExtendedDto.EmailAddress,
-            PasswordHash = listUserPostExtendedDto.PasswordHash,
-            CreationDateTime = listUserPostExtendedDto.CreationDateTime
+            FirstName = listUserCreateDto.FirstName,
+            LastName = listUserCreateDto.LastName,
+            EmailAddress = listUserCreateDto.EmailAddress,
+            PasswordHash = listUserCreateDto.PasswordHash,
+            CreationDateTime = listUserCreateDto.CreationDateTime
         };
 
         await _appDbContext.ListUsers.AddAsync(newUser, ct);

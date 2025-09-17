@@ -1028,7 +1028,7 @@ public class DatabaseServiceObsolete
     /// <param name="sqlConnection"></param>
     /// <returns></returns>
     /// <exception cref="NumberedException"></exception>
-    public async Task<RecordFetchResult<ShoppingListGetDto?>> HandleShoppingListFetchForUserAsync(
+    public async Task<FetchRestrictedRecordResult<ShoppingListGetDto?>> HandleShoppingListFetchForUserAsync(
         ShoppingListIdentificationData data, SqlConnection sqlConnection)
     {
         try
@@ -1037,21 +1037,21 @@ public class DatabaseServiceObsolete
 
             if (exists is false)
             {
-                return new RecordFetchResult<ShoppingListGetDto?>(null, null, false);
+                return new FetchRestrictedRecordResult<ShoppingListGetDto?>(null, null, false);
             }
 
             var requestingUsersRole = await CheckUsersRoleInListAsync(data, sqlConnection);
 
             if (requestingUsersRole is null)
             {
-                return new RecordFetchResult<ShoppingListGetDto?>(null, false, true);
+                return new FetchRestrictedRecordResult<ShoppingListGetDto?>(null, false, true);
             }
 
             var shoppingList = await GetShoppingListByIdAsync(data.ShoppingListId, sqlConnection);
 
             if (shoppingList is null)
             {
-                return new RecordFetchResult<ShoppingListGetDto?>(null, true, true);
+                return new FetchRestrictedRecordResult<ShoppingListGetDto?>(null, true, true);
             }
 
             var items = await GetItemsForShoppingListAsync(shoppingList.ShoppingListId, sqlConnection);
@@ -1060,7 +1060,7 @@ public class DatabaseServiceObsolete
             var collaborators = await GetShoppingListCollaboratorsAsync(shoppingList.ShoppingListId, sqlConnection);
             shoppingList.AddCollaboratorsToShoppingList(collaborators);
 
-            return new RecordFetchResult<ShoppingListGetDto?>(shoppingList, true, true);
+            return new FetchRestrictedRecordResult<ShoppingListGetDto?>(shoppingList, true, true);
         }
         catch (NumberedException)
         {

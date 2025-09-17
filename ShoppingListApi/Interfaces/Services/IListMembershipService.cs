@@ -13,15 +13,6 @@ public interface IListMembershipService
     Task<UserRoleEnum?> GetUserRoleInShoppingListAsync(Guid userId, Guid shoppingListId,
         CancellationToken ct = default);
 
-    Task<List<ShoppingListGetDto>> GetAllShoppingListsForUserAsync(
-        IShoppingListService shoppingListService, Guid userId,
-        CancellationToken ct = default);
-
-    Task<(bool? AccessGranted, ShoppingListGetDto? shoppingList)> CheckAccessAndGetShoppingListForUserAsync(
-        IShoppingListService shoppingListService,
-        Guid userId, Guid shoppingListId,
-        CancellationToken ct = default);
-
     Task<bool> IsOwnerAsync(Guid userId, Guid shoppingListId, CancellationToken ct = default);
 
     Task<bool> IsCollaboratorAsync(Guid userId, Guid shoppingListId, CancellationToken ct = default);
@@ -31,7 +22,7 @@ public interface IListMembershipService
     Task<bool> IsNoAccessAsync(Guid userId, Guid shoppingListId, CancellationToken ct = default);
 
     Task<AddRecordResult<ListMembership?, ListMembership?>> AssignUserToShoppingListAsync(
-        IUserRoleRepository userRoleRepository, Guid userId, Guid shoppingListId, UserRoleEnum userRoleEnum,
+        Guid userRoleId, Guid userId, Guid shoppingListId,
         CancellationToken ct = default);
 
     Task<RemoveRecordResult> RemoveUserFromShoppingListAsync(Guid userId, Guid shoppingListId,

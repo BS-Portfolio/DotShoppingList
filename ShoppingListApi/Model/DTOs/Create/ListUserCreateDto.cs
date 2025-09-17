@@ -2,10 +2,12 @@
 using System.Text;
 using BCrypt.Net;
 using Newtonsoft.Json;
+using ShoppingListApi.Model.DTOs.Post;
 
-namespace ShoppingListApi.Model.DTOs.Post;
+namespace ShoppingListApi.Model.DTOs.Create
+;
 
-public record ListUserPostExtendedDto
+public record ListUserCreateDto
 {
     public void Deconstruct(out string firstName, out string lastName, out string emailAddress, out string passwordHash,
         out DateTimeOffset creationDateTime)
@@ -29,7 +31,7 @@ public record ListUserPostExtendedDto
     public string PasswordHash { get; private set; }
     public DateTimeOffset CreationDateTime { get; private set; }
 
-    public ListUserPostExtendedDto(string firstName, string lastName, string emailAddress, string password)
+    public ListUserCreateDto(string firstName, string lastName, string emailAddress, string password)
     {
         FirstName = firstName;
         LastName = lastName;
@@ -38,7 +40,7 @@ public record ListUserPostExtendedDto
         CreationDateTime = DateTimeOffset.UtcNow;
     }
 
-    public ListUserPostExtendedDto(ListUserPostDto listUserPostDto)
+    public ListUserCreateDto(ListUserPostDto listUserPostDto)
     {
         FirstName = listUserPostDto.FirstName;
         LastName = listUserPostDto.LastName;

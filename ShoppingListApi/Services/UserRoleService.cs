@@ -15,6 +15,16 @@ public class UserRoleService(IUserRoleRepository userRoleRepository, ILogger<Use
 
     public IUserRoleRepository USerRoleRepository => _userRoleRepository;
 
+    public async Task<UserRole?> GetOwnerUserRole(CancellationToken ct = default)
+    {
+        return await _userRoleRepository.GetByEnumAsync(UserRoleEnum.ListOwner, ct);
+    }
+
+    public async Task<UserRole?> GetCollaboratorUserRole(CancellationToken ct = default)
+    {
+        return await _userRoleRepository.GetByEnumAsync(UserRoleEnum.Collaborator, ct);
+    }
+
     public async Task<AddRecordResult<Guid?, UserRole?>> CheckConflictAndAddUserRoleAsync(
         UserRolePostDto userRolePostDto, CancellationToken ct = default)
     {
@@ -61,7 +71,8 @@ public class UserRoleService(IUserRoleRepository userRoleRepository, ILogger<Use
 
             if (userRolePatchDtoObsolete.UserRoleTitle is not null)
             {
-                var existingRoleByTitle = await _userRoleRepository.GetByTitleAsync(userRolePatchDtoObsolete.UserRoleTitle, ct);
+                var existingRoleByTitle =
+                    await _userRoleRepository.GetByTitleAsync(userRolePatchDtoObsolete.UserRoleTitle, ct);
                 if (existingRoleByTitle is not null && existingRoleByTitle.UserRoleId != userRoleId)
                     return new(true, false, true, existingRoleByTitle);
             }

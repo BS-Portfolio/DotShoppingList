@@ -1,6 +1,5 @@
-using ShoppingListApi.Model.DTOs.Get;
+using ShoppingListApi.Model.DTOs.Create;
 using ShoppingListApi.Model.DTOs.Patch;
-using ShoppingListApi.Model.DTOs.Post;
 using ShoppingListApi.Model.Entity;
 using ShoppingListApi.Model.ReturnTypes;
 
@@ -12,7 +11,7 @@ public interface IListUserRepository
 
     Task<ListUser?> GetWithoutDetailsByEmailAddressAsync(string emailAddress, CancellationToken ct = default);
     
-    Task<Guid?> CreateAsync(ListUserPostExtendedDto listUserPostExtendedDto, CancellationToken ct = default);
+    Task<Guid?> CreateAsync(ListUserCreateDto listUserCreateDto, CancellationToken ct = default);
     
     Task<bool> UpdateNameAsync(ListUser listUser, ListUserPatchDto listUserPatchDto, CancellationToken ct = default);
     

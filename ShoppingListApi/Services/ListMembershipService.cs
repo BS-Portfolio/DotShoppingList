@@ -43,134 +43,6 @@ public class ListMembershipService(
         }
     }
 
-    public async Task<List<ShoppingListGetDto>> GetAllShoppingListsForUserAsync(
-        IShoppingListService shoppingListService, Guid userId,
-        CancellationToken ct = default)
-    {
-        List<ShoppingListGetDto> result = [];
-
-        try
-        {
-            // get shopping list ids
-
-            var shoppingListIds = await _listMembershipRepository.GetAllShoppingListIdsForUserAsync(userId, ct);
-
-            if (shoppingListIds.Count == 0)
-                return result;
-
-            foreach (var shoppingListId in shoppingListIds)
-            {
-                // get shopping list with items 
-                var shoppingListsWithItems =
-                    await shoppingListService.ShoppingListRepository.GetWithItemsByIdAsync(shoppingListId, ct);
-
-                if (shoppingListsWithItems is null)
-                    throw new Exception("Shopping list with the following Id not found: " + shoppingListId);
-
-                // get list owner
-                var shoppingListOwner =
-                    await _listMembershipRepository.GetShoppingListOwner(shoppingListId, ct);
-
-                if (shoppingListOwner is null)
-                    throw new Exception("Shopping list owner with the following Id not found: " + shoppingListId);
-
-                // get list collaborators
-                var shoppingListCollaborators =
-                    await _listMembershipRepository.GetShoppingListCollaborators(shoppingListId, ct);
-
-                // map to dto
-                var ownerDto = new ListUserMinimalGetDto(
-                    shoppingListOwner.UserId,
-                    shoppingListOwner.FirstName,
-                    shoppingListOwner.LastName,
-                    shoppingListOwner.EmailAddress
-                );
-
-                var shoppingListGetDto =
-                    new ShoppingListGetDto(shoppingListId, shoppingListsWithItems.ShoppingListName, ownerDto);
-
-                if (shoppingListsWithItems.Items.Count > 0)
-                {
-                    shoppingListGetDto.AddItemsToShoppingList(
-                        ItemGetDto.FromItemBatch(shoppingListsWithItems.Items.ToList()));
-                }
-
-                if (shoppingListCollaborators.Count > 0)
-                {
-                    shoppingListGetDto.AddCollaboratorsToShoppingList(
-                        ListUserMinimalGetDto.FromListUserBatch(shoppingListCollaborators));
-                }
-            }
-
-            return result;
-        }
-        catch (Exception e)
-        {
-            _logger.LogError("The method {MethodName} failed with exception: {Exception}",
-                nameof(GetAllShoppingListsForUserAsync), e.ToString());
-            throw;
-        }
-    }
-
-    public async Task<(bool? AccessGranted, ShoppingListGetDto? shoppingList)>
-        CheckAccessAndGetShoppingListForUserAsync(
-            IShoppingListService shoppingListService, Guid userId, Guid shoppingListId,
-            CancellationToken ct = default)
-    {
-        try
-        {
-            // check access
-            var hasAccess = await IsOwnerOrCollaboratorAsync(userId, shoppingListId, ct);
-
-            if (hasAccess is false)
-                return (false, null!);
-
-            // if access granted get shopping list with items
-            var targetShoppingListWithItems =
-                await shoppingListService.ShoppingListRepository.GetWithItemsByIdAsync(shoppingListId, ct);
-
-            if (targetShoppingListWithItems is null)
-                return (true, null);
-
-            // get list owner
-            var shoppingListOwner =
-                await _listMembershipRepository.GetShoppingListOwner(shoppingListId, ct);
-
-            if (shoppingListOwner is null)
-                return (true, null!);
-
-            // get list collaborators
-            var collaborators =
-                await _listMembershipRepository.GetShoppingListCollaborators(shoppingListId, ct);
-
-            // map to dto
-            var ownerDto = new ListUserMinimalGetDto(shoppingListOwner);
-
-            var shoppingListGetDto =
-                new ShoppingListGetDto(shoppingListId, targetShoppingListWithItems.ShoppingListName, ownerDto);
-
-            if (targetShoppingListWithItems.Items.Count > 0)
-            {
-                var convertedItems = ItemGetDto.FromItemBatch(targetShoppingListWithItems.Items.ToList());
-                shoppingListGetDto.AddItemsToShoppingList(convertedItems);
-            }
-
-            if (collaborators.Count > 0)
-            {
-                var convertedCollaborators = ListUserMinimalGetDto.FromListUserBatch(collaborators);
-                shoppingListGetDto.AddCollaboratorsToShoppingList(convertedCollaborators);
-            }
-
-            return (true, shoppingListGetDto);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError("The method {MethodName} failed with exception: {Exception}",
-                nameof(CheckAccessAndGetShoppingListForUserAsync), e.ToString());
-            throw;
-        }
-    }
-
     public async Task<bool> IsOwnerAsync(Guid userId, Guid shoppingListId, CancellationToken ct = default)
     {
         try
@@ -236,7 +108,7 @@ public class ListMembershipService(
     }
 
     public async Task<AddRecordResult<ListMembership?, ListMembership?>> AssignUserToShoppingListAsync(
-        IUserRoleRepository userRoleRepository, Guid userId, Guid shoppingListId, UserRoleEnum userRoleEnum,
+        Guid userId, Guid shoppingListId, Guid userRoleId,
         CancellationToken ct = default)
     {
         try
@@ -257,14 +129,9 @@ public class ListMembershipService(
                 return new(false, null, true, conflictingMembership);
             }
 
-            var userRoleObj = await userRoleRepository.GetByEnumAsync(userRoleEnum, ct);
-
-            if (userRoleObj is null)
-                throw new Exception("User role not found for enum: " + userRoleEnum);
-
             // assign user to shopping list
             var assignmentSuccess = await _listMembershipRepository
-                .AssignUserToShoppingListByUserRoleIdAsync(userId, shoppingListId, userRoleObj.UserRoleId, ct);
+                .AssignUserToShoppingListByUserRoleIdAsync(userId, shoppingListId, userRoleId, ct);
 
             if (assignmentSuccess is false)
                 return new(false, null, false, null);
@@ -273,7 +140,7 @@ public class ListMembershipService(
             {
                 ShoppingListId = shoppingListId,
                 UserId = userId,
-                UserRoleId = userRoleObj.UserRoleId
+                UserRoleId = userRoleId
             };
 
             return new(true, addedListMemberShip, false, null);
