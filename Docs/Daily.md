@@ -1,3 +1,13 @@
+# Mittwoch, 17.09.25
+
+## Tasks:
+- Weitere Entwicklung der API
+- Frontend Refactor stores
+- Header Styling überarbeiten
+
+## Blocker:
+-
+
 # Dienstag, 16.09.25
 
 ## Tasks:
