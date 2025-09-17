@@ -3,20 +3,18 @@ using ShoppingListApi.Data.Contexts;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Interfaces.Repositories;
 using ShoppingListApi.Model.Entity;
-using ShoppingListApi.Model.ReturnTypes;
 
 namespace ShoppingListApi.Repositories;
 
-public class ApiKeyRepository(AppDbContext dbContext, ILogger<ApiKeyRepository> logger) : IApiKeyRepository
+public class ApiKeyRepository(AppDbContext dbContext) : IApiKeyRepository
 {
     private readonly AppDbContext _dbContext = dbContext;
-    private readonly ILogger<ApiKeyRepository> _logger = logger;
 
     public async Task<ApiKey?> GetWithDetailsByIdAsync(Guid userId, Guid apiKeyId, CancellationToken ct = default)
     {
         return await _dbContext.ApiKeys
-            .Include(apiKey => apiKey.User).ThenInclude(user => user.EmailConfirmationTokens)
-            .Include(apiKey => apiKey.User).ThenInclude(user => user.ListMemberships)
+            .Include(apiKey => apiKey.User).ThenInclude(user => user!.EmailConfirmationTokens)
+            .Include(apiKey => apiKey.User).ThenInclude(user => user!.ListMemberships)
             .FirstOrDefaultAsync(key => key.ApiKeyId == apiKeyId && key.UserId == userId, ct);
     }
 
@@ -26,11 +24,10 @@ public class ApiKeyRepository(AppDbContext dbContext, ILogger<ApiKeyRepository> 
             .FirstOrDefaultAsync(key => key.ApiKeyId == apiKeyId && key.UserId == userId, ct);
     }
 
-    public async Task<List<Guid>> GetAllInvalidatedKeysBeforeDateAsync(CancellationToken ct = default)
+    public async Task<List<ApiKey>> GetAllInvalidatedKeysBeforeDateAsync(CancellationToken ct = default)
     {
         return await _dbContext.ApiKeys
             .Where(ak => ak.IsValid == false || ak.ExpirationDateTime < DateTimeOffset.UtcNow)
-            .Select(ak => ak.ApiKeyId)
             .ToListAsync(ct);
     }
 
@@ -59,7 +56,7 @@ public class ApiKeyRepository(AppDbContext dbContext, ILogger<ApiKeyRepository> 
         return await _dbContext.ApiKeys.FirstOrDefaultAsync(ak => ak.Key == apiKey && ak.UserId == userId, ct);
     }
 
-    public async Task<(bool Success, ApiKey? apiKey)> CreateAsync(Guid userId, string newKey,
+    public async Task<ApiKey> CreateAsync(Guid userId, string newKey,
         CancellationToken ct = default)
     {
         var key = ApiKey.GenerateKey();
@@ -75,43 +72,26 @@ public class ApiKeyRepository(AppDbContext dbContext, ILogger<ApiKeyRepository> 
         };
 
         await _dbContext.ApiKeys.AddAsync(apiKey, ct);
-        var checkResult = await _dbContext.SaveChangesAsync(ct);
 
-        if (checkResult == 0)
-        {
-            _logger.LogWarning("Failed to create API key for user {UserId}", userId);
-            return (false, null);
-        }
-
-        return (true, apiKey);
+        return apiKey;
     }
 
-    public async Task<bool> InvalidateAsync(ApiKey targetApiKey, CancellationToken ct = default)
+    public void Invalidate(ApiKey targetApiKey)
     {
         targetApiKey.IsValid = false;
         targetApiKey.ExpirationDateTime = DateTimeOffset.UtcNow;
 
         _dbContext.ApiKeys.Update(targetApiKey);
-
-        var checkResult = await _dbContext.SaveChangesAsync(ct);
-
-        if (checkResult == 0)
-        {
-            _logger.LogWarning("Failed to invalidate API key {ApiKeyId}", targetApiKey.ApiKeyId);
-            return false;
-        }
-
-        return true;
     }
 
-    public async Task<bool> InvalidateAllByUserIdAsync(Guid userId, CancellationToken ct = default)
+    public async Task<int> InvalidateAllByUserIdAsync(Guid userId, CancellationToken ct = default)
     {
-        var apiKeys = await _dbContext.ApiKeys.Where(ak => ak.UserId == userId && ak.IsValid).ToListAsync(ct);
+        var apiKeys = await _dbContext.ApiKeys
+            .Where(ak => ak.UserId == userId && ak.IsValid).ToListAsync(ct);
 
-        if (!apiKeys.Any())
+        if (apiKeys.Count == 0)
         {
-            _logger.LogInformation("No valid API keys found for user {UserId} to invalidate", userId);
-            return true;
+            return 0;
         }
 
         foreach (var apiKey in apiKeys)
@@ -120,50 +100,16 @@ public class ApiKeyRepository(AppDbContext dbContext, ILogger<ApiKeyRepository> 
             apiKey.ExpirationDateTime = DateTimeOffset.UtcNow;
         }
 
-        _dbContext.ApiKeys.UpdateRange(apiKeys);
-        var checkResult = await _dbContext.SaveChangesAsync(ct);
-
-        if (checkResult == 0)
-        {
-            _logger.LogWarning("Failed to invalidate API keys for user {UserId}", userId);
-            return false;
-        }
-
-        return true;
+        return apiKeys.Count;
     }
 
-    public async Task<RemoveRecordResult> DeleteAsync(ApiKey targetApiKey, CancellationToken ct = default)
+    public void Delete(ApiKey targetApiKey)
     {
         _dbContext.ApiKeys.Remove(targetApiKey);
-
-        var checkResult = await _dbContext.SaveChangesAsync(ct);
-
-        if (checkResult is not 1)
-        {
-            _logger.LogWarning("Failed to delete API key {ApiKeyId}", targetApiKey.ApiKeyId);
-            return new RemoveRecordResult(true, false, checkResult);
-        }
-
-        return new RemoveRecordResult(true, true, 1);
     }
 
-    public async Task<RemoveRecordResult> DeleteBatchAsync(List<Guid> apiKeyIds, CancellationToken ct = default)
+    public void DeleteBatch(List<ApiKey> apiKeys)
     {
-        var checkResult = await _dbContext.ApiKeys
-            .Where(ak => apiKeyIds.Contains(ak.ApiKeyId))
-            .ExecuteDeleteAsync(ct);
-
-        if (checkResult != apiKeyIds.Count)
-        {
-            if (checkResult == 0)
-                _logger.LogWarning("Failed to delete API keys in the provided list");
-            else
-                _logger.LogWarning("Only deleted {DeletedCount} out of {TotalCount} API keys in the provided list",
-                    checkResult, apiKeyIds.Count);
-
-            return new RemoveRecordResult(true, false, checkResult);
-        }
-
-        return new RemoveRecordResult(true, true, checkResult);
+        _dbContext.ApiKeys.RemoveRange(apiKeys);
     }
 }

@@ -1,36 +1,44 @@
-using ShoppingListApi.Interfaces.Repositories;
+using ShoppingListApi.Configs;
+using ShoppingListApi.Exceptions;
 using ShoppingListApi.Interfaces.Services;
 using ShoppingListApi.Model.Entity;
 using ShoppingListApi.Model.ReturnTypes;
 
 namespace ShoppingListApi.Services;
 
-public class ApiKeyService(IApiKeyRepository apiKeyRepository, ILogger<ApiKeyService> logger) : IApiKeyService
+public class ApiKeyService(IUnitOfWork unitOfWork, ILogger<ApiKeyService> logger) : IApiKeyService
 {
-    private readonly IApiKeyRepository _apiKeyRepository = apiKeyRepository;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly ILogger<ApiKeyService> _logger = logger;
-
-    public IApiKeyRepository ApiKeyRepository => _apiKeyRepository;
 
     public async Task<AddRecordResult<ApiKey?, ApiKey?>> CreateAsync(Guid userId, CancellationToken ct = default)
     {
         try
         {
             var newKey = ApiKey.GenerateKey();
-            var conflictingKey = await _apiKeyRepository.GetByKeyAsync(userId, newKey, ct);
+            var conflictingKey = await _unitOfWork.ApiKeyRepository.GetByKeyAsync(userId, newKey, ct);
 
-            if (conflictingKey is not null) return new(false, null, true, conflictingKey);
+            if (conflictingKey is not null)
+                return new(false, null, true, conflictingKey);
 
-            var (success, apiKey) = await _apiKeyRepository.CreateAsync(userId, newKey, ct);
+            var apiKey = await _unitOfWork.ApiKeyRepository.CreateAsync(userId, newKey, ct);
 
-            if (success is false || apiKey is null)
-                return new(false, apiKey, false, null);
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != 1)
+            {
+                _logger.LogError("Failed to create API key for user {UserId}. SaveChangesAsync returned {Result}.",
+                    userId, checkResult);
+                return new(false, null, false, null);
+            }
 
             return new(true, apiKey, false, null);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ApiKeyService), nameof(CreateAsync));
             throw;
         }
     }
@@ -40,7 +48,7 @@ public class ApiKeyService(IApiKeyRepository apiKeyRepository, ILogger<ApiKeySer
     {
         try
         {
-            var targetApiKey = await _apiKeyRepository.GetWithoutDetailsByIdAsync(userId, apiKeyId, ct);
+            var targetApiKey = await _unitOfWork.ApiKeyRepository.GetWithoutDetailsByIdAsync(userId, apiKeyId, ct);
 
             if (targetApiKey is null)
                 return new(false, false, true, null);
@@ -48,39 +56,47 @@ public class ApiKeyService(IApiKeyRepository apiKeyRepository, ILogger<ApiKeySer
             if (targetApiKey.IsValid is false)
                 return new(true, true, false, null);
 
-            var success = await _apiKeyRepository.InvalidateAsync(targetApiKey, ct);
+            _unitOfWork.ApiKeyRepository.Invalidate(targetApiKey);
 
-            if (success is false)
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != 1)
                 return new(true, false, false, null);
-
-            return new(true, true, false, targetApiKey);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
-    }
-
-    public async Task<UpdateRecordResult<object?>> FindUserAndInvalidateAllByUserIdAsync(
-        IListUserService listUserService, Guid userId,
-        CancellationToken ct = default)
-    {
-        try
-        {
-            var targetUser = await listUserService.ListUserRepository.GetWithoutDetailsByIdAsync(userId, ct);
-
-            if (targetUser is null) return new(false, false, false, null);
-
-            var success = await _apiKeyRepository.InvalidateAllByUserIdAsync(userId, ct);
-
-            if (success is false) return new(true, false, false, null);
 
             return new(true, true, false, null);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ApiKeyService), nameof(FindAndInvalidateAsync));
+            throw;
+        }
+    }
+
+    public async Task<UpdateRecordResult<object?>> FindUserAndInvalidateAllByUserIdAsync(
+        Guid userId, CancellationToken ct = default)
+    {
+        try
+        {
+            var targetUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(userId, ct);
+
+            if (targetUser is null) return new(false, false, false, null);
+
+            var apiKeysFountCount = await _unitOfWork.ApiKeyRepository.InvalidateAllByUserIdAsync(userId, ct);
+
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != apiKeysFountCount)
+                return new(true, false, false, null);
+
+            return new(true, true, false, null);
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ApiKeyService), nameof(FindUserAndInvalidateAllByUserIdAsync));
             throw;
         }
     }
@@ -89,15 +105,25 @@ public class ApiKeyService(IApiKeyRepository apiKeyRepository, ILogger<ApiKeySer
     {
         try
         {
-            var targetApiKey = await _apiKeyRepository.GetWithoutDetailsByIdAsync(userId, apiKeyId, ct);
+            var targetApiKey = await _unitOfWork.ApiKeyRepository.GetWithoutDetailsByIdAsync(userId, apiKeyId, ct);
 
-            if (targetApiKey is null) return new(false, false, 0);
-            
-            return await _apiKeyRepository.DeleteAsync(targetApiKey, ct);
+            if (targetApiKey is null)
+                return new(false, false, 0);
+
+            _unitOfWork.ApiKeyRepository.Delete(targetApiKey);
+
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != 1)
+                return new(true, false, 0);
+
+            return new(true, true, 1);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ApiKeyService), nameof(FindAndDeleteAsync));
             throw;
         }
     }
@@ -106,16 +132,25 @@ public class ApiKeyService(IApiKeyRepository apiKeyRepository, ILogger<ApiKeySer
     {
         try
         {
-            var ids = await _apiKeyRepository.GetAllInvalidatedKeysBeforeDateAsync(ct);
+            var expiredApiKeys = await _unitOfWork.ApiKeyRepository.GetAllInvalidatedKeysBeforeDateAsync(ct);
 
-            if (ids.Count == 0)
+            if (expiredApiKeys.Count == 0)
                 return new(false, true, 0);
 
-            return await _apiKeyRepository.DeleteBatchAsync(ids, ct);
+            _unitOfWork.ApiKeyRepository.DeleteBatch(expiredApiKeys);
+
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != expiredApiKeys.Count)
+                return new(true, false, 0);
+
+            return new(true, true, checkResult);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ApiKeyService), nameof(DeleteExpiredAsync));
             throw;
         }
     }

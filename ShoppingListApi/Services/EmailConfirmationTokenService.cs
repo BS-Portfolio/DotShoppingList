@@ -1,4 +1,6 @@
+using ShoppingListApi.Configs;
 using ShoppingListApi.Enums;
+using ShoppingListApi.Exceptions;
 using ShoppingListApi.Interfaces.Repositories;
 using ShoppingListApi.Interfaces.Services;
 using ShoppingListApi.Model.Entity;
@@ -7,15 +9,13 @@ using ShoppingListApi.Model.ReturnTypes;
 namespace ShoppingListApi.Services;
 
 public class EmailConfirmationTokenService(
-    IEmailConfirmationTokenRepository emailConfirmationTokenRepository,
+    IUnitOfWork unitOfWork,
     ILogger<EmailConfirmationTokenService> logger) : IEmailConfirmationTokenService
 {
-    private readonly IEmailConfirmationTokenRepository _emailConfirmationTokenRepository =
-        emailConfirmationTokenRepository;
+    private readonly IUnitOfWork _unitOfWork =
+        unitOfWork;
 
     private readonly ILogger<IEmailConfirmationTokenService> _logger = logger;
-
-    public IEmailConfirmationTokenRepository EmailConfirmationTokenRepository => _emailConfirmationTokenRepository;
 
     public async Task<AddRecordResult<EmailConfirmationToken?, EmailConfirmationToken?>> CheckConflictAndAdd(
         Guid userId, CancellationToken ct = default)
@@ -24,21 +24,26 @@ public class EmailConfirmationTokenService(
         {
             var generatedToken = EmailConfirmationToken.GenerateToken();
 
-            var conflictingToken = await _emailConfirmationTokenRepository.GetByTokenValue(userId, generatedToken, ct);
+            var conflictingToken =
+                await _unitOfWork.EmailConfirmationTokenRepository.GetByTokenValue(userId, generatedToken, ct);
 
             if (conflictingToken is not null)
                 return new(false, null, true, conflictingToken);
 
-            var addedToken = await _emailConfirmationTokenRepository.AddAsync(userId, generatedToken, ct);
+            var addedToken = _unitOfWork.EmailConfirmationTokenRepository.Add(userId, generatedToken);
 
-            if (addedToken is null)
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != 1)
                 return new(false, null, false, null);
 
             return new(true, addedToken, false, null);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(EmailConfirmationTokenService), nameof(CheckConflictAndAdd));
             throw;
         }
     }
@@ -48,7 +53,7 @@ public class EmailConfirmationTokenService(
     {
         try
         {
-            var targetToken = await _emailConfirmationTokenRepository.GetByTokenValue(userId, token, ct);
+            var targetToken = await _unitOfWork.EmailConfirmationTokenRepository.GetByTokenValue(userId, token, ct);
 
             if (targetToken is null)
                 return new(false, false);
@@ -57,60 +62,71 @@ public class EmailConfirmationTokenService(
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(EmailConfirmationTokenService), nameof(CheckTokenValidity));
             throw;
         }
     }
 
     public async Task<UpdateRecordResult<EmailConfirmationToken?>> FindUserAndInvalidateAllTokenByUserId(
-        IListUserRepository listUserRepository, Guid userId,
+        Guid userId,
         CancellationToken ct = default)
     {
         try
         {
             var targetUser =
-                await listUserRepository.GetWithoutDetailsByIdAsync(userId, ct);
+                await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(userId, ct);
 
             if (targetUser is null)
                 return new(false, false, false, null);
 
-            var invalidateResult = await _emailConfirmationTokenRepository.InvalidateAllByUserIdAsync(userId, ct);
+            var foundTokensCount =
+                await _unitOfWork.EmailConfirmationTokenRepository.InvalidateAllByUserIdAsync(userId, ct);
 
-            if (invalidateResult is false)
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != foundTokensCount)
                 return new(true, false, false, null);
 
             return new(true, true, false, null);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(EmailConfirmationTokenService), nameof(FindUserAndInvalidateAllTokenByUserId));
             throw;
         }
     }
 
     public async Task<UpdateRecordResult<EmailConfirmationToken?>> FindUserAndInvalidateAllTokenByUserEmail(
-        IListUserRepository listUserRepository, string userEmailAddress,
+        string userEmailAddress,
         CancellationToken ct = default)
     {
         try
         {
             var targetUser =
-                await listUserRepository.GetWithoutDetailsByEmailAddressAsync(userEmailAddress, ct);
+                await _unitOfWork.ListUserRepository.GetWithoutDetailsByEmailAddressAsync(userEmailAddress, ct);
 
             if (targetUser is null)
                 return new(false, false, false, null);
 
-            var invalidateResult =
-                await _emailConfirmationTokenRepository.InvalidateAllByUserIdAsync(targetUser.UserId, ct);
+            var foundTokensCount =
+                await _unitOfWork.EmailConfirmationTokenRepository.InvalidateAllByUserIdAsync(targetUser.UserId, ct);
 
-            if (invalidateResult is false)
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != foundTokensCount)
                 return new(true, false, false, null);
 
             return new(true, true, false, null);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(EmailConfirmationTokenService), nameof(FindUserAndInvalidateAllTokenByUserEmail));
             throw;
         }
     }
@@ -121,21 +137,26 @@ public class EmailConfirmationTokenService(
         try
         {
             var targetToken =
-                await _emailConfirmationTokenRepository.GetByIdWithoutUserDetails(userId, emailConfirmationTokenId, ct);
+                await _unitOfWork.EmailConfirmationTokenRepository.GetByIdWithoutUserDetails(userId,
+                    emailConfirmationTokenId, ct);
 
             if (targetToken is null)
                 return new(false, false, false, null);
 
-            var markAsUsedResult = await _emailConfirmationTokenRepository.MarkTokenAsUsedAsync(targetToken, ct);
+            _unitOfWork.EmailConfirmationTokenRepository.MarkTokenAsUsed(targetToken);
 
-            if (markAsUsedResult is false)
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != 1)
                 return new(true, false, false, null);
 
             return new(true, true, false, null);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(EmailConfirmationTokenService), nameof(FindAndMarkTokenAsUsedById));
             throw;
         }
     }
@@ -145,21 +166,26 @@ public class EmailConfirmationTokenService(
     {
         try
         {
-            var targetToken = await _emailConfirmationTokenRepository.GetByTokenValue(userId, tokenValue, ct);
+            var targetToken =
+                await _unitOfWork.EmailConfirmationTokenRepository.GetByTokenValue(userId, tokenValue, ct);
 
             if (targetToken is null)
                 return new(false, false, false, null);
 
-            var markAsUsedResult = await _emailConfirmationTokenRepository.MarkTokenAsUsedAsync(targetToken, ct);
+            _unitOfWork.EmailConfirmationTokenRepository.MarkTokenAsUsed(targetToken);
 
-            if (markAsUsedResult is false)
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != 1)
                 return new(true, false, false, null);
 
             return new(true, true, false, null);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(EmailConfirmationTokenService), nameof(FindAndMarkTokenAsUsedByTokenValue));
             throw;
         }
     }
@@ -169,19 +195,24 @@ public class EmailConfirmationTokenService(
     {
         try
         {
-            var targetToken = await _emailConfirmationTokenRepository.GetByTokenValue(userId, token, ct);
+            var targetToken = await _unitOfWork.EmailConfirmationTokenRepository.GetByTokenValue(userId, token, ct);
             if (targetToken is null)
                 return new(false, false, 0);
 
-            var deleteResult = await _emailConfirmationTokenRepository.DeleteAsync(targetToken, ct);
-            if (deleteResult is false)
+            _unitOfWork.EmailConfirmationTokenRepository.Delete(targetToken);
+
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != 1)
                 return new(true, false, 0);
 
             return new(true, true, 1);
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error deleting email confirmation token");
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(EmailConfirmationTokenService), nameof(FindAndDeleteByTokenValueAsync));
             throw;
         }
     }
@@ -191,74 +222,98 @@ public class EmailConfirmationTokenService(
     {
         try
         {
-            var invalidateResult =
-                await _emailConfirmationTokenRepository.GetByIdWithoutUserDetails(userId, emailConfirmationTokenId, ct);
-            if (invalidateResult is null)
+            var targetToken =
+                await _unitOfWork.EmailConfirmationTokenRepository.GetByIdWithoutUserDetails(userId,
+                    emailConfirmationTokenId, ct);
+            if (targetToken is null)
                 return new(false, false, 0);
 
-            var deleteResult = await _emailConfirmationTokenRepository.DeleteAsync(invalidateResult, ct);
+            _unitOfWork.EmailConfirmationTokenRepository.Delete(targetToken);
 
-            if (deleteResult is false)
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != 1)
                 return new(true, false, 0);
 
             return new(true, true, 1);
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error invalidating email confirmation tokens for user {UserId}", userId);
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(EmailConfirmationTokenService), nameof(FindAndDeleteByIdAsync));
             throw;
         }
     }
 
-    public async Task<RemoveRecordResult> DeleteAllUsedByUserIdAsync(IListUserRepository listUserRepository,
+    public async Task<RemoveRecordResult> DeleteAllUsedByUserIdAsync(
         Guid userId, CancellationToken ct = default)
     {
         try
         {
-            var targetUser = await listUserRepository.GetWithoutDetailsByIdAsync(userId, ct);
+            var targetUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(userId, ct);
 
             if (targetUser is null)
                 return new(false, false, 0);
 
-            var emailConfirmationTokenIdsToBeRemoved = (await
-                    _emailConfirmationTokenRepository.GetAllByUserIdAsync(userId, ValidityCheck.IsNotValid, ct))
-                .Select(t => t.EmailConfirmationTokenId).ToList();
+            var emailConfirmationTokensToBeRemoved = await
+                _unitOfWork.EmailConfirmationTokenRepository.GetAllByUserIdAsync(userId, ValidityCheck.IsNotValid,
+                    ct);
 
-            if (emailConfirmationTokenIdsToBeRemoved.Count == 0)
+            if (emailConfirmationTokensToBeRemoved.Count == 0)
                 return new(true, true, 0);
 
-            return await _emailConfirmationTokenRepository.DeleteBatchAsync(emailConfirmationTokenIdsToBeRemoved, ct);
+            _unitOfWork.EmailConfirmationTokenRepository.DeleteBatch(emailConfirmationTokensToBeRemoved);
+
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != emailConfirmationTokensToBeRemoved.Count)
+                return new(true, false, checkResult);
+
+            return new(true, true, checkResult);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(EmailConfirmationTokenService), nameof(DeleteAllUsedByUserIdAsync));
             throw;
         }
     }
 
-    public async Task<RemoveRecordResult> DeleteAllUsedByUserEmailAsync(IListUserRepository listUserRepository,
+    public async Task<RemoveRecordResult> DeleteAllUsedByUserEmailAsync(
         string userEmailAddress, CancellationToken ct = default)
     {
         try
         {
-            var targetUser = await listUserRepository.GetWithoutDetailsByEmailAddressAsync(userEmailAddress, ct);
+            var targetUser =
+                await _unitOfWork.ListUserRepository.GetWithoutDetailsByEmailAddressAsync(userEmailAddress, ct);
 
             if (targetUser is null)
                 return new(false, false, 0);
 
-            var emailConfirmationTokenIdsToBeRemoved = (await
-                    _emailConfirmationTokenRepository.GetAllByUserIdAsync(targetUser.UserId, ValidityCheck.IsNotValid,
-                        ct))
-                .Select(t => t.EmailConfirmationTokenId).ToList();
+            var emailConfirmationTokensToBeRemoved = await
+                _unitOfWork.EmailConfirmationTokenRepository.GetAllByUserIdAsync(targetUser.UserId,
+                    ValidityCheck.IsNotValid,
+                    ct);
 
-            if (emailConfirmationTokenIdsToBeRemoved.Count == 0)
+            if (emailConfirmationTokensToBeRemoved.Count == 0)
                 return new(true, true, 0);
 
-            return await _emailConfirmationTokenRepository.DeleteBatchAsync(emailConfirmationTokenIdsToBeRemoved, ct);
+            _unitOfWork.EmailConfirmationTokenRepository.DeleteBatch(emailConfirmationTokensToBeRemoved);
+
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != emailConfirmationTokensToBeRemoved.Count)
+                return new(true, false, checkResult);
+
+            return new(true, true, checkResult);
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(EmailConfirmationTokenService), nameof(DeleteAllUsedByUserEmailAsync));
             throw;
         }
     }

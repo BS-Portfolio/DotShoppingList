@@ -3,16 +3,12 @@ using ShoppingListApi.Data.Contexts;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Interfaces.Repositories;
 using ShoppingListApi.Model.Entity;
-using ShoppingListApi.Model.ReturnTypes;
 
 namespace ShoppingListApi.Repositories;
 
-public class EmailConfirmationTokenRepository(
-    AppDbContext appDbContext,
-    ILogger<EmailConfirmationTokenRepository> logger) : IEmailConfirmationTokenRepository
+public class EmailConfirmationTokenRepository(AppDbContext appDbContext) : IEmailConfirmationTokenRepository
 {
     private readonly AppDbContext _appDbContext = appDbContext;
-    private readonly ILogger<EmailConfirmationTokenRepository> _logger = logger;
 
     public async Task<List<EmailConfirmationToken>> GetAllByUserIdAsync(Guid userId, ValidityCheck validityCheck,
         CancellationToken ct = default)
@@ -57,8 +53,7 @@ public class EmailConfirmationTokenRepository(
             .FirstOrDefaultAsync(t => t.UserId == userId && t.Token == token, ct);
     }
 
-    public async Task<EmailConfirmationToken?> AddAsync(Guid userId, string generatedToken,
-        CancellationToken ct = default)
+    public EmailConfirmationToken Add(Guid userId, string generatedToken)
     {
         var newTokenId = Guid.NewGuid();
 
@@ -74,38 +69,25 @@ public class EmailConfirmationTokenRepository(
 
         _appDbContext.EmailConfirmationTokens.Add(newToken);
 
-        var checkResult = await _appDbContext.SaveChangesAsync(ct);
-
-        if (checkResult <= 0)
-            return null;
-
         return newToken;
     }
 
-    public async Task<bool> MarkTokenAsUsedAsync(EmailConfirmationToken targetEmailConfirmationToken,
-        CancellationToken ct = default)
+    public void MarkTokenAsUsed(EmailConfirmationToken targetEmailConfirmationToken)
     {
         targetEmailConfirmationToken.IsUsed = true;
 
         if (targetEmailConfirmationToken.ExpirationDateTime > DateTimeOffset.UtcNow)
             targetEmailConfirmationToken.ExpirationDateTime = DateTimeOffset.UtcNow;
-
-        var checkResult = await _appDbContext.SaveChangesAsync(ct);
-
-        if (checkResult <= 0)
-            return false;
-
-        return true;
     }
 
-    public async Task<bool> InvalidateAllByUserIdAsync(Guid userId, CancellationToken ct = default)
+    public async Task<int> InvalidateAllByUserIdAsync(Guid userId, CancellationToken ct = default)
     {
         var tokens = await _appDbContext.EmailConfirmationTokens
-            .Where(t => t.UserId == userId && t.IsUsed == false || t.ExpirationDateTime > DateTimeOffset.UtcNow)
+            .Where(t => t.UserId == userId && (t.IsUsed == false || t.ExpirationDateTime > DateTimeOffset.UtcNow))
             .ToListAsync(ct);
 
-        if (!tokens.Any())
-            return true;
+        if (tokens.Count == 0)
+            return 0;
 
         foreach (var token in tokens)
         {
@@ -113,44 +95,16 @@ public class EmailConfirmationTokenRepository(
             token.ExpirationDateTime = DateTimeOffset.UtcNow;
         }
 
-        var checkResult = await _appDbContext.SaveChangesAsync(ct);
-
-        if (checkResult <= 0)
-            return false;
-
-        return true;
+        return tokens.Count;
     }
 
-    public async Task<bool> DeleteAsync(EmailConfirmationToken targetEmailConfirmationToken,
-        CancellationToken ct = default)
+    public void Delete(EmailConfirmationToken targetEmailConfirmationToken)
     {
         _appDbContext.EmailConfirmationTokens.Remove(targetEmailConfirmationToken);
-
-        var checkResult = await _appDbContext.SaveChangesAsync(ct);
-
-        if (checkResult != 1)
-            return false;
-
-        return true;
     }
 
-    public async Task<RemoveRecordResult> DeleteBatchAsync(List<Guid> emailConfirmationTokenIds,
-        CancellationToken ct = default)
+    public void DeleteBatch(List<EmailConfirmationToken> emailConfirmationTokens)
     {
-        var tokensToDelete = await _appDbContext.EmailConfirmationTokens
-            .Where(t => emailConfirmationTokenIds.Contains(t.EmailConfirmationTokenId))
-            .ToListAsync(ct);
-
-        if (!tokensToDelete.Any())
-            return new RemoveRecordResult(false, true, 0);
-
-        _appDbContext.EmailConfirmationTokens.RemoveRange(tokensToDelete);
-
-        var checkResult = await _appDbContext.SaveChangesAsync(ct);
-
-        if (checkResult != tokensToDelete.Count)
-            return new RemoveRecordResult(true, false, checkResult);
-
-        return new RemoveRecordResult(true, true, checkResult);
+        _appDbContext.EmailConfirmationTokens.RemoveRange(emailConfirmationTokens);
     }
 }

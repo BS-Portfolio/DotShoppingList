@@ -1,6 +1,5 @@
 using ShoppingListApi.Enums;
 using ShoppingListApi.Model.Entity;
-using ShoppingListApi.Model.ReturnTypes;
 
 namespace ShoppingListApi.Interfaces.Repositories;
 
@@ -16,12 +15,11 @@ public interface IEmailConfirmationTokenRepository
         CancellationToken ct = default);
 
     Task<EmailConfirmationToken?> GetByTokenValue(Guid userId, string token, CancellationToken ct = default);
-    Task<EmailConfirmationToken?> AddAsync(Guid userId, string generatedToken, CancellationToken ct = default);
+    EmailConfirmationToken Add(Guid userId, string generatedToken);
 
-    Task<bool> MarkTokenAsUsedAsync(EmailConfirmationToken targetEmailConfirmationToken,
-        CancellationToken ct = default);
+    void MarkTokenAsUsed(EmailConfirmationToken targetEmailConfirmationToken);
 
-    Task<bool> InvalidateAllByUserIdAsync(Guid userId, CancellationToken ct = default);
-    Task<bool> DeleteAsync(EmailConfirmationToken targetEmailConfirmationToken, CancellationToken ct = default);
-    Task<RemoveRecordResult> DeleteBatchAsync(List<Guid> emailConfirmationTokenIds, CancellationToken ct = default);
+    Task<int> InvalidateAllByUserIdAsync(Guid userId, CancellationToken ct = default);
+    void Delete(EmailConfirmationToken targetEmailConfirmationToken);
+    void DeleteBatch(List<EmailConfirmationToken> emailConfirmationTokens);
 }
