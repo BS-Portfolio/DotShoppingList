@@ -24,3 +24,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Entities
 - Added DbContext
 - Added Initial Migration
+
+## [0.1.1] - 2025-09-18
+
+### Features
+
+- Added Repositories and their respective Interfaces
+- Added Services and their respective Interfaces
+- Added Unit of Work and its Interface
+- Added new return types for the Services
+- Added new migrations
+- Added Constants to appsettings.json
+
+### Changes
+- Edited Entities minorly
+- Edited DbContext minorly
+- Edite: reorganized DTOs
