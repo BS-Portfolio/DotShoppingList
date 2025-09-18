@@ -1,3 +1,13 @@
+# Donnerstag, 18.09.25
+
+## Tasks:
+- Implementierung von unit of work pattern im DB Service der API
+- Frontend Refactor stores
+- Header Styling überarbeiten
+- CSS doppelung Überprüfung
+
+## Blocker:
+
 # Mittwoch, 17.09.25
 
 ## Tasks:
