@@ -9,9 +9,11 @@ public interface IItemRepository
     Task<Item?> GetByIdAsync(Guid shoppingListId, Guid itemId, CancellationToken ct = default);
 
     Task<List<Item>> GetAllByShoppingListIdAsync(Guid shoppingListId, CancellationToken ct = default);
-    Task<Guid?> CreateAsync(Guid shoppingListId, ItemPostDto itemPostDto, CancellationToken ct = default);
+    Task<Guid> CreateAsync(Guid shoppingListId, ItemPostDto itemPostDto, CancellationToken ct = default);
 
-    Task<bool> UpdateByIdAsync(Item targetItem, ItemPatchDto itemPatchDto, CancellationToken ct = default);
+    void UpdateById(Item targetItem, ItemPatchDto itemPatchDto);
 
-    Task<bool> DeleteAsync(Item targetItem, CancellationToken ct = default);
+    void Delete(Item targetItem);
+
+    void DeleteBatch(List<Item> items);
 }

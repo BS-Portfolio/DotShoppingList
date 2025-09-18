@@ -8,13 +8,10 @@ using ShoppingListApi.Model.ReturnTypes;
 
 namespace ShoppingListApi.Repositories;
 
-public class ShoppingListRepository(AppDbContext appDbContext, ILogger<ShoppingListRepository> logger)
+public class ShoppingListRepository(AppDbContext appDbContext)
     : IShoppingListRepository
 {
     private readonly AppDbContext _appDbContext = appDbContext;
-
-    private readonly ILogger<ShoppingListRepository> _logger = logger;
-
 
     public async Task<ShoppingList?> GetWithoutItemsByIdAsync(Guid shoppingListId, CancellationToken ct = default)
     {
@@ -79,9 +76,6 @@ public class ShoppingListRepository(AppDbContext appDbContext, ILogger<ShoppingL
 
             if (listOwnerAdditionResult.Success is false)
             {
-                _logger.LogError(
-                    "Failed to assign user with ID {UserId} as owner to newly created shopping list with ID {ShoppingListId}. Shopping list creation aborted!",
-                    userId, newShoppingListId);
                 await transaction.RollbackAsync(ct);
                 return null;
             }
@@ -92,9 +86,6 @@ public class ShoppingListRepository(AppDbContext appDbContext, ILogger<ShoppingL
         catch (Exception e)
         {
             await transaction.RollbackAsync(ct);
-            _logger.LogError(
-                "Error creating shopping list and assigning owner with ID {UserId}. The following exception was caught: {Exception}",
-                userId, e);
             throw;
         }
     }
@@ -152,8 +143,6 @@ public class ShoppingListRepository(AppDbContext appDbContext, ILogger<ShoppingL
         catch (Exception e)
         {
             await transaction.RollbackAsync(ct);
-            _logger.LogError(e, "Error deleting shopping list with ID {ShoppingListId}",
-                targetShoppingList.ShoppingListId);
             Console.WriteLine(e);
             throw;
         }
@@ -206,8 +195,6 @@ public class ShoppingListRepository(AppDbContext appDbContext, ILogger<ShoppingL
         catch (Exception e)
         {
             await transaction.RollbackAsync(ct);
-            _logger.LogError(e, "Error deleting shopping list with ID {ShoppingListId}",
-                targetShoppingListId);
             Console.WriteLine(e);
             throw;
         }

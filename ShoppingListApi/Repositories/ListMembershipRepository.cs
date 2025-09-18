@@ -6,13 +6,12 @@ using ShoppingListApi.Model.Entity;
 
 namespace ShoppingListApi.Repositories;
 
-public class ListMembershipRepository(AppDbContext appDbContext, ILogger<ListMembershipRepository> logger)
+public class ListMembershipRepository(AppDbContext appDbContext)
     : IListMembershipRepository
 {
     private readonly AppDbContext _appDbContext = appDbContext;
-    private readonly ILogger<ListMembershipRepository> _logger = logger;
 
-    public async Task<UserRole?> GetUserRoleInShoppingListAsync(Guid listUserId, Guid shoppingListId,
+    public async Task<UserRole?> GetUserRoleObjInShoppingListAsync(Guid listUserId, Guid shoppingListId,
         CancellationToken ct = default)
     {
         var targetMembership = await _appDbContext.ListMemberships
@@ -24,7 +23,21 @@ public class ListMembershipRepository(AppDbContext appDbContext, ILogger<ListMem
         return targetMembership.UserRole;
     }
 
-    public async Task<ListMembership?> GetListMembershipByCompositePkAsync(Guid listUserId, Guid shoppingListId,
+    public async Task<UserRoleEnum?> GetUserRoleEnumInShoppingListAsync(Guid listUserId, Guid shoppingListId,
+        CancellationToken ct = default)
+    {
+        var targetMembership = await _appDbContext.ListMemberships
+            .Include(lm => lm.UserRole)
+            .FirstOrDefaultAsync(lm => lm.UserId == listUserId && lm.ShoppingListId == shoppingListId, ct);
+
+        if (targetMembership?.UserRole is null) return null;
+
+        var targetEnum = UserRole.GetEnumFromIndex(targetMembership.UserRole.EnumIndex);
+
+        return targetEnum;
+    }
+
+    public async Task<ListMembership?> GetListMembershipByCompositePkAsync(Guid shoppingListId, Guid listUserId,
         CancellationToken ct = default)
     {
         return await _appDbContext.ListMemberships.FindAsync([shoppingListId, listUserId], ct);
@@ -98,9 +111,8 @@ public class ListMembershipRepository(AppDbContext appDbContext, ILogger<ListMem
         return collaboratorsList.Select(lm => lm.User!).ToList();
     }
 
-    public async Task<bool> AssignUserToShoppingListByUserRoleIdAsync(Guid listUserId, Guid shoppingListId,
-        Guid userRoleId,
-        CancellationToken ct = default)
+    public async Task<ListMembership> AssignUserToShoppingListByUserRoleIdAsync(Guid listUserId, Guid shoppingListId,
+        Guid userRoleId, CancellationToken ct = default)
     {
         var newMembership = new ListMembership()
         {
@@ -111,18 +123,11 @@ public class ListMembershipRepository(AppDbContext appDbContext, ILogger<ListMem
 
         await _appDbContext.ListMemberships.AddAsync(newMembership, ct);
 
-        var checkResult = await _appDbContext.SaveChangesAsync(ct);
-
-        return checkResult == 1;
+        return newMembership;
     }
 
-    public async Task<bool> RemoveListMembershipAsync(ListMembership listMembership,
-        CancellationToken ct = default)
+    public void RemoveListMembership(ListMembership listMembership)
     {
         _appDbContext.ListMemberships.Remove(listMembership);
-
-        var checkResult = await _appDbContext.SaveChangesAsync(ct);
-
-        return checkResult == 1;
     }
 }

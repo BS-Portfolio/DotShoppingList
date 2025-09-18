@@ -6,16 +6,9 @@ using ShoppingListApi.Repositories;
 
 namespace ShoppingListApi.Services;
 
-public class UnitOfWork : IUnitOfWork
+public class UnitOfWork(AppDbContext appDbContext) : IUnitOfWork
 {
     private IDbContextTransaction? _transaction;
-    private readonly AppDbContext _appDbContext;
-    private readonly ILogger<EmailConfirmationTokenRepository> _emailConfirmationTokenRepositoryLogger;
-    private readonly ILogger<ItemRepository> _itemRepositoryLogger;
-    private readonly ILogger<ListMembershipRepository> _listMembershipRepositoryLogger;
-    private readonly ILogger<ListUserRepository> _listUserRepositoryLogger;
-    private readonly ILogger<ShoppingListRepository> _shoppingListRepositoryLogger;
-    private readonly ILogger<UserRoleRepository> _userRoleRepositorLogger;
 
     private IApiKeyRepository? _apiKeyRepository;
     private IEmailConfirmationTokenRepository? _emailConfirmationTokenRepository;
@@ -25,52 +18,36 @@ public class UnitOfWork : IUnitOfWork
     private IShoppingListRepository? _shoppingListRepository;
     private IUserRoleRepository? _userRoleRepository;
 
-    public UnitOfWork(
-        AppDbContext appDbContext,
-        ILogger<ItemRepository> itemRepositoryLogger,
-        ILogger<ListMembershipRepository> listMembershipRepositoryLogger,
-        ILogger<ListUserRepository> listUserRepositoryLogger,
-        ILogger<ShoppingListRepository> shoppingListRepositoryLogger,
-        ILogger<UserRoleRepository> userRoleRepositorLogger)
-    {
-        _appDbContext = appDbContext;
-        _itemRepositoryLogger = itemRepositoryLogger;
-        _listMembershipRepositoryLogger = listMembershipRepositoryLogger;
-        _listUserRepositoryLogger = listUserRepositoryLogger;
-        _shoppingListRepositoryLogger = shoppingListRepositoryLogger;
-        _userRoleRepositorLogger = userRoleRepositorLogger;
-    }
-
     public IApiKeyRepository ApiKeyRepository =>
-        _apiKeyRepository ??= new ApiKeyRepository(_appDbContext);
+        _apiKeyRepository ??= new ApiKeyRepository(appDbContext);
 
     public IEmailConfirmationTokenRepository EmailConfirmationTokenRepository =>
         _emailConfirmationTokenRepository ??=
-            new EmailConfirmationTokenRepository(_appDbContext);
+            new EmailConfirmationTokenRepository(appDbContext);
 
     public IItemRepository ItemRepository =>
-        _itemRepository ??= new ItemRepository(_appDbContext, _itemRepositoryLogger);
+        _itemRepository ??= new ItemRepository(appDbContext);
 
     public IListMembershipRepository ListMembershipRepository =>
-        _listMembershipRepository ??= new ListMembershipRepository(_appDbContext, _listMembershipRepositoryLogger);
+        _listMembershipRepository ??= new ListMembershipRepository(appDbContext);
 
     public IListUserRepository ListUserRepository =>
-        _listUserRepository ??= new ListUserRepository(_appDbContext, _listUserRepositoryLogger);
+        _listUserRepository ??= new ListUserRepository(appDbContext);
 
     public IShoppingListRepository ShoppingListRepository =>
-        _shoppingListRepository ??= new ShoppingListRepository(_appDbContext, _shoppingListRepositoryLogger);
+        _shoppingListRepository ??= new ShoppingListRepository(appDbContext);
 
     public IUserRoleRepository UserRoleRepository =>
-        _userRoleRepository ??= new UserRoleRepository(_appDbContext, _userRoleRepositorLogger);
+        _userRoleRepository ??= new UserRoleRepository(appDbContext);
 
     public async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
-        return await _appDbContext.SaveChangesAsync(ct);
+        return await appDbContext.SaveChangesAsync(ct);
     }
 
     public async Task BeginTransactionAsync(CancellationToken ct = default)
     {
-        _transaction = await _appDbContext.Database.BeginTransactionAsync(ct);
+        _transaction = await appDbContext.Database.BeginTransactionAsync(ct);
     }
 
     public async Task CommitTransactionAsync(CancellationToken ct = default)
@@ -93,7 +70,7 @@ public class UnitOfWork : IUnitOfWork
     {
         _transaction?.Dispose();
         _transaction = null;
-        _appDbContext.Dispose();
+        appDbContext.Dispose();
         GC.SuppressFinalize(this);
     }
 }

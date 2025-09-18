@@ -1,8 +1,8 @@
 namespace ShoppingListApi.Model.ReturnTypes;
 
 public record AddItemResult(
-    bool ShoppingListExists,
-    bool? AccessGranted,
     bool Success,
+    bool? ShoppingListExists,
+    bool? AccessGranted,
     bool? MaxAmountReached,
     Guid? ItemId);

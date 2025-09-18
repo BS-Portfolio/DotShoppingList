@@ -7,11 +7,10 @@ using ShoppingListApi.Model.Entity;
 
 namespace ShoppingListApi.Repositories;
 
-public class ItemRepository(AppDbContext appDbContext, ILogger<ItemRepository> logger) : IItemRepository
+public class ItemRepository(AppDbContext appDbContext) : IItemRepository
 {
     private readonly AppDbContext _appDbContext = appDbContext;
 
-    private readonly ILogger<ItemRepository> _logger = logger;
 
     public async Task<Item?> GetByIdAsync(Guid shoppingListId, Guid itemId, CancellationToken ct = default)
     {
@@ -24,7 +23,7 @@ public class ItemRepository(AppDbContext appDbContext, ILogger<ItemRepository> l
         return await _appDbContext.Items.Where(item => item.ShoppingListId == shoppingListId).ToListAsync(ct);
     }
 
-    public async Task<Guid?> CreateAsync(Guid shoppingListId, ItemPostDto itemPostDto, CancellationToken ct = default)
+    public async Task<Guid> CreateAsync(Guid shoppingListId, ItemPostDto itemPostDto, CancellationToken ct = default)
     {
         var newItemId = Guid.NewGuid();
 
@@ -38,35 +37,24 @@ public class ItemRepository(AppDbContext appDbContext, ILogger<ItemRepository> l
 
         await _appDbContext.Items.AddAsync(newItem, ct);
 
-        var checkResult = await _appDbContext.SaveChangesAsync(ct);
-
-        if (checkResult != 1) return null;
-
         return newItemId;
     }
 
-    public async Task<bool> UpdateByIdAsync(Item targetItem, ItemPatchDto itemPatchDto, CancellationToken ct = default)
+    public void UpdateById(Item targetItem, ItemPatchDto itemPatchDto)
     {
         var (itemName, itemAmount) = itemPatchDto;
 
         if (itemName is not null) targetItem.ItemName = itemName;
         if (itemAmount is not null) targetItem.ItemAmount = itemAmount;
-
-        var checkResult = await _appDbContext.SaveChangesAsync(ct);
-
-        if (checkResult != 1) return false;
-
-        return true;
     }
 
-    public async Task<bool> DeleteAsync(Item targetItem, CancellationToken ct = default)
+    public void Delete(Item targetItem)
     {
         _appDbContext.Items.Remove(targetItem);
+    }
 
-        var checkResult = await _appDbContext.SaveChangesAsync(ct);
-
-        if (checkResult != 1) return false;
-
-        return true;
+    public void DeleteBatch(List<Item> items)
+    {
+        _appDbContext.Items.RemoveRange(items);
     }
 }

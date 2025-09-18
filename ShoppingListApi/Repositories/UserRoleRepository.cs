@@ -8,9 +8,8 @@ using ShoppingListApi.Model.Entity;
 
 namespace ShoppingListApi.Repositories;
 
-public class UserRoleRepository(AppDbContext appDbContext, ILogger<UserRoleRepository> logger) : IUserRoleRepository
+public class UserRoleRepository(AppDbContext appDbContext) : IUserRoleRepository
 {
-    private readonly ILogger<UserRoleRepository> _logger = logger;
     private readonly AppDbContext _appDbContext = appDbContext;
 
     public async Task<List<UserRole>> GetAllAsync(CancellationToken ct = default)

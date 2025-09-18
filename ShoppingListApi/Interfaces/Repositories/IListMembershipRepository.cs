@@ -5,11 +5,15 @@ namespace ShoppingListApi.Interfaces.Repositories;
 
 public interface IListMembershipRepository
 {
-    Task<UserRole?> GetUserRoleInShoppingListAsync(Guid listUserId, Guid shoppingListId,
+    Task<UserRole?> GetUserRoleObjInShoppingListAsync(Guid listUserId, Guid shoppingListId,
         CancellationToken ct = default);
 
-    Task<ListMembership?> GetListMembershipByCompositePkAsync(Guid listUserId, Guid shoppingListId,
+    Task<UserRoleEnum?> GetUserRoleEnumInShoppingListAsync(Guid listUserId, Guid shoppingListId,
         CancellationToken ct = default);
+
+    Task<ListMembership?> GetListMembershipByCompositePkAsync(Guid shoppingListId, Guid listUserId,
+        CancellationToken ct = default);
+
     Task<List<Guid>> GetAllShoppingListIdsForUserAsync(Guid listUserId, CancellationToken ct = default);
 
     Task<List<ShoppingList>> GetAllShoppingListsOwnedByUserAsync(Guid listUserId, CancellationToken ct = default);
@@ -23,8 +27,8 @@ public interface IListMembershipRepository
 
     Task<List<ListUser>> GetShoppingListCollaborators(Guid shoppingListId, CancellationToken ct = default);
 
-    Task<bool> AssignUserToShoppingListByUserRoleIdAsync(Guid listUserId, Guid shoppingListId, Guid userRoleId,
+    Task<ListMembership> AssignUserToShoppingListByUserRoleIdAsync(Guid listUserId, Guid shoppingListId, Guid userRoleId,
         CancellationToken ct = default);
 
-    Task<bool> RemoveListMembershipAsync(ListMembership listMembership, CancellationToken ct = default);
+    void RemoveListMembership(ListMembership listMembership);
 }

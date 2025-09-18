@@ -10,9 +10,8 @@ using ShoppingListApi.Model.ReturnTypes;
 
 namespace ShoppingListApi.Repositories;
 
-public class ListUserRepository(AppDbContext appAppDbContext, ILogger<ListUserRepository> logger) : IListUserRepository
+public class ListUserRepository(AppDbContext appAppDbContext) : IListUserRepository
 {
-    private readonly ILogger<ListUserRepository> _logger = logger;
     private readonly AppDbContext _appDbContext = appAppDbContext;
 
 
@@ -182,7 +181,6 @@ public class ListUserRepository(AppDbContext appAppDbContext, ILogger<ListUserRe
         catch (Exception e)
         {
             await transaction.RollbackAsync(ct);
-            _logger.LogError("Error deleting user {UserId}: {ExceptionMessage}", listUser.UserId, e.Message);
             throw;
         }
     }

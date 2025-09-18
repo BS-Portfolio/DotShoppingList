@@ -8,24 +8,11 @@ namespace ShoppingListApi.Interfaces.Services;
 
 public interface IListMembershipService
 {
-    IListMembershipRepository ListMembershipRepository { get; }
-
-    Task<UserRoleEnum?> GetUserRoleInShoppingListAsync(Guid userId, Guid shoppingListId,
-        CancellationToken ct = default);
-
-    Task<bool> IsOwnerAsync(Guid userId, Guid shoppingListId, CancellationToken ct = default);
-
-    Task<bool> IsCollaboratorAsync(Guid userId, Guid shoppingListId, CancellationToken ct = default);
-
-    Task<bool> IsOwnerOrCollaboratorAsync(Guid userId, Guid shoppingListId, CancellationToken ct = default);
-
-    Task<bool> IsNoAccessAsync(Guid userId, Guid shoppingListId, CancellationToken ct = default);
-
     Task<AddRecordResult<ListMembership?, ListMembership?>> AssignUserToShoppingListAsync(
         Guid userRoleId, Guid userId, Guid shoppingListId,
         CancellationToken ct = default);
 
-    Task<RemoveRecordResult> RemoveUserFromShoppingListAsync(Guid userId, Guid shoppingListId,
+    Task<RemoveRecordResult> RemoveUserFromShoppingListAsApplicationAdminAsync(Guid userId, Guid shoppingListId,
         CancellationToken ct = default);
 
     Task<RemoveRestrictedRecordResult> RemoveCollaboratorFromShoppingListAsListOwnerAsync(
