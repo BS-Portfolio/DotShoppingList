@@ -1,7 +1,5 @@
-using ShoppingListApi.Interfaces.Repositories;
 using ShoppingListApi.Model.DTOs.Create;
 using ShoppingListApi.Model.DTOs.Patch;
-using ShoppingListApi.Model.DTOs.Post;
 using ShoppingListApi.Model.Entity;
 using ShoppingListApi.Model.ReturnTypes;
 

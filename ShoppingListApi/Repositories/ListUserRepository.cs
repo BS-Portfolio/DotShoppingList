@@ -23,7 +23,7 @@ public class ListUserRepository(AppDbContext appAppDbContext) : IListUserReposit
         return await _appDbContext.ListUsers.FirstOrDefaultAsync(lu => lu.EmailAddress == emailAddress, ct);
     }
 
-    public async Task<Guid> CreateAsync(ListUserCreateDto listUserCreateDto, CancellationToken ct)
+    public async Task<Guid> CreateAsync(ListUserCreateDto listUserCreateDto, CancellationToken ct= default)
     {
         var newUserId = Guid.NewGuid();
 

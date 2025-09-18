@@ -207,7 +207,7 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
 
                 // delete its memberships
                 var memberships =
-                    await _unitOfWork.ListMembershipRepository.GetAllMembershipsByShoppingListIdAsync(
+                    await _unitOfWork.ListMembershipRepository.GetAllMembershipsWithoutCascadingInfoByShoppingListIdAsync(
                         targetShoppingList.ShoppingListId, ct);
                 recordsToBeRemoved += memberships.Count;
 

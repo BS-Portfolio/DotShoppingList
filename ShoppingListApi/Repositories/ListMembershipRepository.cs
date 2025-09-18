@@ -46,9 +46,10 @@ public class ListMembershipRepository(AppDbContext appDbContext)
     public async Task<List<Guid>> GetAllShoppingListIdsForUserAsync(Guid listUserId,
         CancellationToken ct = default)
     {
-        return (await _appDbContext.ListMemberships
-                .Where(lm => lm.UserId == listUserId).ToListAsync(ct))
-            .Select(lm => lm.ShoppingListId).ToList();
+        return await _appDbContext.ListMemberships
+            .Where(lm => lm.UserId == listUserId)
+            .Select(lm => lm.ShoppingListId)
+            .ToListAsync(ct);
     }
 
     public async Task<List<ListMembership>> GetAllListMembershipsWithDetailsForOwnerByUserAsync(Guid listUserId,
@@ -71,7 +72,8 @@ public class ListMembershipRepository(AppDbContext appDbContext)
             .ToListAsync(ct);
     }
 
-    public async Task<List<ListMembership>> GetAllMembershipsByShoppingListIdAsync(Guid shoppingListId,
+    public async Task<List<ListMembership>> GetAllMembershipsWithoutCascadingInfoByShoppingListIdAsync(
+        Guid shoppingListId,
         CancellationToken ct = default)
     {
         return await _appDbContext.ListMemberships
@@ -79,15 +81,47 @@ public class ListMembershipRepository(AppDbContext appDbContext)
             .ToListAsync(ct);
     }
 
+    public async Task<List<ListMembership>> GetAllMembershipsWithCascadingInfoByShoppingListIdAsync(Guid shoppingListId,
+        CancellationToken ct = default)
+    {
+        return await _appDbContext.ListMemberships
+            .Include(lm => lm.User)
+            .Include(lm => lm.UserRole)
+            .Where(lm => lm.ShoppingListId == shoppingListId)
+            .ToListAsync(ct);
+    }
+
+    public async Task<List<ListMembership>> GetAllMembershipsWithCascadingInfoByShoppingListIdsAsync(
+        List<Guid> shoppingListIds,
+        CancellationToken ct = default)
+    {
+        return await _appDbContext.ListMemberships
+            .Include(lm => lm.User)
+            .Include(lm => lm.UserRole)
+            .Where(lm => shoppingListIds.Contains(lm.ShoppingListId))
+            .ToListAsync(ct);
+    }
+
+    public async Task<List<ListMembership>> GetAllMembershipsWithCascadingInfoByUserIdAsync(Guid listUserId,
+        CancellationToken ct = default)
+    {
+        return await _appDbContext.ListMemberships
+            .Include(lm => lm.ShoppingList).ThenInclude(sl => sl!.Items)
+            .Include(lm => lm.UserRole)
+            .Include(lm => lm.User)
+            .Where(lm => lm.UserId == listUserId)
+            .ToListAsync(ct);
+    }
+
     public async Task<List<ShoppingList>> GetAllCollaboratingShoppingListsForUserAsync(Guid listUserId,
         CancellationToken ct = default)
     {
-        return (await _appDbContext.ListMemberships
-                .Include(lm => lm.ShoppingList)
-                .Include(lm => lm.UserRole)
-                .Where(lm => lm.UserId == listUserId && lm.UserRole!.EnumIndex == (int)UserRoleEnum.Collaborator)
-                .ToListAsync(ct))
-            .Select(lm => lm.ShoppingList!).ToList();
+        return await _appDbContext.ListMemberships
+            .Include(lm => lm.ShoppingList)
+            .Include(lm => lm.UserRole)
+            .Where(lm => lm.UserId == listUserId && lm.UserRole!.EnumIndex == (int)UserRoleEnum.Collaborator)
+            .Select(lm => lm.ShoppingList!)
+            .ToListAsync(ct);
     }
 
     public async Task<List<ListMembership>> GetAllUsersInShoppingListAsync(Guid shoppingListId,
@@ -102,30 +136,53 @@ public class ListMembershipRepository(AppDbContext appDbContext)
 
     public async Task<ListUser?> GetShoppingListOwner(Guid shoppingListId, CancellationToken ct = default)
     {
-        var potentialOwnerList = await _appDbContext.ListMemberships
+        var ownerMembership = await _appDbContext.ListMemberships
             .Include(lm => lm.UserRole)
             .Include(lm => lm.User)
             .Where(lm => lm.ShoppingListId == shoppingListId && lm.UserRole!.EnumIndex == (int)UserRoleEnum.ListOwner)
-            .ToListAsync(ct);
+            .FirstOrDefaultAsync(ct);
 
-        if (potentialOwnerList.Count > 1)
-            throw new Exception("Data integrity issue: multiple list owners found for shopping list ID " +
-                                shoppingListId);
+        if (ownerMembership == null)
+            return null;
 
-        return potentialOwnerList.FirstOrDefault()?.User;
+        // Check for data integrity
+        var ownerCount = await _appDbContext.ListMemberships
+            .CountAsync(
+                lm => lm.ShoppingListId == shoppingListId && lm.UserRole!.EnumIndex == (int)UserRoleEnum.ListOwner, ct);
+
+        if (ownerCount > 1)
+            throw new Exception(
+                $"Data integrity issue: multiple list owners found for shopping list ID {shoppingListId}");
+
+        return ownerMembership.User;
     }
 
     public async Task<List<ListUser>> GetShoppingListCollaborators(Guid shoppingListId,
         CancellationToken ct = default)
     {
-        var collaboratorsList = await _appDbContext.ListMemberships
+        return await _appDbContext.ListMemberships
             .Include(lm => lm.UserRole)
             .Include(lm => lm.User)
             .Where(lm =>
                 lm.ShoppingListId == shoppingListId && lm.UserRole!.EnumIndex == (int)UserRoleEnum.Collaborator)
+            .Select(lm => lm.User!)
             .ToListAsync(ct);
+    }
 
-        return collaboratorsList.Select(lm => lm.User!).ToList();
+    public Task<ShoppingList?> OwnsShoppingListWithNameAsync(Guid userId, string listName, Guid? excludeListId,
+        CancellationToken ct = default)
+    {
+        var query = _appDbContext.ListMemberships
+            .Include(lm => lm.ShoppingList)
+            .Include(lm => lm.UserRole)
+            .Where(lm => lm.UserId == userId && lm.UserRole!.EnumIndex == (int)UserRoleEnum.ListOwner &&
+                         lm.ShoppingList!.ShoppingListName == listName)
+            .Select(lm => lm.ShoppingList);
+
+        if (excludeListId.HasValue)
+            query = query.Where(q => q!.ShoppingListId != excludeListId.Value);
+
+        return query.FirstOrDefaultAsync(ct);
     }
 
     public async Task<ListMembership> AssignUserToShoppingListByUserRoleIdAsync(Guid listUserId, Guid shoppingListId,

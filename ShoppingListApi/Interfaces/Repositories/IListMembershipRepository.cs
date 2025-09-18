@@ -25,7 +25,16 @@ public interface IListMembershipRepository
         CancellationToken ct = default);
 
     // Does not include UserRole and ShoppingList and ListUser
-    Task<List<ListMembership>> GetAllMembershipsByShoppingListIdAsync(Guid shoppingListId,
+    Task<List<ListMembership>> GetAllMembershipsWithoutCascadingInfoByShoppingListIdAsync(Guid shoppingListId,
+        CancellationToken ct = default);
+
+    Task<List<ListMembership>> GetAllMembershipsWithCascadingInfoByShoppingListIdAsync(Guid shoppingListId,
+        CancellationToken ct = default);
+
+    Task<List<ListMembership>> GetAllMembershipsWithCascadingInfoByShoppingListIdsAsync(List<Guid> shoppingListId,
+        CancellationToken ct = default);
+
+    Task<List<ListMembership>> GetAllMembershipsWithCascadingInfoByUserIdAsync(Guid listUserId,
         CancellationToken ct = default);
 
     Task<List<ShoppingList>> GetAllCollaboratingShoppingListsForUserAsync(Guid listUserId,
@@ -36,6 +45,9 @@ public interface IListMembershipRepository
     Task<ListUser?> GetShoppingListOwner(Guid shoppingListId, CancellationToken ct = default);
 
     Task<List<ListUser>> GetShoppingListCollaborators(Guid shoppingListId, CancellationToken ct = default);
+
+    Task<ShoppingList?> OwnsShoppingListWithNameAsync(Guid userId, string listName, Guid? excludeListId,
+        CancellationToken ct = default);
 
     Task<ListMembership> AssignUserToShoppingListByUserRoleIdAsync(Guid listUserId, Guid shoppingListId,
         Guid userRoleId,

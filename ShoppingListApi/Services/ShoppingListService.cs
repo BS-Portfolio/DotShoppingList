@@ -24,37 +24,42 @@ public class ShoppingListService(
     {
         List<ShoppingListGetDto> result = [];
 
+        if (userId != requestingUserId)
+            return new(null, false);
+
         try
         {
-            if (userId != requestingUserId)
-                return new(null, false);
+            var userShoppingListMemberships =
+                await _unitOfWork.ListMembershipRepository.GetAllMembershipsWithCascadingInfoByUserIdAsync(userId, ct);
 
-            var shoppingListIds =
-                await _unitOfWork.ListMembershipRepository.GetAllShoppingListIdsForUserAsync(userId, ct);
-
-            if (shoppingListIds.Count == 0)
+            if (userShoppingListMemberships.Count == 0)
                 return new(result, true, false);
 
-            foreach (var shoppingListId in shoppingListIds)
+            var shoppingListIds = userShoppingListMemberships.Select(lm => lm.ShoppingListId).ToList();
+
+            var shoppingListMembers = await
+                _unitOfWork.ListMembershipRepository.GetAllMembershipsWithCascadingInfoByShoppingListIdsAsync(
+                    shoppingListIds, ct);
+
+            foreach (var membership in userShoppingListMemberships)
             {
-                // get shopping list with items 
-                var shoppingListsWithItems =
-                    await _unitOfWork.ShoppingListRepository.GetWithItemsByIdAsync(shoppingListId, ct);
-
-                if (shoppingListsWithItems is null)
-                    throw new Exception("Shopping list with the following Id not found: " + shoppingListId);
-
                 // get list owner
                 var shoppingListOwner =
-                    await _unitOfWork.ListMembershipRepository.GetShoppingListOwner(shoppingListId, ct);
+                    shoppingListMembers.FirstOrDefault(slm =>
+                            slm.ShoppingListId == membership.ShoppingListId &&
+                            slm.UserRole!.EnumIndex == (int)UserRoleEnum.ListOwner)
+                        ?.User;
 
                 if (shoppingListOwner is null)
-                    throw new Exception("Shopping list owner with the following Id not found: " + shoppingListId);
+                    throw new Exception("Shopping list owner with the following Id not found: " +
+                                        membership.ShoppingListId);
 
                 // get list collaborators
                 var shoppingListCollaborators =
-                    await _unitOfWork.ListMembershipRepository.GetShoppingListCollaborators(shoppingListId,
-                        ct);
+                    shoppingListMembers.Where(slm =>
+                            slm.ShoppingListId == membership.ShoppingListId &&
+                            slm.UserRole!.EnumIndex != (int)UserRoleEnum.ListOwner)
+                        .Select(slm => slm.User!).ToList();
 
                 // map to dto
                 var ownerDto = new ListUserMinimalGetDto(
@@ -65,12 +70,15 @@ public class ShoppingListService(
                 );
 
                 var shoppingListGetDto =
-                    new ShoppingListGetDto(shoppingListId, shoppingListsWithItems.ShoppingListName, ownerDto);
+                    new ShoppingListGetDto(membership.ShoppingListId, membership.ShoppingList!.ShoppingListName,
+                        ownerDto);
 
-                if (shoppingListsWithItems.Items.Count > 0)
+                var shoppingListItemsList = membership.ShoppingList.Items.ToList();
+
+                if (shoppingListItemsList.Count > 0)
                 {
                     shoppingListGetDto.AddItemsToShoppingList(
-                        ItemGetDto.FromItemBatch(shoppingListsWithItems.Items.ToList()));
+                        ItemGetDto.FromItemBatch(shoppingListItemsList));
                 }
 
                 if (shoppingListCollaborators.Count > 0)
@@ -118,16 +126,28 @@ public class ShoppingListService(
             if (targetShoppingListWithItems is null)
                 return new(null, true, false);
 
+            var shoppingListMemberships =
+                await _unitOfWork.ListMembershipRepository.GetAllMembershipsWithCascadingInfoByShoppingListIdAsync(
+                    shoppingListId, ct);
+
             // get list owner
             var shoppingListOwner =
-                await _unitOfWork.ListMembershipRepository.GetShoppingListOwner(shoppingListId, ct);
+                shoppingListMemberships.FirstOrDefault(slm =>
+                        slm.ShoppingListId == shoppingListId &&
+                        slm.UserRole!.EnumIndex == (int)UserRoleEnum.ListOwner)
+                    ?.User;
 
             if (shoppingListOwner is null)
-                return new(null, true, false);
+                throw new Exception("Shopping list owner with the following Id not found: " +
+                                    shoppingListId);
 
             // get list collaborators
-            var collaborators =
-                await _unitOfWork.ListMembershipRepository.GetShoppingListCollaborators(shoppingListId, ct);
+            var shoppingListCollaborators =
+                shoppingListMemberships.Where(slm =>
+                        slm.ShoppingListId == shoppingListId &&
+                        slm.UserRole!.EnumIndex != (int)UserRoleEnum.ListOwner)
+                    .Select(slm => slm.User!).ToList();
+
 
             // map to dto
             var ownerDto = new ListUserMinimalGetDto(shoppingListOwner);
@@ -141,9 +161,9 @@ public class ShoppingListService(
                 shoppingListGetDto.AddItemsToShoppingList(convertedItems);
             }
 
-            if (collaborators.Count > 0)
+            if (shoppingListCollaborators.Count > 0)
             {
-                var convertedCollaborators = ListUserMinimalGetDto.FromListUserBatch(collaborators);
+                var convertedCollaborators = ListUserMinimalGetDto.FromListUserBatch(shoppingListCollaborators);
                 shoppingListGetDto.AddCollaboratorsToShoppingList(convertedCollaborators);
             }
 
@@ -180,6 +200,9 @@ public class ShoppingListService(
 
             var maxShoppingListsPerUser =
                 _configuration.GetValue<int>("ShoppingLists_MaxAmount");
+
+            if (maxShoppingListsPerUser <= 0)
+                maxShoppingListsPerUser = 5;
 
             var ownerListMemberships =
                 await _unitOfWork.ListMembershipRepository.GetAllListMembershipsWithDetailsForOwnerByUserAsync(userId,
@@ -255,19 +278,13 @@ public class ShoppingListService(
             if (targetShoppingList is null)
                 return new(false, false, true, null, null);
 
-            var ownedShoppingLists = (await _unitOfWork.ListMembershipRepository
-                    .GetAllListMembershipsWithDetailsForOwnerByUserAsync(requestingUserId, ct))
-                .Select(lm => lm.ShoppingList!).ToList();
+            var conflictingShoppingList =
+                await _unitOfWork.ListMembershipRepository.OwnsShoppingListWithNameAsync(requestingUserId,
+                    shoppingListPostDto.ShoppingListName, shoppingListId, ct);
 
-            foreach (var ownedList in ownedShoppingLists)
-            {
-                if (ownedList.ShoppingListId != shoppingListId &&
-                    string.Equals(ownedList.ShoppingListName, shoppingListPostDto.ShoppingListName,
-                        StringComparison.OrdinalIgnoreCase))
-                {
-                    return new(true, false, true, true, ownedList);
-                }
-            }
+
+            if (conflictingShoppingList is not null)
+                return new(true, false, true, true, conflictingShoppingList);
 
             _unitOfWork.ShoppingListRepository.UpdateName(targetShoppingList, shoppingListPostDto);
 
@@ -349,14 +366,15 @@ public class ShoppingListService(
             _unitOfWork.ItemRepository.DeleteBatch(targetShoppingList.Items.ToList());
 
             // get list memberships
-            var listMemberShips =
-                await _unitOfWork.ListMembershipRepository.GetAllMembershipsByShoppingListIdAsync(shoppingListId, ct);
+            var listMemberships =
+                await _unitOfWork.ListMembershipRepository.GetAllMembershipsWithoutCascadingInfoByShoppingListIdAsync(
+                    shoppingListId, ct);
 
             // delete memberships
-            if (listMemberShips.Count > 0)
-                recordsToBeRemoved += listMemberShips.Count;
+            if (listMemberships.Count > 0)
+                recordsToBeRemoved += listMemberships.Count;
 
-            _unitOfWork.ListMembershipRepository.DeleteBatch(listMemberShips);
+            _unitOfWork.ListMembershipRepository.DeleteBatch(listMemberships);
 
             // delete shopping list
             _unitOfWork.ShoppingListRepository.Delete(targetShoppingList);

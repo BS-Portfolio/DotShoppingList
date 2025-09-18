@@ -20,9 +20,11 @@ public class ItemService(IUnitOfWork unitOfWork, IConfiguration configuration, I
         try
         {
             var maxItemsAmount = _configuration.GetValue<int>("Items_MaxAmount");
+            if (maxItemsAmount <= 0) maxItemsAmount = 20;
 
             var userRole =
-                await _unitOfWork.ListMembershipRepository.GetUserRoleObjInShoppingListAsync(userId, shoppingListId, ct);
+                await _unitOfWork.ListMembershipRepository.GetUserRoleObjInShoppingListAsync(userId, shoppingListId,
+                    ct);
 
             if (userRole is null)
                 return new(false, null, false, null, null);

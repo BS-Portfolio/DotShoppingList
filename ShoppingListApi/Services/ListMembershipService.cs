@@ -16,7 +16,7 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
 
 
     public async Task<AddRecordResult<ListMembership?, ListMembership?>> AssignUserToShoppingListAsync(
-        Guid userId, Guid shoppingListId, Guid userRoleId, CancellationToken ct = default)
+        Guid userRoleId, Guid userId, Guid shoppingListId, CancellationToken ct = default)
     {
         try
         {
