@@ -9,8 +9,6 @@ namespace ShoppingListApi.Interfaces.Services;
 
 public interface IListUserService
 {
-    IListUserRepository ListUserRepository { get; }
-
     Task<AddRecordResult<Guid?, ListUser?>> CheckConflictAndCreateUserAsync(ListUserCreateDto listUserCreateDto,
         CancellationToken ct = default);
 

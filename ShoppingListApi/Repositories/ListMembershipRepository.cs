@@ -51,15 +51,32 @@ public class ListMembershipRepository(AppDbContext appDbContext)
             .Select(lm => lm.ShoppingListId).ToList();
     }
 
-    public async Task<List<ShoppingList>> GetAllShoppingListsOwnedByUserAsync(Guid listUserId,
+    public async Task<List<ListMembership>> GetAllListMembershipsWithDetailsForOwnerByUserAsync(Guid listUserId,
         CancellationToken ct = default)
     {
-        return (await _appDbContext.ListMemberships
-                .Include(lm => lm.ShoppingList)
-                .Include(lm => lm.UserRole)
-                .Where(lm => lm.UserId == listUserId && lm.UserRole!.EnumIndex == (int)UserRoleEnum.ListOwner)
-                .ToListAsync(ct))
-            .Select(lm => lm.ShoppingList!).ToList();
+        return await _appDbContext.ListMemberships
+            .Include(lm => lm.ShoppingList)
+            .Include(lm => lm.UserRole)
+            .Where(lm => lm.UserId == listUserId && lm.UserRole!.EnumIndex == (int)UserRoleEnum.ListOwner)
+            .ToListAsync(ct);
+    }
+
+    public async Task<List<ListMembership>> GetAllListMembershipsWithDetailsForNotOwnerByUserAsync(Guid listUserId,
+        CancellationToken ct = default)
+    {
+        return await _appDbContext.ListMemberships
+            .Include(lm => lm.ShoppingList)
+            .Include(lm => lm.UserRole)
+            .Where(lm => lm.UserId == listUserId && lm.UserRole!.EnumIndex != (int)UserRoleEnum.ListOwner)
+            .ToListAsync(ct);
+    }
+
+    public async Task<List<ListMembership>> GetAllMembershipsByShoppingListIdAsync(Guid shoppingListId,
+        CancellationToken ct = default)
+    {
+        return await _appDbContext.ListMemberships
+            .Where(lm => lm.ShoppingListId == shoppingListId)
+            .ToListAsync(ct);
     }
 
     public async Task<List<ShoppingList>> GetAllCollaboratingShoppingListsForUserAsync(Guid listUserId,
@@ -126,8 +143,13 @@ public class ListMembershipRepository(AppDbContext appDbContext)
         return newMembership;
     }
 
-    public void RemoveListMembership(ListMembership listMembership)
+    public void Delete(ListMembership listMembership)
     {
         _appDbContext.ListMemberships.Remove(listMembership);
+    }
+
+    public void DeleteBatch(List<ListMembership> listMembership)
+    {
+        _appDbContext.ListMemberships.RemoveRange(listMembership);
     }
 }

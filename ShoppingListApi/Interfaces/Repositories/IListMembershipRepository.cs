@@ -16,7 +16,17 @@ public interface IListMembershipRepository
 
     Task<List<Guid>> GetAllShoppingListIdsForUserAsync(Guid listUserId, CancellationToken ct = default);
 
-    Task<List<ShoppingList>> GetAllShoppingListsOwnedByUserAsync(Guid listUserId, CancellationToken ct = default);
+    // Includes ShoppingList and UserRole
+    Task<List<ListMembership>>
+        GetAllListMembershipsWithDetailsForOwnerByUserAsync(Guid listUserId, CancellationToken ct = default);
+
+    // Includes ShoppingList and UserRole
+    Task<List<ListMembership>> GetAllListMembershipsWithDetailsForNotOwnerByUserAsync(Guid listUserId,
+        CancellationToken ct = default);
+
+    // Does not include UserRole and ShoppingList and ListUser
+    Task<List<ListMembership>> GetAllMembershipsByShoppingListIdAsync(Guid shoppingListId,
+        CancellationToken ct = default);
 
     Task<List<ShoppingList>> GetAllCollaboratingShoppingListsForUserAsync(Guid listUserId,
         CancellationToken ct = default);
@@ -27,8 +37,10 @@ public interface IListMembershipRepository
 
     Task<List<ListUser>> GetShoppingListCollaborators(Guid shoppingListId, CancellationToken ct = default);
 
-    Task<ListMembership> AssignUserToShoppingListByUserRoleIdAsync(Guid listUserId, Guid shoppingListId, Guid userRoleId,
+    Task<ListMembership> AssignUserToShoppingListByUserRoleIdAsync(Guid listUserId, Guid shoppingListId,
+        Guid userRoleId,
         CancellationToken ct = default);
 
-    void RemoveListMembership(ListMembership listMembership);
+    void Delete(ListMembership listMembership);
+    void DeleteBatch(List<ListMembership> listMembership);
 }

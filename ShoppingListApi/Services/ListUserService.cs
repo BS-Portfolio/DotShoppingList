@@ -1,19 +1,19 @@
-using ShoppingListApi.Interfaces.Repositories;
+using ShoppingListApi.Configs;
+using ShoppingListApi.Enums;
+using ShoppingListApi.Exceptions;
 using ShoppingListApi.Interfaces.Services;
 using ShoppingListApi.Model.DTOs.Create;
 using ShoppingListApi.Model.DTOs.Patch;
-using ShoppingListApi.Model.DTOs.Post;
 using ShoppingListApi.Model.Entity;
 using ShoppingListApi.Model.ReturnTypes;
 
 namespace ShoppingListApi.Services;
 
-public class ListUserService(IListUserRepository listUserRepository, ILogger<ListUserService> logger) : IListUserService
+public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> logger) : IListUserService
 {
-    private readonly IListUserRepository _listUserRepository = listUserRepository;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
-    private readonly ILogger _logger = logger;
-    public IListUserRepository ListUserRepository => _listUserRepository;
+    private readonly ILogger<ListUserService> _logger = logger;
 
     public async Task<AddRecordResult<Guid?, ListUser?>> CheckConflictAndCreateUserAsync(
         ListUserCreateDto listUserCreateDto,
@@ -22,22 +22,26 @@ public class ListUserService(IListUserRepository listUserRepository, ILogger<Lis
         try
         {
             var conflictingListUser =
-                await _listUserRepository.GetWithoutDetailsByEmailAddressAsync(listUserCreateDto.EmailAddress, ct);
+                await _unitOfWork.ListUserRepository.GetWithoutDetailsByEmailAddressAsync(
+                    listUserCreateDto.EmailAddress, ct);
 
             if (conflictingListUser is not null)
                 return new(false, null, true, conflictingListUser);
 
-            var newUserId = await _listUserRepository.CreateAsync(listUserCreateDto, ct);
+            var newUserId = await _unitOfWork.ListUserRepository.CreateAsync(listUserCreateDto, ct);
 
-            if (newUserId is null)
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != 1)
                 return new(false, null, false, null);
 
             return new(true, newUserId, false, null);
         }
         catch (Exception e)
         {
-             _logger.LogError("The method {MethodName} failed with exception: {Exception}",
-                nameof(CheckConflictAndCreateUserAsync), e.ToString());
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListUserService), nameof(CheckConflictAndCreateUserAsync));
             throw;
         }
     }
@@ -50,22 +54,25 @@ public class ListUserService(IListUserRepository listUserRepository, ILogger<Lis
             if (requestingUserId != listUserId)
                 return new(null, false, false, null, null);
 
-            var listUser = await _listUserRepository.GetWithoutDetailsByIdAsync(listUserId, ct);
+            var listUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(listUserId, ct);
 
             if (listUser is null)
                 return new(false, false, true, null, null);
 
-            var updateSuccess = await _listUserRepository.UpdateNameAsync(listUser, listUserPatchDto, ct);
+            _unitOfWork.ListUserRepository.UpdateName(listUser, listUserPatchDto);
 
-            if (updateSuccess is false)
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != 1)
                 return new(true, false, true, null, null);
 
             return new(true, true, true, null, null);
         }
         catch (Exception e)
         {
-             _logger.LogError("The method {MethodName} failed with exception: {Exception}",
-                nameof(CheckAccessAndUpdateNameAsync), e.ToString());
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListUserService), nameof(CheckAccessAndUpdateNameAsync));
             throw;
         }
     }
@@ -79,22 +86,26 @@ public class ListUserService(IListUserRepository listUserRepository, ILogger<Lis
             if (requestingUserId != listUserId)
                 return new(null, false, false, null, null);
 
-            var listUser = await _listUserRepository.GetWithoutDetailsByIdAsync(listUserId, ct);
+            var listUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(listUserId, ct);
 
             if (listUser is null)
                 return new(false, false, true, null, null);
 
-            var updateSuccess = await _listUserRepository.UpdatePassword(listUser, newPasswordHash, ct);
+            _unitOfWork.ListUserRepository.UpdatePassword(listUser, newPasswordHash);
 
-            if (updateSuccess is false)
+
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != 1)
                 return new(true, false, true, null, null);
 
             return new(true, true, true, null, null);
         }
         catch (Exception e)
         {
-             _logger.LogError("The method {MethodName} failed with exception: {Exception}",
-                nameof(CheckAccessAndUpdatePasswordAsync), e.ToString());
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListUserService), nameof(CheckAccessAndUpdatePasswordAsync));
             throw;
         }
     }
@@ -107,19 +118,24 @@ public class ListUserService(IListUserRepository listUserRepository, ILogger<Lis
             if (requestingUserId != listUserId)
                 return new(null, false, false, 0);
 
-            var listUser = await _listUserRepository.GetWithoutDetailsByIdAsync(listUserId, ct);
+            var listUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(listUserId, ct);
 
             if (listUser is null)
                 return new(false, true, false, 0);
 
-            var deleteResult = await _listUserRepository.DeleteAsync(listUser, ct);
+            var deleteResult = await DeleteUserAndCascadeAsync(listUser, ct);
 
             return new(true, true, deleteResult.Success, deleteResult.RecordsAffected);
         }
+        catch (NumberedException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
-             _logger.LogError("The method {MethodName} failed with exception: {Exception}",
-                nameof(CheckAccessAndDeleteUserAsync), e.ToString());
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListUserService), nameof(CheckAccessAndDeleteUserAsync));
             throw;
         }
     }
@@ -129,17 +145,115 @@ public class ListUserService(IListUserRepository listUserRepository, ILogger<Lis
     {
         try
         {
-            var listUser = await _listUserRepository.GetWithoutDetailsByIdAsync(listUserId, ct);
+            var listUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(listUserId, ct);
 
             if (listUser is null)
                 return new(false, true, 0);
 
-            return await _listUserRepository.DeleteAsync(listUser, ct);
+            return await DeleteUserAndCascadeAsync(listUser, ct);
+        }
+        catch (NumberedException)
+        {
+            throw;
         }
         catch (Exception e)
         {
-             _logger.LogError("The method {MethodName} failed with exception: {Exception}",
-                nameof(CheckExistenceAndDeleteUserAsAppAdminAsync), e.ToString());
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListUserService), nameof(CheckExistenceAndDeleteUserAsAppAdminAsync));
+            throw;
+        }
+    }
+
+    private async Task<RemoveRecordResult> DeleteUserAndCascadeAsync(ListUser listUser, CancellationToken ct = default)
+    {
+        try
+        {
+            // start transaction
+
+            await _unitOfWork.BeginTransactionAsync(ct);
+
+            // get lists not owned by user and delete their memberships
+
+            var collaboratorLists =
+                await _unitOfWork.ListMembershipRepository.GetAllListMembershipsWithDetailsForNotOwnerByUserAsync(
+                    listUser.UserId,
+                    ct);
+            var recordsToBeRemoved = collaboratorLists.Count;
+
+            foreach (var listMembership in collaboratorLists)
+            {
+                _unitOfWork.ListMembershipRepository.Delete(listMembership);
+            }
+
+            // get lists owned by user
+
+            var ownerMemberships =
+                await _unitOfWork.ListMembershipRepository.GetAllListMembershipsWithDetailsForOwnerByUserAsync(
+                    listUser.UserId, ct);
+
+            foreach (var ownerMembership in ownerMemberships)
+            {
+                // get shopping List
+                var targetShoppingList = ownerMembership.ShoppingList!;
+                recordsToBeRemoved++; // for the list itself
+
+                // delete its items
+                var items =
+                    await _unitOfWork.ItemRepository.GetAllByShoppingListIdAsync(targetShoppingList.ShoppingListId, ct);
+                recordsToBeRemoved += items.Count;
+
+                _unitOfWork.ItemRepository.DeleteBatch(items);
+
+                // delete its memberships
+                var memberships =
+                    await _unitOfWork.ListMembershipRepository.GetAllMembershipsByShoppingListIdAsync(
+                        targetShoppingList.ShoppingListId, ct);
+                recordsToBeRemoved += memberships.Count;
+
+                _unitOfWork.ListMembershipRepository.DeleteBatch(memberships);
+
+                // delete list
+                _unitOfWork.ShoppingListRepository.Delete(targetShoppingList);
+            }
+
+            // delete email confirmation tokens
+            var emailTokens =
+                await _unitOfWork.EmailConfirmationTokenRepository.GetAllByUserIdAsync(listUser.UserId,
+                    ValidityCheck.None, ct);
+            recordsToBeRemoved += emailTokens.Count;
+
+            _unitOfWork.EmailConfirmationTokenRepository.DeleteBatch(emailTokens);
+
+            // delete api keys
+            var apiKeys =
+                await _unitOfWork.ApiKeyRepository.GetAllByUserIdAsync(listUser.UserId, ValidityCheck.None, ct);
+            recordsToBeRemoved += apiKeys.Count;
+
+            _unitOfWork.ApiKeyRepository.DeleteBatch(apiKeys);
+
+            // delete user
+            recordsToBeRemoved++;
+
+            _unitOfWork.ListUserRepository.Delete(listUser);
+
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != recordsToBeRemoved)
+            {
+                await _unitOfWork.RollbackTransactionAsync(ct);
+                return new(false, false, 0);
+            }
+
+            await _unitOfWork.CommitTransactionAsync(ct);
+            return new(true, true, checkResult);
+        }
+        catch (Exception e)
+        {
+            await _unitOfWork.RollbackTransactionAsync(ct);
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListUserService), nameof(DeleteUserAndCascadeAsync));
             throw;
         }
     }

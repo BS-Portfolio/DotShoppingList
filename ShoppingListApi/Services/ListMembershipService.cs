@@ -1,7 +1,7 @@
+using ShoppingListApi.Configs;
 using ShoppingListApi.Enums;
-using ShoppingListApi.Interfaces.Repositories;
+using ShoppingListApi.Exceptions;
 using ShoppingListApi.Interfaces.Services;
-using ShoppingListApi.Model.DTOs.Get;
 using ShoppingListApi.Model.Entity;
 using ShoppingListApi.Model.ReturnTypes;
 
@@ -41,8 +41,9 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
         }
         catch (Exception e)
         {
-            _logger.LogError("The method {MethodName} failed with exception: {Exception}",
-                nameof(AssignUserToShoppingListAsync), e.ToString());
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListMembershipService), nameof(AssignUserToShoppingListAsync));
             throw;
         }
     }
@@ -66,7 +67,7 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
             if (targetListMembership is null)
                 return new(false, false, 0);
 
-            _unitOfWork.ListMembershipRepository.RemoveListMembership(targetListMembership);
+            _unitOfWork.ListMembershipRepository.Delete(targetListMembership);
 
             var checkResult = await _unitOfWork.SaveChangesAsync(ct);
 
@@ -77,8 +78,9 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
         }
         catch (Exception e)
         {
-            _logger.LogError("The method {MethodName} failed with exception: {Exception}",
-                nameof(RemoveUserFromShoppingListAsApplicationAdminAsync), e.ToString());
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListMembershipService), nameof(RemoveUserFromShoppingListAsApplicationAdminAsync));
             throw;
         }
     }
@@ -112,7 +114,7 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
             if (targetListMembership is null)
                 return new(false, true, false, 0);
 
-            _unitOfWork.ListMembershipRepository.RemoveListMembership(targetListMembership);
+            _unitOfWork.ListMembershipRepository.Delete(targetListMembership);
 
             var checkResult = await _unitOfWork.SaveChangesAsync(ct);
 
@@ -123,8 +125,9 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
         }
         catch (Exception e)
         {
-            _logger.LogError("The method {MethodName} failed with exception: {Exception}",
-                nameof(RemoveCollaboratorFromShoppingListAsListOwnerAsync), e.ToString());
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListMembershipService), nameof(RemoveCollaboratorFromShoppingListAsListOwnerAsync));
             throw;
         }
     }
@@ -150,7 +153,7 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
             if (targetListMembership is null)
                 return new(false, true, false, 0);
 
-            _unitOfWork.ListMembershipRepository.RemoveListMembership(targetListMembership);
+            _unitOfWork.ListMembershipRepository.Delete(targetListMembership);
 
             var checkResult = await _unitOfWork.SaveChangesAsync(ct);
 
@@ -161,8 +164,9 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
         }
         catch (Exception e)
         {
-            _logger.LogError("The method {MethodName} failed with exception: {Exception}",
-                nameof(LeaveShoppingListAsCollaboratorAsync), e.ToString());
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListMembershipService), nameof(LeaveShoppingListAsCollaboratorAsync));
             throw;
         }
     }

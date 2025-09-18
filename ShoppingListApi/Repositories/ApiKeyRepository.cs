@@ -31,7 +31,7 @@ public class ApiKeyRepository(AppDbContext dbContext) : IApiKeyRepository
             .ToListAsync(ct);
     }
 
-    public async Task<List<ApiKey>> GetAllByUserId(Guid userId, ValidityCheck validityCheck,
+    public async Task<List<ApiKey>> GetAllByUserIdAsync(Guid userId, ValidityCheck validityCheck,
         CancellationToken ct = default)
     {
         bool? validityCheckValue = validityCheck switch
