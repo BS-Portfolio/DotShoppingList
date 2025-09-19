@@ -25,10 +25,10 @@ public class ListUser
 
     public DateTimeOffset CreationDateTime { get; set; }
 
-    public virtual ICollection<ApiKey> ApiKeys { get; set; } = new List<ApiKey>();
+    public virtual ICollection<ApiKey> ApiKeys { get; set; } = [];
 
     public virtual ICollection<EmailConfirmationToken> EmailConfirmationTokens { get; set; } =
-        new List<EmailConfirmationToken>();
+        [];
 
-    public virtual ICollection<ListMembership> ListMemberships { get; set; } = new List<ListMembership>();
+    public virtual ICollection<ListMembership> ListMemberships { get; set; } = [];
 }
