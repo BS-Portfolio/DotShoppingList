@@ -56,16 +56,15 @@ public class ApiKeyRepository(AppDbContext dbContext) : IApiKeyRepository
         return await _dbContext.ApiKeys.FirstOrDefaultAsync(ak => ak.Key == apiKey && ak.UserId == userId, ct);
     }
 
-    public async Task<ApiKey> CreateAsync(Guid userId, 
+    public async Task<ApiKey> CreateAsync(Guid userId, string newKey,
         CancellationToken ct = default)
     {
-        var key = ApiKey.GenerateKey();
 
         var apiKey = new ApiKey
         {
             ApiKeyId = Guid.NewGuid(),
             UserId = userId,
-            Key = key,
+            Key = newKey,
             CreationDateTime = DateTimeOffset.UtcNow,
             ExpirationDateTime = DateTimeOffset.UtcNow.AddMinutes(45),
             IsValid = true
