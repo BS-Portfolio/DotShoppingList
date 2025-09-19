@@ -180,7 +180,7 @@ public class ShoppingListService(
 
 
     /// <summary>
-    /// Don't forget the authorization check before calling the function! 
+    /// Don't forget the authorization check before calling the function!
     /// </summary>
     /// <param name="requestingUserId"></param>
     /// <param name="userId"></param>

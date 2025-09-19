@@ -1,5 +1,4 @@
-using ShoppingListApi.Interfaces.Repositories;
-using ShoppingListApi.Model.DTOs.PatchObsolete;
+using ShoppingListApi.Model.DTOs.Patch;
 using ShoppingListApi.Model.DTOs.Post;
 using ShoppingListApi.Model.Entity;
 using ShoppingListApi.Model.ReturnTypes;
@@ -8,8 +7,6 @@ namespace ShoppingListApi.Interfaces.Services;
 
 public interface IUserRoleService
 {
-    IUserRoleRepository USerRoleRepository { get; }
-
     Task<UserRole?> GetOwnerUserRole(CancellationToken ct = default);
     Task<UserRole?> GetCollaboratorUserRole(CancellationToken ct = default);
 
@@ -17,5 +14,5 @@ public interface IUserRoleService
         UserRolePostDto userRolePostDto, CancellationToken ct = default);
 
     Task<UpdateRecordResult<UserRole?>> CheckConflictAndUpdateUserRoleAsync(
-        Guid userRoleId, UserRolePatchDtoObsolete userRolePatchDtoObsolete, CancellationToken ct = default);
+        Guid userRoleId, UserRolePatchDto userRolePatchDto, CancellationToken ct = default);
 }

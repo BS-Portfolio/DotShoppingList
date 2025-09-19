@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ShoppingListApi.Data.Contexts;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Interfaces.Repositories;
-using ShoppingListApi.Model.DTOs.PatchObsolete;
+using ShoppingListApi.Model.DTOs.Patch;
 using ShoppingListApi.Model.DTOs.Post;
 using ShoppingListApi.Model.Entity;
 
@@ -31,8 +31,8 @@ public class UserRoleRepository(AppDbContext appDbContext) : IUserRoleRepository
     {
         return await _appDbContext.UserRoles.FirstOrDefaultAsync(ur => ur.UserRoleTitle == userRoleTitle, ct);
     }
-    
-    public async Task<Guid?> AddAsync(UserRolePostDto userRolePostDto, CancellationToken ct = default)
+
+    public async Task<Guid> AddAsync(UserRolePostDto userRolePostDto, CancellationToken ct = default)
     {
         var newUserRoleId = Guid.NewGuid();
 
@@ -43,31 +43,19 @@ public class UserRoleRepository(AppDbContext appDbContext) : IUserRoleRepository
             EnumIndex = (int)userRolePostDto.UserRoleEnum
         };
 
-        _appDbContext.UserRoles.Add(newUserRole);
-
-        var checkResult = await _appDbContext.SaveChangesAsync(ct);
-
-        if (checkResult <= 0)
-            return null;
-
+        await _appDbContext.UserRoles.AddAsync(newUserRole, ct);
+        
         return newUserRoleId;
     }
 
-    public async Task<bool> UpdateAsync(Guid userRoleId, UserRolePatchDtoObsolete userRolePatchDtoObsolete, CancellationToken ct = default)
+    public void Update(UserRole targetUserRole, UserRolePatchDto userRolePatchDto)
     {
-        var existingUserRole = await _appDbContext.UserRoles.FirstOrDefaultAsync(ur => ur.UserRoleId == userRoleId, ct);
-        
-        if (existingUserRole is null)
-            return false;
-        
-        if (userRolePatchDtoObsolete.UserRoleTitle is not null) existingUserRole.UserRoleTitle = userRolePatchDtoObsolete.UserRoleTitle;
-        if (userRolePatchDtoObsolete.UserRoleEnum.HasValue) existingUserRole.EnumIndex = (int)userRolePatchDtoObsolete.UserRoleEnum.Value;
-        
-        var checkResult = await _appDbContext.SaveChangesAsync(ct);
-        
-        if (checkResult <= 0)
-            return false;
-        
-        return true;
+        if (userRolePatchDto.UserRoleEnum is null && userRolePatchDto.UserRoleTitle is null)
+            return;
+
+        if (userRolePatchDto.UserRoleTitle is not null)
+            targetUserRole.UserRoleTitle = userRolePatchDto.UserRoleTitle;
+        if (userRolePatchDto.UserRoleEnum.HasValue)
+            targetUserRole.EnumIndex = (int)userRolePatchDto.UserRoleEnum.Value;
     }
 }
