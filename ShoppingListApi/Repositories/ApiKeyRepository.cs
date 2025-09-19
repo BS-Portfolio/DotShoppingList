@@ -56,7 +56,7 @@ public class ApiKeyRepository(AppDbContext dbContext) : IApiKeyRepository
         return await _dbContext.ApiKeys.FirstOrDefaultAsync(ak => ak.Key == apiKey && ak.UserId == userId, ct);
     }
 
-    public async Task<ApiKey> CreateAsync(Guid userId, string newKey,
+    public async Task<ApiKey> CreateAsync(Guid userId, 
         CancellationToken ct = default)
     {
         var key = ApiKey.GenerateKey();
