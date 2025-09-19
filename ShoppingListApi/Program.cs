@@ -6,6 +6,7 @@ using ShoppingListApi.Services;
 using Newtonsoft.Json;
 using ShoppingListApi.Authentication;
 using ShoppingListApi.Data.Contexts;
+using ShoppingListApi.Interfaces.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,13 +49,13 @@ builder.Services.AddSwaggerGen(options =>
     });
 
     options.AddSecurityDefinition("UserId", new OpenApiSecurityScheme
-    {
-        In = ParameterLocation.Header,
-        Name = "USER-ID", // 🔹 User ID header
-        Type = SecuritySchemeType.ApiKey,
-        Description = "Enter your User ID",
-        Scheme = "UserIdScheme"
-    }
+        {
+            In = ParameterLocation.Header,
+            Name = "USER-ID", // 🔹 User ID header
+            Type = SecuritySchemeType.ApiKey,
+            Description = "Enter your User ID",
+            Scheme = "UserIdScheme"
+        }
     );
 
     // 🔐 Apply Security Policies
@@ -66,7 +67,7 @@ builder.Services.AddSwaggerGen(options =>
             {
                 Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "ApiKey" }
             },
-            new string[] { }
+            []
         },
         // Policy 2: Requires USER-KEY + USER-ID
         {
@@ -74,21 +75,20 @@ builder.Services.AddSwaggerGen(options =>
             {
                 Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "UserKeyAndUserId" }
             },
-            new string[] { }
+            []
         },
         {
             new OpenApiSecurityScheme
             {
                 Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "UserId" }
             },
-            new string[] { }
+            []
         }
     });
-    
+
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     options.IncludeXmlComments(xmlPath);
-    
 });
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -97,6 +97,17 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddTransient<ConnectionStringService>();
 builder.Services.AddTransient<DatabaseServiceObsolete>();
 builder.Services.AddTransient<MyAuthenticationService>();
+
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IAppAuthenticationService, AppAuthenticationService>();
+builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
+builder.Services.AddScoped<IListUserService, ListUserService>();
+builder.Services.AddScoped<IShoppingListService, ShoppingListService>();
+builder.Services.AddScoped<IListUserService, ListUserService>();
+builder.Services.AddScoped<IItemService, ItemService>();
+builder.Services.AddScoped<IEmailConfirmationTokenService, EmailConfirmationTokenService>();
+builder.Services.AddScoped<IListMembershipService, ListMembershipService>();
+builder.Services.AddScoped<IUserRoleService, UserRoleService>();
 
 builder.Services.AddCors(options =>
 {
