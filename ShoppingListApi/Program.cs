@@ -33,7 +33,7 @@ builder.Services.AddSwaggerGen(options =>
         In = ParameterLocation.Header,
         Name = "X-API-KEY", // 🔹 API Key header for basic auth
         Type = SecuritySchemeType.ApiKey,
-        Description = "Enter your API key",
+        Description = "Enter your Admin API key",
         Scheme = "ApiKeyScheme"
     });
 
@@ -125,7 +125,7 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
-app.UseMiddleware<MyAuthenticationMiddleware>();
+app.UseMiddleware<AppAuthenticationMiddleware>();
 
 app.UseAuthorization();
 
