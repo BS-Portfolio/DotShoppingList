@@ -103,7 +103,6 @@ builder.Services.AddScoped<IAppAuthenticationService, AppAuthenticationService>(
 builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
 builder.Services.AddScoped<IListUserService, ListUserService>();
 builder.Services.AddScoped<IShoppingListService, ShoppingListService>();
-builder.Services.AddScoped<IListUserService, ListUserService>();
 builder.Services.AddScoped<IItemService, ItemService>();
 builder.Services.AddScoped<IEmailConfirmationTokenService, EmailConfirmationTokenService>();
 builder.Services.AddScoped<IListMembershipService, ListMembershipService>();
