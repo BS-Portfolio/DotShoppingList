@@ -42,7 +42,7 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListUserService), nameof(CheckConflictAndCreateUserAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -73,7 +73,7 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListUserService), nameof(CheckAccessAndUpdateNameAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -106,7 +106,7 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListUserService), nameof(CheckAccessAndUpdatePasswordAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -136,7 +136,7 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListUserService), nameof(CheckAccessAndDeleteUserAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -161,7 +161,7 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListUserService), nameof(CheckExistenceAndDeleteUserAsAppAdminAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -207,8 +207,9 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
 
                 // delete its memberships
                 var memberships =
-                    await _unitOfWork.ListMembershipRepository.GetAllMembershipsWithoutCascadingInfoByShoppingListIdAsync(
-                        targetShoppingList.ShoppingListId, ct);
+                    await _unitOfWork.ListMembershipRepository
+                        .GetAllMembershipsWithoutCascadingInfoByShoppingListIdAsync(
+                            targetShoppingList.ShoppingListId, ct);
                 recordsToBeRemoved += memberships.Count;
 
                 _unitOfWork.ListMembershipRepository.DeleteBatch(memberships);
@@ -254,7 +255,7 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListUserService), nameof(DeleteUserAndCascadeAsync));
-            throw;
+            throw numberedException;
         }
     }
 }

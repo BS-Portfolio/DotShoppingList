@@ -25,48 +25,7 @@ public class ShoppingListApiController : ControllerBase
         _logger = serviceProvider.GetRequiredService<ILogger<ShoppingListApiController>>();
     }
 
-    /// <summary>
-    /// public endpoint to get all user role id's
-    /// </summary>
-    /// <returns></returns>
-    [HttpGet]
-    [PublicEndpoint]
-    [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType<List<UserRoleGetDto>>(StatusCodes.Status200OK)]
-    [Route("UserRole/all")]
-    public async Task<ActionResult> GetUserRoles()
-    {
-        try
-        {
-            List<UserRoleGetDto> userRoles =
-                await _databaseServiceObsolete.SqlConnectionHandlerAsync<List<UserRoleGetDto>>(async (connection) =>
-                    await _databaseServiceObsolete.GetUserRolesAsync(connection)
-                );
-
-            if (userRoles.Count == 0)
-            {
-                return NoContent();
-            }
-
-            return Ok(userRoles);
-        }
-        catch (NumberedException nEx)
-        {
-            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListApiController), nameof(GetUserRoles));
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                "Du to an internal error, your request could not be processed.");
-        }
-        catch (Exception e)
-        {
-            var numberedException = new NumberedException(e);
-            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ShoppingListApiController), nameof(GetUserRoles));
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                "Du to an internal error, your request could not be processed.");
-        }
-    }
+    
 
     /// <summary>
     /// admin endpoint to get user details by email address for an api admin
@@ -320,61 +279,6 @@ public class ShoppingListApiController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// admin endpoint to add new user roles
-    /// </summary>
-    /// <param name="userRolePostDto"></param>
-    /// <returns></returns>
-    [HttpPost]
-    [AdminEndpoint]
-    [ProducesResponseType<string>(StatusCodes.Status409Conflict)]
-    [ProducesResponseType<Guid>(StatusCodes.Status201Created)]
-    [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
-    [Route("UserRole")]
-    public async Task<ActionResult> AddUserRole([FromBody] UserRolePostDto userRolePostDto)
-    {
-        try
-        {
-            var alreadyExists = await _databaseServiceObsolete.SqlConnectionHandlerAsync<int, bool>(
-                async (enumIndex, sqlConnection) =>
-                    await _databaseServiceObsolete.CheckUserRoleExistenceAsync(enumIndex, sqlConnection),
-                (int)userRolePostDto.UserRoleEnum
-            );
-
-            if (alreadyExists)
-            {
-                return Conflict("A user role withe same Enum index already exists in the database.");
-            }
-
-            var (success, addedUserRoleId) =
-                await _databaseServiceObsolete.SqlConnectionHandlerAsync<UserRolePostDto, (bool, Guid?)>(
-                    (input, connection) => _databaseServiceObsolete.AddUserRoleAsync(connection, input),
-                    userRolePostDto);
-
-            if (success is false)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    "Du to an internal error, your request could not be processed.");
-            }
-
-            return CreatedAtAction(nameof(AddUserRole), addedUserRoleId);
-        }
-        catch (NumberedException nEx)
-        {
-            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListApiController), nameof(AddUserRole));
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                "Du to an internal error, your request could not be processed.");
-        }
-        catch (Exception e)
-        {
-            var numberedException = new NumberedException(e);
-            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ShoppingListApiController), nameof(AddUserRole));
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                "Du to an internal error, your request could not be processed.");
-        }
-    }
 
     /// <summary>
     /// public endpoint to register new users
@@ -419,13 +323,13 @@ public class ShoppingListApiController : ControllerBase
         catch (FormatException fEx)
         {
             _logger.LogWithLevel(LogLevel.Error, fEx, "0", fEx.Message,
-                nameof(ShoppingListApiController), nameof(AddUserRole));
+                nameof(ShoppingListApiController), nameof(AddNewUser));
             return BadRequest("Your input email address and password were delivered in wrong formatting!");
         }
         catch (NumberedException nEx)
         {
             _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
-                nameof(ShoppingListApiController), nameof(AddUserRole));
+                nameof(ShoppingListApiController), nameof(AddNewUser));
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Due to an internal error, your request could not be processed.");
         }

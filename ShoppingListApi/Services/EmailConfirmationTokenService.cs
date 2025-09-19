@@ -44,7 +44,7 @@ public class EmailConfirmationTokenService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(EmailConfirmationTokenService), nameof(CheckConflictAndAdd));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -65,7 +65,7 @@ public class EmailConfirmationTokenService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(EmailConfirmationTokenService), nameof(CheckTokenValidity));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -96,7 +96,7 @@ public class EmailConfirmationTokenService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(EmailConfirmationTokenService), nameof(FindUserAndInvalidateAllTokenByUserId));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -127,7 +127,7 @@ public class EmailConfirmationTokenService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(EmailConfirmationTokenService), nameof(FindUserAndInvalidateAllTokenByUserEmail));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -157,7 +157,7 @@ public class EmailConfirmationTokenService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(EmailConfirmationTokenService), nameof(FindAndMarkTokenAsUsedById));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -186,7 +186,7 @@ public class EmailConfirmationTokenService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(EmailConfirmationTokenService), nameof(FindAndMarkTokenAsUsedByTokenValue));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -213,7 +213,7 @@ public class EmailConfirmationTokenService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(EmailConfirmationTokenService), nameof(FindAndDeleteByTokenValueAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -242,7 +242,7 @@ public class EmailConfirmationTokenService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(EmailConfirmationTokenService), nameof(FindAndDeleteByIdAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -277,7 +277,7 @@ public class EmailConfirmationTokenService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(EmailConfirmationTokenService), nameof(DeleteAllUsedByUserIdAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -314,7 +314,7 @@ public class EmailConfirmationTokenService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(EmailConfirmationTokenService), nameof(DeleteAllUsedByUserEmailAsync));
-            throw;
+            throw numberedException;
         }
     }
 }

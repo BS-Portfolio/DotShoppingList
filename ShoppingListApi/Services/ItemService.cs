@@ -51,7 +51,7 @@ public class ItemService(IUnitOfWork unitOfWork, IConfiguration configuration, I
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ItemService), nameof(FindShoppingListAndAddItemAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -87,7 +87,7 @@ public class ItemService(IUnitOfWork unitOfWork, IConfiguration configuration, I
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ItemService), nameof(FindItemAndUpdateAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -121,7 +121,7 @@ public class ItemService(IUnitOfWork unitOfWork, IConfiguration configuration, I
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ItemService), nameof(FindItemAndDeleteAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -162,7 +162,7 @@ public class ItemService(IUnitOfWork unitOfWork, IConfiguration configuration, I
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ItemService), nameof(DeleteAllItemsInShoppingListAsync));
-            throw;
+            throw numberedException;
         }
     }
 }

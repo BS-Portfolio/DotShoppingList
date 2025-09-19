@@ -6,6 +6,7 @@ using ShoppingListApi.Services;
 using Newtonsoft.Json;
 using ShoppingListApi.Authentication;
 using ShoppingListApi.Data.Contexts;
+using ShoppingListApi.ExceptionHandlers;
 using ShoppingListApi.Interfaces.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -96,7 +97,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddTransient<ConnectionStringService>();
 builder.Services.AddTransient<DatabaseServiceObsolete>();
-builder.Services.AddTransient<MyAuthenticationService>();
+
+builder.Services.AddExceptionHandler<AppExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAppAuthenticationService, AppAuthenticationService>();
@@ -134,6 +137,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseRouting();
+
+app.UseExceptionHandler();
 
 app.UseMiddleware<AppAuthenticationMiddleware>();
 

@@ -7,24 +7,20 @@ using ShoppingListApi.Services;
 
 namespace ShoppingListApi.Authentication;
 
-public class AppAuthenticationMiddleware
+public class AppAuthenticationMiddleware(
+    RequestDelegate next,
+    IServiceProvider serviceProvider,
+    IConfiguration configuration,
+    ILogger<AppAuthenticationMiddleware> logger)
 {
-    private readonly RequestDelegate _next;
-    private readonly IAppAuthenticationService _appAuthenticationService;
-    private readonly IConfiguration _configuration;
-    private readonly ILogger<AppAuthenticationMiddleware> _logger;
-
-    public AppAuthenticationMiddleware(RequestDelegate next, IAppAuthenticationService appAuthenticationService,
-        IConfiguration configuration, ILogger<AppAuthenticationMiddleware> logger)
-    {
-        _next = next;
-        _appAuthenticationService = appAuthenticationService;
-        _configuration = configuration;
-        _logger = logger;
-    }
+    private readonly IServiceProvider _serviceProvider = serviceProvider;
 
     public async Task InvokeAsync(HttpContext context)
     {
+        using var scope = _serviceProvider.CreateScope();
+        var appAuthenticationService =
+            scope.ServiceProvider.GetRequiredService<IAppAuthenticationService>();
+
         var endpoint = context.GetEndpoint();
 
         if (endpoint is null)
@@ -36,7 +32,7 @@ public class AppAuthenticationMiddleware
 
         if (endpoint.Metadata.GetMetadata<PublicEndpointAttribute>() != null)
         {
-            await _next(context);
+            await next(context);
             return;
         }
 
@@ -49,7 +45,7 @@ public class AppAuthenticationMiddleware
                 return;
             }
 
-            var storedKey = _configuration.GetValue<string>("API-Admin-Key");
+            var storedKey = configuration.GetValue<string>("API-Admin-Key");
 
             if (storedKey is null)
             {
@@ -65,7 +61,7 @@ public class AppAuthenticationMiddleware
                 return;
             }
 
-            await _next(context);
+            await next(context);
             return;
         }
 
@@ -84,7 +80,7 @@ public class AppAuthenticationMiddleware
         {
             Guid userId = Guid.Parse(userIdSv.ToString());
             string userApiKey = userApiKeySv.ToString();
-            var result = await _appAuthenticationService.AuthenticateAsync(userId, userApiKey);
+            var result = await appAuthenticationService.AuthenticateAsync(userId, userApiKey);
 
             if (result.IsAuthenticated is not true)
             {
@@ -120,18 +116,18 @@ public class AppAuthenticationMiddleware
                     AuthorizationErrorEnum.ServiceNotAvailable, context);
             }
 
-            await _next(context);
+            await next(context);
         }
         catch (FormatException fEx)
         {
-            _logger.LogWithLevel(LogLevel.Error, fEx, "0", fEx.Message,
+            logger.LogWithLevel(LogLevel.Error, fEx, "0", fEx.Message,
                 nameof(AppAuthenticationMiddleware), nameof(InvokeAsync));
             await AppAuthenticationService.HandleAuthenticationResponseAsync(400, AuthorizationErrorEnum.WrongFormat,
                 context);
         }
         catch (NumberedException nEx)
         {
-            _logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
+            logger.LogWithLevel(LogLevel.Error, nEx, nEx.ErrorNumber, nEx.Message,
                 nameof(AppAuthenticationMiddleware), nameof(InvokeAsync));
             await AppAuthenticationService.HandleAuthenticationResponseAsync(500,
                 AuthorizationErrorEnum.ServiceNotAvailable,
@@ -140,7 +136,7 @@ public class AppAuthenticationMiddleware
         catch (Exception e)
         {
             var numberedException = new NumberedException(e);
-            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+            logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(AppAuthenticationMiddleware), nameof(InvokeAsync));
             await AppAuthenticationService.HandleAuthenticationResponseAsync(500,
                 AuthorizationErrorEnum.ServiceNotAvailable,

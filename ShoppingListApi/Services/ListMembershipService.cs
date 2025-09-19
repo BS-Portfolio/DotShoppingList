@@ -44,7 +44,7 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListMembershipService), nameof(AssignUserToShoppingListAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -81,7 +81,7 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListMembershipService), nameof(RemoveUserFromShoppingListAsApplicationAdminAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -128,7 +128,7 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListMembershipService), nameof(RemoveCollaboratorFromShoppingListAsListOwnerAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -167,7 +167,7 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListMembershipService), nameof(LeaveShoppingListAsCollaboratorAsync));
-            throw;
+            throw numberedException;
         }
     }
 }

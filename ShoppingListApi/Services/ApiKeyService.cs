@@ -39,7 +39,7 @@ public class ApiKeyService(IUnitOfWork unitOfWork, ILogger<ApiKeyService> logger
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ApiKeyService), nameof(CreateAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -70,7 +70,7 @@ public class ApiKeyService(IUnitOfWork unitOfWork, ILogger<ApiKeyService> logger
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ApiKeyService), nameof(FindAndInvalidateAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -97,7 +97,7 @@ public class ApiKeyService(IUnitOfWork unitOfWork, ILogger<ApiKeyService> logger
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ApiKeyService), nameof(FindUserAndInvalidateAllByUserIdAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -124,7 +124,7 @@ public class ApiKeyService(IUnitOfWork unitOfWork, ILogger<ApiKeyService> logger
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ApiKeyService), nameof(FindAndDeleteAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -151,7 +151,7 @@ public class ApiKeyService(IUnitOfWork unitOfWork, ILogger<ApiKeyService> logger
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ApiKeyService), nameof(DeleteExpiredAsync));
-            throw;
+            throw numberedException;
         }
     }
 }

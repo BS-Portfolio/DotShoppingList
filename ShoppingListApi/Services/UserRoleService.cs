@@ -26,7 +26,7 @@ public class UserRoleService(IUnitOfWork unitOfWork, ILogger<UserRoleService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(UserRoleService), nameof(GetOwnerUserRole));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -41,7 +41,37 @@ public class UserRoleService(IUnitOfWork unitOfWork, ILogger<UserRoleService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(UserRoleService), nameof(GetCollaboratorUserRole));
-            throw;
+            throw numberedException;
+        }
+    }
+
+    public async Task<UserRole?> GetByIdAsync(Guid userRoleId, CancellationToken ct = default)
+    {
+        try
+        {
+            return await _unitOfWork.UserRoleRepository.GetByIdAsync(userRoleId, ct);
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(UserRoleService), nameof(GetByIdAsync));
+            throw numberedException;
+        }
+    }
+
+    public async Task<List<UserRole>> GetAllAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _unitOfWork.UserRoleRepository.GetAllAsync(ct);
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(UserRoleService), nameof(GetAllAsync));
+            throw numberedException;
         }
     }
 
@@ -74,7 +104,7 @@ public class UserRoleService(IUnitOfWork unitOfWork, ILogger<UserRoleService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(UserRoleService), nameof(CheckConflictAndAddUserRoleAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -108,6 +138,7 @@ public class UserRoleService(IUnitOfWork unitOfWork, ILogger<UserRoleService> lo
 
             var checkResult = await _unitOfWork.SaveChangesAsync(ct);
 
+
             if (checkResult != 1)
                 return new(true, false, false, null);
 
@@ -118,7 +149,7 @@ public class UserRoleService(IUnitOfWork unitOfWork, ILogger<UserRoleService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(UserRoleService), nameof(CheckConflictAndUpdateUserRoleAsync));
-            throw;
+            throw numberedException;
         }
     }
 }

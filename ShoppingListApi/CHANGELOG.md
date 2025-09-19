@@ -40,3 +40,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Edited Entities minorly
 - Edited DbContext minorly
 - Edite: reorganized DTOs
+
+## [0.1.2] - 2025-09-19
+
+### Features
+- Added AppAuthenticationService and its Interface
+- Added AppAuthenticationMiddleware
+- Added global exception handling
+
+
+

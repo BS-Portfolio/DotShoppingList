@@ -98,7 +98,7 @@ public class ShoppingListService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ShoppingListService), nameof(CheckAccessAndGetAllShoppingListsForUser));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -174,7 +174,7 @@ public class ShoppingListService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ShoppingListService), nameof(CheckAccessAndGetShoppingListByIdAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -255,7 +255,7 @@ public class ShoppingListService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ShoppingListService), nameof(CheckConflictAndCreateShoppingListAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -300,7 +300,7 @@ public class ShoppingListService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ShoppingListService), nameof(CheckAccessAndUpdateShoppingListNameAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -329,7 +329,7 @@ public class ShoppingListService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ShoppingListService), nameof(CheckAccessAndDeleteShoppingListAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -397,7 +397,7 @@ public class ShoppingListService(
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ShoppingListService), nameof(DeleteShoppingListByIdAndCascadeAsync));
-            throw;
+            throw numberedException;
         }
     }
 }
