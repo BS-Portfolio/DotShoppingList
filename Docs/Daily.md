@@ -1,3 +1,16 @@
+# Freitag, 19.09.25
+
+## Tasks:
+- Frontend Refactor stores
+- CSS doppelung Überprüfung
+- Bearbeitung der bestehenden Controller-Klasse
+- Einrichtung neuer Controller-Klassen
+- Einbindung der neu entwickelten Entitätsservices in den Controller-Klassen
+- Neuentwicklung eines Authentifizierungsservice
+
+## Blocker:
+-
+
 # Donnerstag, 18.09.25
 
 ## Tasks:
