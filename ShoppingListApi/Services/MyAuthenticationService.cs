@@ -76,7 +76,7 @@ public class MyAuthenticationService
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(DatabaseService), nameof(AuthenticateAsync));
+                nameof(DatabaseServiceObsolete), nameof(AuthenticateAsync));
             throw numberedException;
         }
         finally

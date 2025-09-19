@@ -21,9 +21,14 @@ public class ListUser
 
     [Required]
     [MaxLength(500)]
-    public Guid PasswordHash { get; set; }
+    public required string PasswordHash { get; set; }
 
-    public virtual List<ApiKey> ApiKeys { get; set; } = [];
-    public virtual List<EmailConfirmationToken> EmailConfirmationTokens { get; set; } = [];
-    public virtual List<ListMembership> ListMemberships { get; set; } = [];
+    public DateTimeOffset CreationDateTime { get; set; }
+
+    public virtual ICollection<ApiKey> ApiKeys { get; set; } = [];
+
+    public virtual ICollection<EmailConfirmationToken> EmailConfirmationTokens { get; set; } =
+        [];
+
+    public virtual ICollection<ListMembership> ListMemberships { get; set; } = [];
 }

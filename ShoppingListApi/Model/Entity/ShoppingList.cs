@@ -11,5 +11,6 @@ public class ShoppingList()
     [Required]
     public required string ShoppingListName { get; set; }
     
-    public virtual List<ListMembership> ListMemberships { get; set; } = [];
+    public virtual ICollection<ListMembership> ListMemberships { get; set; } = [];
+    public virtual ICollection<Item> Items { get; set; } = [];
 }

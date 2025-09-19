@@ -1,4 +1,4 @@
-﻿using ShoppingListApi.Model.Get;
+﻿using ShoppingListApi.Model.DTOs.Get;
 
 namespace ShoppingListApi.Exceptions;
 

@@ -2,6 +2,6 @@
 
 public enum UserRoleEnum
 {
-    ListAdmin = 1,
+    ListOwner = 1,
     Collaborator = 2,
 };

@@ -4,24 +4,24 @@ using ShoppingListApi.Configs;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Model.Database;
-using ShoppingListApi.Model.Get;
-using ShoppingListApi.Model.Patch;
-using ShoppingListApi.Model.Post;
+using ShoppingListApi.Model.DTOs.Get;
+using ShoppingListApi.Model.DTOs.PatchObsolete;
+using ShoppingListApi.Model.DTOs.ObsoletePost;
 using ShoppingListApi.Model.ReturnTypes;
 using ShoppingListApi.Services;
 
 namespace ShoppingListApi.Controllers;
-    
+
 [ApiController]
 [Route("[controller]")]
 public class ShoppingListApiController : ControllerBase
 {
-    private readonly DatabaseService _databaseService;
+    private readonly DatabaseServiceObsolete _databaseServiceObsolete;
     private readonly ILogger<ShoppingListApiController> _logger;
 
     public ShoppingListApiController(IServiceProvider serviceProvider)
     {
-        _databaseService = serviceProvider.GetRequiredService<DatabaseService>();
+        _databaseServiceObsolete = serviceProvider.GetRequiredService<DatabaseServiceObsolete>();
         _logger = serviceProvider.GetRequiredService<ILogger<ShoppingListApiController>>();
     }
 
@@ -33,15 +33,16 @@ public class ShoppingListApiController : ControllerBase
     [PublicEndpoint]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType<List<UserRole>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<List<UserRoleGetDto>>(StatusCodes.Status200OK)]
     [Route("UserRole/all")]
     public async Task<ActionResult> GetUserRoles()
     {
         try
         {
-            List<UserRole> userRoles = await _databaseService.SqlConnectionHandlerAsync<List<UserRole>>(
-                async (connection) => await _databaseService.GetUserRolesAsync(connection)
-            );
+            List<UserRoleGetDto> userRoles =
+                await _databaseServiceObsolete.SqlConnectionHandlerAsync<List<UserRoleGetDto>>(async (connection) =>
+                    await _databaseServiceObsolete.GetUserRolesAsync(connection)
+                );
 
             if (userRoles.Count == 0)
             {
@@ -75,15 +76,15 @@ public class ShoppingListApiController : ControllerBase
     [HttpGet]
     [AdminEndpoint]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<ListUser>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ListUserGetDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [Route("User/EmailAddress/{emailAddress}")]
     public async Task<ActionResult> GetUserByEmail([FromRoute] string emailAddress)
     {
         try
         {
-            var user = await _databaseService.SqlConnectionHandlerAsync<string, ListUser?>(
-                (input, connection) => _databaseService.GetUserByEmailAddressAsync(input, connection),
+            var user = await _databaseServiceObsolete.SqlConnectionHandlerAsync<string, ListUserGetDto?>(
+                (input, connection) => _databaseServiceObsolete.GetUserByEmailAddressAsync(input, connection),
                 emailAddress
             );
 
@@ -119,7 +120,7 @@ public class ShoppingListApiController : ControllerBase
     /// <returns></returns>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType<List<ShoppingList>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<List<ShoppingListGetDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [Route("User/{userId:Guid}/ShoppingList/all")]
     public async Task<ActionResult> GetShoppingListsForUser([FromRoute] Guid userId,
@@ -137,10 +138,12 @@ public class ShoppingListApiController : ControllerBase
 
         try
         {
-            var shoppingLists = await _databaseService.SqlConnectionHandlerAsync<Guid, List<ShoppingList>>(
-                async (id, connection) => await _databaseService.HandleShoppingListsFetchForUserAsync(id, connection),
-                userId
-            );
+            var shoppingLists =
+                await _databaseServiceObsolete.SqlConnectionHandlerAsync<Guid, List<ShoppingListGetDto>>(
+                    async (id, connection) =>
+                        await _databaseServiceObsolete.HandleShoppingListsFetchForUserAsync(id, connection),
+                    userId
+                );
 
             if (shoppingLists.Count == 0)
             {
@@ -176,7 +179,7 @@ public class ShoppingListApiController : ControllerBase
     [HttpGet]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<AuthenticationErrorResponse>(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType<List<ShoppingList>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<List<ShoppingListGetDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}")]
     public async Task<ActionResult> GetShoppingListForUser([FromRoute] Guid userId, [FromRoute] Guid shoppingListId,
@@ -189,10 +192,11 @@ public class ShoppingListApiController : ControllerBase
 
         try
         {
-            var result = await _databaseService
-                .SqlConnectionHandlerAsync<ShoppingListIdentificationData, RecordFetchResult<ShoppingList?>>(
+            var result = await _databaseServiceObsolete
+                .SqlConnectionHandlerAsync<ShoppingListIdentificationData,
+                    FetchRestrictedRecordResult<ShoppingListGetDto?>>(
                     async (input, connection) =>
-                        await _databaseService.HandleShoppingListFetchForUserAsync(input, connection),
+                        await _databaseServiceObsolete.HandleShoppingListFetchForUserAsync(input, connection),
                     new ShoppingListIdentificationData((Guid)requestingUserId, shoppingListId));
 
             if (result.Record is null)
@@ -238,15 +242,15 @@ public class ShoppingListApiController : ControllerBase
     [HttpGet]
     [AdminEndpoint]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
-    [ProducesResponseType<ListUser>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ListUserGetDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [Route("User/{userId:Guid}")]
     public async Task<ActionResult> GetUserById(Guid userId)
     {
         try
         {
-            var user = await _databaseService.SqlConnectionHandlerAsync<Guid, ListUser?>(
-                (input, connection) => _databaseService.GetUserByIdAsync(input, connection),
+            var user = await _databaseServiceObsolete.SqlConnectionHandlerAsync<Guid, ListUserGetDto?>(
+                (input, connection) => _databaseServiceObsolete.GetUserByIdAsync(input, connection),
                 userId
             );
 
@@ -280,7 +284,7 @@ public class ShoppingListApiController : ControllerBase
     /// <returns></returns>
     [HttpGet]
     [AdminEndpoint]
-    [ProducesResponseType<List<ListUserMinimal>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<List<ListUserMinimalGetDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [Route("User/all")]
@@ -288,8 +292,9 @@ public class ShoppingListApiController : ControllerBase
     {
         try
         {
-            var users = await _databaseService.SqlConnectionHandlerAsync<List<ListUserMinimal>>(
-                async connection => await _databaseService.GetAllUsersAsync(connection));
+            var users =
+                await _databaseServiceObsolete.SqlConnectionHandlerAsync<List<ListUserMinimalGetDto>>(async
+                    connection => await _databaseServiceObsolete.GetAllUsersAsync(connection));
 
             if (users.Count == 0)
             {
@@ -318,7 +323,7 @@ public class ShoppingListApiController : ControllerBase
     /// <summary>
     /// admin endpoint to add new user roles
     /// </summary>
-    /// <param name="userRolePost"></param>
+    /// <param name="userRolePostDto"></param>
     /// <returns></returns>
     [HttpPost]
     [AdminEndpoint]
@@ -326,14 +331,14 @@ public class ShoppingListApiController : ControllerBase
     [ProducesResponseType<Guid>(StatusCodes.Status201Created)]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [Route("UserRole")]
-    public async Task<ActionResult> AddUserRole([FromBody] UserRolePost userRolePost)
+    public async Task<ActionResult> AddUserRole([FromBody] UserRolePostDto userRolePostDto)
     {
         try
         {
-            var alreadyExists = await _databaseService.SqlConnectionHandlerAsync<int, bool>(
+            var alreadyExists = await _databaseServiceObsolete.SqlConnectionHandlerAsync<int, bool>(
                 async (enumIndex, sqlConnection) =>
-                    await _databaseService.CheckUserRoleExistenceAsync(enumIndex, sqlConnection),
-                (int)userRolePost.UserRoleEnum
+                    await _databaseServiceObsolete.CheckUserRoleExistenceAsync(enumIndex, sqlConnection),
+                (int)userRolePostDto.UserRoleEnum
             );
 
             if (alreadyExists)
@@ -342,8 +347,9 @@ public class ShoppingListApiController : ControllerBase
             }
 
             var (success, addedUserRoleId) =
-                await _databaseService.SqlConnectionHandlerAsync<UserRolePost, (bool, Guid?)>(
-                    (input, connection) => _databaseService.AddUserRoleAsync(connection, input), userRolePost);
+                await _databaseServiceObsolete.SqlConnectionHandlerAsync<UserRolePostDto, (bool, Guid?)>(
+                    (input, connection) => _databaseServiceObsolete.AddUserRoleAsync(connection, input),
+                    userRolePostDto);
 
             if (success is false)
             {
@@ -373,7 +379,7 @@ public class ShoppingListApiController : ControllerBase
     /// <summary>
     /// public endpoint to register new users
     /// </summary>
-    /// <param name="userPost"></param>
+    /// <param name="userPostDto"></param>
     /// <returns></returns>
     [HttpPost]
     [PublicEndpoint]
@@ -382,15 +388,15 @@ public class ShoppingListApiController : ControllerBase
     [ProducesResponseType<string>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [Route("User")]
-    public async Task<ActionResult> AddNewUser([FromBody] ListUserPost userPost)
+    public async Task<ActionResult> AddNewUser([FromBody] ListUserPostDto userPostDto)
     {
         try
         {
-            var userPostExtended = new ListUserPostExtended(userPost);
+            var userPostExtended = new ListUserPostExtendedDto(userPostDto);
 
-            var emailAlreadyExists = await _databaseService.SqlConnectionHandlerAsync<string, bool>(
+            var emailAlreadyExists = await _databaseServiceObsolete.SqlConnectionHandlerAsync<string, bool>(
                 async (emailAddress, sqlConnection) =>
-                    await _databaseService.CheckUserExistenceAsync(emailAddress, sqlConnection),
+                    await _databaseServiceObsolete.CheckUserExistenceAsync(emailAddress, sqlConnection),
                 userPostExtended.EmailAddress);
 
             if (emailAlreadyExists)
@@ -400,8 +406,8 @@ public class ShoppingListApiController : ControllerBase
             }
 
             var (success, addedUserId) =
-                await _databaseService.SqlConnectionHandlerAsync<ListUserPostExtended, (bool, Guid?)>(
-                    (input, connection) => _databaseService.AddUserAsync(input, connection), userPostExtended);
+                await _databaseServiceObsolete.SqlConnectionHandlerAsync<ListUserPostExtendedDto, (bool, Guid?)>(
+                    (input, connection) => _databaseServiceObsolete.AddUserAsync(input, connection), userPostExtended);
 
             if (success is false || addedUserId is null)
             {
@@ -436,21 +442,21 @@ public class ShoppingListApiController : ControllerBase
     /// <summary>
     /// public endpoint to log in
     /// </summary>
-    /// <param name="loginData"></param>
+    /// <param name="loginDataDto"></param>
     /// <returns></returns>
     [HttpPost]
     [Route("User/Login")]
     [PublicEndpoint]
-    [ProducesResponseType<ListUser>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ListUserGetDto>(StatusCodes.Status200OK)]
     [ProducesResponseType<AuthenticationErrorResponse>(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult> UserLogin([FromBody] LoginData loginData)
+    public async Task<ActionResult> UserLogin([FromBody] LoginDataDto loginDataDto)
     {
         try
         {
-            var user = await _databaseService.SqlConnectionHandlerAsync<LoginData, ListUser?>(
-                async (input, sqlConnection) => await _databaseService.HandleLoginAsync(input, sqlConnection),
-                loginData);
+            var user = await _databaseServiceObsolete.SqlConnectionHandlerAsync<LoginDataDto, ListUserGetDto?>(
+                async (input, sqlConnection) => await _databaseServiceObsolete.HandleLoginAsync(input, sqlConnection),
+                loginDataDto);
 
             if (user is null)
             {
@@ -522,20 +528,20 @@ public class ShoppingListApiController : ControllerBase
 
         try
         {
-            var result = await _databaseService
+            var result = await _databaseServiceObsolete
                 .SqlConnectionHandlerAsync<ShoppingListAdditionData, ShoppingListAdditionResult>(
                     async (data, sqlConnection) =>
-                        await _databaseService.HandleAddingShoppingListAsync(data, sqlConnection),
+                        await _databaseServiceObsolete.HandleAddingShoppingListAsync(data, sqlConnection),
                     new ShoppingListAdditionData(shoppingListName, userId));
 
             if (result.Success is false || result.AddedShoppingListId is null)
             {
-                if (result.NameAlreadyExists)
+                if (result.NameAlreadyExists is true)
                 {
                     return Conflict($"You already have a shopping list named: \"{shoppingListName}\"");
                 }
 
-                if (result.MaximumNumberOfListsReached)
+                if (result.MaximumNumberOfListsReached is true)
                 {
                     return BadRequest("Maximum number of shopping lists reached!");
                 }
@@ -549,9 +555,9 @@ public class ShoppingListApiController : ControllerBase
                 {
                     if (result.AddedShoppingListId is not null)
                     {
-                        await _databaseService.SqlConnectionHandlerAsync<Guid, bool>(
+                        await _databaseServiceObsolete.SqlConnectionHandlerAsync<Guid, bool>(
                             async (input, connection) =>
-                                await _databaseService.RemoveShoppingListByIdAsync(input, connection),
+                                await _databaseServiceObsolete.RemoveShoppingListByIdAsync(input, connection),
                             (Guid)result.AddedShoppingListId);
                     }
 
@@ -583,7 +589,7 @@ public class ShoppingListApiController : ControllerBase
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="shoppingListId"></param>
-    /// <param name="itemPost"></param>
+    /// <param name="itemPostDto"></param>
     /// <param name="requestingUserId"></param>
     /// <returns></returns>
     [HttpPost]
@@ -593,7 +599,7 @@ public class ShoppingListApiController : ControllerBase
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}/Item")]
     public async Task<ActionResult> AddItemToShoppingList([FromRoute] Guid userId, [FromRoute] Guid shoppingListId,
-        [FromBody] ItemPost itemPost, [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
+        [FromBody] ItemPostDto itemPostDto, [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
     {
         if (requestingUserId is null)
         {
@@ -602,10 +608,10 @@ public class ShoppingListApiController : ControllerBase
 
         try
         {
-            var result = await _databaseService.SqlConnectionHandlerAsync<NewItemData, ItemAdditionResult>(
+            var result = await _databaseServiceObsolete.SqlConnectionHandlerAsync<NewItemData, ItemAdditionResult>(
                 async (data, connection) =>
-                    await _databaseService.HandleAddingItemToShoppingListAsync(data, connection),
-                new NewItemData(itemPost, shoppingListId, userId, requestingUserId));
+                    await _databaseServiceObsolete.HandleAddingItemToShoppingListAsync(data, connection),
+                new NewItemData(itemPostDto, shoppingListId, userId, requestingUserId));
 
             if (result.Success is false || result.ItemId is null)
             {
@@ -666,10 +672,10 @@ public class ShoppingListApiController : ControllerBase
                 return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
             }
 
-            var result = await _databaseService
+            var result = await _databaseServiceObsolete
                 .SqlConnectionHandlerAsync<CollaboratorAdditionData, CollaboratorAddRemoveResult>(
                     async (input, connection) =>
-                        await _databaseService.HandleAddingCollaboratorToShoppingListAsync(input, connection),
+                        await _databaseServiceObsolete.HandleAddingCollaboratorToShoppingListAsync(input, connection),
                     new CollaboratorAdditionData(userId, shoppingListId, collaboratorEmailAddress,
                         (Guid)requestingUserId));
 
@@ -716,7 +722,7 @@ public class ShoppingListApiController : ControllerBase
     /// user endpoint to modify the first and last name.
     /// </summary>
     /// <param name="userId"></param>
-    /// <param name="listUserPatch"></param>
+    /// <param name="listUserPatchDtoObsolete"></param>
     /// <param name="requestingUserId"></param>
     /// <returns></returns>
     [HttpPatch]
@@ -725,7 +731,8 @@ public class ShoppingListApiController : ControllerBase
     [ProducesResponseType<string>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [Route("User/{userId:Guid}")]
-    public async Task<ActionResult> ModifyUserDetails([FromRoute] Guid userId, [FromBody] ListUserPatch listUserPatch,
+    public async Task<ActionResult> ModifyUserDetails([FromRoute] Guid userId,
+        [FromBody] ListUserPatchDtoObsolete listUserPatchDtoObsolete,
         [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
     {
         if (requestingUserId is null)
@@ -738,17 +745,19 @@ public class ShoppingListApiController : ControllerBase
             return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
         }
 
-        if (listUserPatch.NewFirstName is null &&
-            listUserPatch.NewLastName is null)
+        if (listUserPatchDtoObsolete.NewFirstName is null &&
+            listUserPatchDtoObsolete.NewLastName is null)
         {
             return BadRequest("Nothing to update!");
         }
 
         try
         {
-            var success = await _databaseService.SqlConnectionHandlerAsync<ModificationData<Guid, ListUserPatch>, bool>(
-                async (input, connection) => await _databaseService.ModifyUserDetailsAsync(input, connection),
-                new ModificationData<Guid, ListUserPatch>(userId, listUserPatch));
+            var success = await _databaseServiceObsolete
+                .SqlConnectionHandlerAsync<ModificationData<Guid, ListUserPatchDtoObsolete>, bool>(
+                    async (input, connection) =>
+                        await _databaseServiceObsolete.ModifyUserDetailsAsync(input, connection),
+                    new ModificationData<Guid, ListUserPatchDtoObsolete>(userId, listUserPatchDtoObsolete));
 
             if (success is false) return NotFound($"A user with the provided ID {userId} was not found.");
 
@@ -776,7 +785,7 @@ public class ShoppingListApiController : ControllerBase
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="shoppingListId"></param>
-    /// <param name="shoppingListPatch"></param>
+    /// <param name="shoppingListPatchDtoObsolete"></param>
     /// <param name="requestingUserId"></param>
     /// <returns></returns>
     [HttpPatch]
@@ -786,7 +795,8 @@ public class ShoppingListApiController : ControllerBase
     [ProducesResponseType<string>(StatusCodes.Status500InternalServerError)]
     [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}")]
     public async Task<ActionResult> ModifyShoppingListName([FromRoute] Guid userId, [FromRoute] Guid shoppingListId,
-        [FromBody] ShoppingListPatch shoppingListPatch, [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
+        [FromBody] ShoppingListPatchDtoObsolete shoppingListPatchDtoObsolete,
+        [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
     {
         if (requestingUserId is null)
         {
@@ -800,11 +810,12 @@ public class ShoppingListApiController : ControllerBase
 
         try
         {
-            var result = await _databaseService
-                .SqlConnectionHandlerAsync<ModificationData<(Guid userId, Guid shoppingListId), ShoppingListPatch>,
+            var result = await _databaseServiceObsolete
+                .SqlConnectionHandlerAsync<
+                    ModificationData<(Guid userId, Guid shoppingListId), ShoppingListPatchDtoObsolete>,
                     UpdateResult>(
-                    (input, connection) => _databaseService.HandleShoppingListNameUpdateAsync(input, connection)
-                    , new ModificationData<(Guid userId, Guid shoppingListId), ShoppingListPatch>(((Guid)requestingUserId, shoppingListId), shoppingListPatch));
+                    (input, connection) => _databaseServiceObsolete.HandleShoppingListNameUpdateAsync(input, connection)
+                    , new ModificationData<(Guid userId, Guid shoppingListId), ShoppingListPatchDtoObsolete>(((Guid)requestingUserId, shoppingListId), shoppingListPatchDtoObsolete));
 
             if (result.Success is false)
             {
@@ -841,7 +852,7 @@ public class ShoppingListApiController : ControllerBase
     /// <param name="userId"></param>
     /// <param name="shoppingListId"></param>
     /// <param name="itemId"></param>
-    /// <param name="itemPatch"></param>
+    /// <param name="itemPatchDtoObsolete"></param>
     /// <param name="requestingUserId"></param>
     /// <returns></returns>
     [HttpPatch]
@@ -852,26 +863,27 @@ public class ShoppingListApiController : ControllerBase
     [ProducesResponseType<string>(StatusCodes.Status200OK)]
     [Route("User/{userId:Guid}/ShoppingList/{shoppingListId}/Item/{itemId:Guid}")]
     public async Task<ActionResult> ModifyItemDetails(Guid userId, Guid shoppingListId, Guid itemId,
-        ItemPatch itemPatch, [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
+        ItemPatchDtoObsolete itemPatchDtoObsolete, [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
     {
         if (requestingUserId is null)
         {
             return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
         }
 
-        if (itemPatch.NewItemAmount is null &&
-            itemPatch.NewItemName is null)
+        if (itemPatchDtoObsolete.NewItemAmount is null &&
+            itemPatchDtoObsolete.NewItemName is null)
         {
             return BadRequest("Nothing to update!");
         }
 
         try
         {
-            var result = await _databaseService
-                .SqlConnectionHandlerAsync<ModificationData<(Guid userId, Guid shoppingListId, Guid itemId), ItemPatch>,
+            var result = await _databaseServiceObsolete
+                .SqlConnectionHandlerAsync<ModificationData<(Guid userId, Guid shoppingListId, Guid itemId),
+                        ItemPatchDtoObsolete>,
                     UpdateResult>(
-                    (input, connection) => _databaseService.HandleShoppingListItemUpdateAsync(input, connection)
-                    , new ModificationData<(Guid userId, Guid shoppingListId, Guid itemId), ItemPatch>(((Guid)requestingUserId, shoppingListId, itemId), itemPatch));
+                    (input, connection) => _databaseServiceObsolete.HandleShoppingListItemUpdateAsync(input, connection)
+                    , new ModificationData<(Guid userId, Guid shoppingListId, Guid itemId), ItemPatchDtoObsolete>(((Guid)requestingUserId, shoppingListId, itemId), itemPatchDtoObsolete));
 
             if (result.Success is false)
             {
@@ -917,9 +929,10 @@ public class ShoppingListApiController : ControllerBase
     {
         try
         {
-            var result = await _databaseService
+            var result = await _databaseServiceObsolete
                 .SqlConnectionHandlerAsync<string, UserRemovalDbResult>(
-                    async (input, connection) => await _databaseService.RemoveUserByEmailAsync(input, connection)
+                    async (input, connection) =>
+                        await _databaseServiceObsolete.RemoveUserByEmailAsync(input, connection)
                     , emailAddress);
 
             if (result.Success is false)
@@ -977,10 +990,10 @@ public class ShoppingListApiController : ControllerBase
 
         try
         {
-            var result = await _databaseService
+            var result = await _databaseServiceObsolete
                 .SqlConnectionHandlerAsync<ShoppingListIdentificationData, ShoppingListRemovalResult>(
                     async (input, connection) =>
-                        await _databaseService.HandleShoppingListRemovalAsync(input, connection)
+                        await _databaseServiceObsolete.HandleShoppingListRemovalAsync(input, connection)
                     , new ShoppingListIdentificationData((Guid)requestingUserId, shoppingListId));
 
             if (result.Success is false)
@@ -1038,9 +1051,9 @@ public class ShoppingListApiController : ControllerBase
 
         try
         {
-            var result = await _databaseService.SqlConnectionHandlerAsync<ItemIdentificationData, UpdateResult>(
+            var result = await _databaseServiceObsolete.SqlConnectionHandlerAsync<ItemIdentificationData, UpdateResult>(
                 async (input, connection) =>
-                    await _databaseService.HandleItemRemovalFromShoppingListAsync(input, connection)
+                    await _databaseServiceObsolete.HandleItemRemovalFromShoppingListAsync(input, connection)
                 , new ItemIdentificationData((Guid)requestingUserId, shoppingListId, itemId));
 
             if (result.Success is false)
@@ -1096,10 +1109,11 @@ public class ShoppingListApiController : ControllerBase
             }
 
             var result = await
-                _databaseService.SqlConnectionHandlerAsync<CollaboratorRemovalCheck, CollaboratorAddRemoveResult>(
-                    async (input, connection) =>
-                        await _databaseService.HandleCollaboratorRemovalAsync(input, connection),
-                    new CollaboratorRemovalCheck(userId, shoppingListId, collaboratorId, (Guid)requestingUserId));
+                _databaseServiceObsolete
+                    .SqlConnectionHandlerAsync<CollaboratorRemovalCheck, CollaboratorAddRemoveResult>(
+                        async (input, connection) =>
+                            await _databaseServiceObsolete.HandleCollaboratorRemovalAsync(input, connection),
+                        new CollaboratorRemovalCheck(userId, shoppingListId, collaboratorId, (Guid)requestingUserId));
 
             if (result.Success is false)
             {

@@ -51,7 +51,8 @@ namespace ShoppingListApi.Migrations
 
                     b.HasIndex("IsValid");
 
-                    b.HasIndex("Key");
+                    b.HasIndex("Key")
+                        .IsUnique();
 
                     b.HasIndex("UserId");
 
@@ -85,9 +86,12 @@ namespace ShoppingListApi.Migrations
 
                     b.HasIndex("ExpirationDateTime");
 
-                    b.HasIndex("IsUsed");
+                    b.HasIndex("IsUsed")
+                        .IsUnique()
+                        .HasFilter("[IsUsed] = 0");
 
-                    b.HasIndex("Token");
+                    b.HasIndex("Token")
+                        .IsUnique();
 
                     b.HasIndex("UserId");
 
@@ -131,7 +135,7 @@ namespace ShoppingListApi.Migrations
                     b.Property<Guid>("UserRoleId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("ShoppingListId", "UserId", "UserRoleId");
+                    b.HasKey("ShoppingListId", "UserId");
 
                     b.HasIndex("UserId");
 
@@ -145,6 +149,9 @@ namespace ShoppingListApi.Migrations
                     b.Property<Guid>("UserId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreationDateTime")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("EmailAddress")
                         .IsRequired()
@@ -161,9 +168,10 @@ namespace ShoppingListApi.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<Guid>("PasswordHash")
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("nvarchar(500)");
 
                     b.HasKey("UserId");
 
@@ -204,7 +212,11 @@ namespace ShoppingListApi.Migrations
 
                     b.HasKey("UserRoleId");
 
-                    b.HasIndex("EnumIndex");
+                    b.HasIndex("EnumIndex")
+                        .IsUnique();
+
+                    b.HasIndex("UserRoleTitle")
+                        .IsUnique();
 
                     b.ToTable("UserRoles");
                 });
@@ -234,7 +246,7 @@ namespace ShoppingListApi.Migrations
             modelBuilder.Entity("ShoppingListApi.Model.Entity.Item", b =>
                 {
                     b.HasOne("ShoppingListApi.Model.Entity.ShoppingList", "ShoppingList")
-                        .WithMany()
+                        .WithMany("Items")
                         .HasForeignKey("ShoppingListId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -280,6 +292,8 @@ namespace ShoppingListApi.Migrations
 
             modelBuilder.Entity("ShoppingListApi.Model.Entity.ShoppingList", b =>
                 {
+                    b.Navigation("Items");
+
                     b.Navigation("ListMemberships");
                 });
 

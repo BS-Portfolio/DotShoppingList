@@ -1,55 +1,66 @@
 using Microsoft.EntityFrameworkCore;
+using ShoppingListApi.Model.Entity;
 
 namespace ShoppingListApi.Data.Contexts;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public DbSet<Model.Entity.ListUser> ListUsers => Set<Model.Entity.ListUser>();
+    public DbSet<ListUser> ListUsers => Set<ListUser>();
 
-    public DbSet<Model.Entity.EmailConfirmationToken> EmailConfirmationTokens =>
-        Set<Model.Entity.EmailConfirmationToken>();
+    public DbSet<EmailConfirmationToken> EmailConfirmationTokens =>
+        Set<EmailConfirmationToken>();
 
-    public DbSet<Model.Entity.ApiKey> ApiKeys => Set<Model.Entity.ApiKey>();
-    public DbSet<Model.Entity.ShoppingList> ShoppingLists => Set<Model.Entity.ShoppingList>();
-    public DbSet<Model.Entity.ListMembership> ListMemberships => Set<Model.Entity.ListMembership>();
-    public DbSet<Model.Entity.UserRole> UserRoles => Set<Model.Entity.UserRole>();
-    public DbSet<Model.Entity.Item> Items => Set<Model.Entity.Item>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+    public DbSet<ShoppingList> ShoppingLists => Set<ShoppingList>();
+    public DbSet<ListMembership> ListMemberships => Set<ListMembership>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<Item> Items => Set<Item>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Model.Entity.ListMembership>()
-            .HasKey(lm => new { lm.ShoppingListId, lm.UserId, lm.UserRoleId });
-        
+        // ListMembership - Composite Key
+        // a user cn either be an owner or a collaborator in a shopping list, not both
+        modelBuilder.Entity<ListMembership>()
+            .HasKey(lm => new { lm.ShoppingListId, lm.UserId });
+
         // ApiKey
-        modelBuilder.Entity<Model.Entity.ApiKey>()
+        modelBuilder.Entity<ApiKey>()
             .HasIndex(x => x.UserId);
-        modelBuilder.Entity<Model.Entity.ApiKey>()
-            .HasIndex(x => x.Key);
-        modelBuilder.Entity<Model.Entity.ApiKey>()
+        modelBuilder.Entity<ApiKey>()
+            .HasIndex(x => x.Key)
+            .IsUnique();
+        modelBuilder.Entity<ApiKey>()
             .HasIndex(x => x.ExpirationDateTime);
-        modelBuilder.Entity<Model.Entity.ApiKey>()
+        modelBuilder.Entity<ApiKey>()
             .HasIndex(x => x.IsValid);
 
         // EmailConfirmationToken
-        modelBuilder.Entity<Model.Entity.EmailConfirmationToken>()
+        modelBuilder.Entity<EmailConfirmationToken>()
             .HasIndex(x => x.UserId);
-        modelBuilder.Entity<Model.Entity.EmailConfirmationToken>()
-            .HasIndex(x => x.Token);
-        modelBuilder.Entity<Model.Entity.EmailConfirmationToken>()
+        modelBuilder.Entity<EmailConfirmationToken>()
+            .HasIndex(x => x.Token)
+            .IsUnique();
+        modelBuilder.Entity<EmailConfirmationToken>()
             .HasIndex(x => x.ExpirationDateTime);
-        modelBuilder.Entity<Model.Entity.EmailConfirmationToken>()
-            .HasIndex(x => x.IsUsed);
+        modelBuilder.Entity<EmailConfirmationToken>()
+            .HasIndex(x => x.IsUsed)
+            .IsUnique()
+            .HasFilter("[IsUsed] = 0");
 
         // Item
-        modelBuilder.Entity<Model.Entity.Item>()
+        modelBuilder.Entity<Item>()
             .HasIndex(x => x.ShoppingListId);
 
         // ListUser
-        modelBuilder.Entity<Model.Entity.ListUser>()
+        modelBuilder.Entity<ListUser>()
             .HasIndex(x => x.EmailAddress);
-        
+
         // UserRole
-        modelBuilder.Entity<Model.Entity.UserRole>()
-            .HasIndex(x => x.EnumIndex);
+        modelBuilder.Entity<UserRole>()
+            .HasIndex(x => x.EnumIndex)
+            .IsUnique();
+        modelBuilder.Entity<UserRole>()
+            .HasIndex(x => x.UserRoleTitle)
+            .IsUnique();
     }
 }

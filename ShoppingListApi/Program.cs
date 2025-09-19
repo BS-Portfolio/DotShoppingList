@@ -95,7 +95,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DotShoppingListStoreLocal")));
 
 builder.Services.AddTransient<ConnectionStringService>();
-builder.Services.AddTransient<DatabaseService>();
+builder.Services.AddTransient<DatabaseServiceObsolete>();
 builder.Services.AddTransient<MyAuthenticationService>();
 
 builder.Services.AddCors(options =>
