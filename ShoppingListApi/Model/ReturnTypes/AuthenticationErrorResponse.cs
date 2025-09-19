@@ -15,6 +15,8 @@ namespace ShoppingListApi.Model.ReturnTypes;
 /// 6: User Credentials Missing!
 /// 7: User Credentials are provided in a wrong format!
 /// 8: You are not part of this list!
+/// 9: You are not allowed to execute the requested action!
+/// 10: Login failure!
 /// </summary>
 public class AuthenticationErrorResponse
 {
