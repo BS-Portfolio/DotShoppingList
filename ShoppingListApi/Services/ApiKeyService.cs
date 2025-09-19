@@ -128,7 +128,7 @@ public class ApiKeyService(IUnitOfWork unitOfWork, ILogger<ApiKeyService> logger
         }
     }
 
-    public async Task<RemoveRecordResult> DeleteExpiredAsync(Guid userId, Guid apiKeyId, CancellationToken ct = default)
+    public async Task<RemoveRecordResult> DeleteExpiredAsync(CancellationToken ct = default)
     {
         try
         {

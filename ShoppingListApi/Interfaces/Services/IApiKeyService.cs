@@ -14,5 +14,5 @@ public interface IApiKeyService
         CancellationToken ct = default);
 
     Task<RemoveRecordResult> FindAndDeleteAsync(Guid userId, Guid apiKeyId, CancellationToken ct = default);
-    Task<RemoveRecordResult> DeleteExpiredAsync(Guid userId, Guid apiKeyId, CancellationToken ct = default);
+    Task<RemoveRecordResult> DeleteExpiredAsync(CancellationToken ct = default);
 }
