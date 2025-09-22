@@ -19,7 +19,7 @@ namespace ShoppingListApi.Model.ReturnTypes;
 /// 10: Login failure!
 /// 11: User ID and API Key do not match!
 /// </summary>
-public class AuthenticationErrorResponse
+public record AuthenticationErrorResponse
 {
     public int AuthenticationErrorCode { get; }
     public string Message { get; }

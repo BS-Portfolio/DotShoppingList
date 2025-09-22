@@ -9,7 +9,7 @@ using ShoppingListApi.Model.ReturnTypes;
 
 namespace ShoppingListApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class ApplicationController(
         IListUserService listUserService,

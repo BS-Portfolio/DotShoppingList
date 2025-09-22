@@ -48,5 +48,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added AppAuthenticationMiddleware
 - Added global exception handling
 
+## [0.9.0] - 2025-09-22
 
+### Features
+- Added ApiKeyController
+- Added UserController
+- Added UserRoleController
+- Added AuthController
+- Added ApplicationController
+- Added new Methods to all services for new use cases in the controllers mentioned above
+- Added Documentation to all the endpoint methods in the controllers mentioned above
+
+### Changes
+- Deleted ShoppingListApiController 
+- Deleted unnecessary DTOs, Exception and folders
+- Deleted the obsolete Database service
+- Deleted the obsolete connection string string
+- Deleted the corresponding test cases in the test project
 

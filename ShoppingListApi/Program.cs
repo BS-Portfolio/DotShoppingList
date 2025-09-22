@@ -95,9 +95,6 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DotShoppingListStoreLocal")));
 
-builder.Services.AddTransient<ConnectionStringService>();
-builder.Services.AddTransient<DatabaseServiceObsolete>();
-
 builder.Services.AddExceptionHandler<AppExceptionHandler>();
 builder.Services.AddProblemDetails();
 
