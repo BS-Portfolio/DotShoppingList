@@ -1,3 +1,14 @@
+# Montag, 22.09.25
+
+## Tasks:
+- Neuentwicklung der Controller-Klassen in der API
+- Frontend Refactor stores
+- Vorbereitung der Präsentation
+- Header Styling überarbeiten
+
+## Blocker:
+-
+
 # Freitag, 19.09.25
 
 ## Tasks:
