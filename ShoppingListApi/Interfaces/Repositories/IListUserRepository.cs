@@ -13,7 +13,7 @@ public interface IListUserRepository
     Task<Guid> CreateAsync(ListUserCreateDto listUserCreateDto, CancellationToken ct = default);
 
     void UpdateName(ListUser listUser, ListUserPatchDto listUserPatchDto);
-
+    void SetExpirationDateTime(ListUser listUser, DateTimeOffset? expirationDateTime);
     void UpdatePassword(ListUser listUser, string newPasswordHash);
 
     void Delete(ListUser listUser);

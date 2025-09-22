@@ -59,6 +59,11 @@ public class ListUserRepository(AppDbContext appAppDbContext) : IListUserReposit
         listUser.PasswordHash = newPasswordHash;
     }
 
+    public void SetExpirationDateTime(ListUser listUser, DateTimeOffset? expirationDateTime)
+    {
+        listUser.ExpirationDateTime = expirationDateTime;
+    }
+    
     public void Delete(ListUser listUser)
     {
         _appDbContext.ListUsers.Remove(listUser);

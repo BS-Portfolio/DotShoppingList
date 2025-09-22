@@ -140,6 +140,33 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
         }
     }
 
+    public async Task<UpdateRecordResult<object?>> CheckExistenceAndExpireUserAsAdminAsync(Guid userId)
+    {
+        try
+        {
+            var targetUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(userId);
+
+            if (targetUser is null)
+                return new(false, false, false, null);
+
+            _unitOfWork.ListUserRepository.SetExpirationDateTime(targetUser, DateTimeOffset.UtcNow);
+
+            var checkResult = await _unitOfWork.SaveChangesAsync();
+
+            if (checkResult != 1)
+                return new(true, false, true, null);
+
+            return new(true, true, true, null);
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListUserService), nameof(CheckExistenceAndExpireUserAsAdminAsync));
+            throw numberedException;
+        }
+    }
+
     public async Task<RemoveRecordResult> CheckExistenceAndDeleteUserAsAppAdminAsync(Guid listUserId,
         CancellationToken ct = default)
     {

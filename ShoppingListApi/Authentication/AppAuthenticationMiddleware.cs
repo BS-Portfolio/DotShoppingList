@@ -80,7 +80,7 @@ public class AppAuthenticationMiddleware(
         {
             Guid userId = Guid.Parse(userIdSv.ToString());
             string userApiKey = userApiKeySv.ToString();
-            var result = await appAuthenticationService.AuthenticateAsync(userId, userApiKey);
+            var result = await appAuthenticationService.AuthenticateApiKeyAsync(userId, userApiKey);
 
             if (result.IsAuthenticated is not true)
             {

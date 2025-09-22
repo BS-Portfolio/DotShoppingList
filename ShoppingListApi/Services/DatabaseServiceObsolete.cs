@@ -465,8 +465,7 @@ public class DatabaseServiceObsolete
             {
                 while (await sqlReader.ReadAsync())
                 {
-                    userRoles.Add(new UserRoleGetDto(sqlReader.GetGuid(0), sqlReader.GetString(1),
-                        sqlReader.GetInt32(2)));
+                    userRoles.Add(new UserRoleGetDto(sqlReader.GetGuid(0), sqlReader.GetString(1)));
                 }
             }
 
@@ -516,15 +515,8 @@ public class DatabaseServiceObsolete
             {
                 while (await sqlReader.ReadAsync())
                 {
-                    user = new ListUserGetDto(
-                        sqlReader.GetGuid(0),
-                        sqlReader.GetString(1),
-                        sqlReader.GetString(2),
-                        sqlReader.GetString(3),
-                        sqlReader.GetDateTimeOffset(4),
-                        sqlReader.GetString(5),
-                        sqlReader.GetDateTimeOffset(6)
-                    );
+                    user = new ListUserGetDto(sqlReader.GetGuid(0),sqlReader.GetString(1), sqlReader.GetString(2),
+                        sqlReader.GetString(3), sqlReader.GetDateTimeOffset(4), sqlReader.GetString(5), sqlReader.GetDateTimeOffset(6));
                 }
             }
 
@@ -1800,7 +1792,8 @@ public class DatabaseServiceObsolete
 
     #region Data-Modifier
 
-    public async Task<bool> ModifyUserDetailsAsync(ModificationData<Guid, ListUserPatchDtoObsolete> userDetailsModificationData,
+    public async Task<bool> ModifyUserDetailsAsync(
+        ModificationData<Guid, ListUserPatchDtoObsolete> userDetailsModificationData,
         SqlConnection sqlConnection)
     {
         const bool success = true;

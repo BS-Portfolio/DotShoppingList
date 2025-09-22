@@ -1,6 +1,6 @@
 namespace ShoppingListApi.Model.ReturnTypes;
 
-public record AppAuthenticationResult(
+public record ApiKeyAuthenticationResult(
     bool AccountExists,
     bool IsAuthenticated,
     bool? ApiKeyExists,

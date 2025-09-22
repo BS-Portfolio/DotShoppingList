@@ -35,5 +35,8 @@ public enum AuthorizationErrorEnum
     ActionNotAllowed = 9,
 
     [Description("Login failure!")]
-    LoginFailure = 10
+    LoginFailure = 10,
+
+    [Description("User ID and API Key do not match!")]
+    IdAndKeyNotMatching = 11
 }

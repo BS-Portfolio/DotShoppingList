@@ -1,6 +1,7 @@
 using ShoppingListApi.Configs;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Interfaces.Services;
+using ShoppingListApi.Model.DTOs.Get;
 using ShoppingListApi.Model.DTOs.Patch;
 using ShoppingListApi.Model.DTOs.Post;
 using ShoppingListApi.Model.ReturnTypes;
@@ -14,6 +15,7 @@ public class ItemService(IUnitOfWork unitOfWork, IConfiguration configuration, I
     private readonly IConfiguration _configuration = configuration;
     private readonly ILogger<ItemService> _logger = logger;
 
+    
     public async Task<AddItemResult> FindShoppingListAndAddItemAsync(Guid userId, Guid shoppingListId,
         ItemPostDto itemPostDto, CancellationToken ct = default)
     {

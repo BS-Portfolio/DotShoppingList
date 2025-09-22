@@ -83,20 +83,4 @@ public class UnitTests
         Assert.Equal(2, (int)Enums.UserRoleEnum.Collaborator);
     }
 
-    [Fact]
-    public void UserRole_Constructor_SetsEnumIndex()
-    {
-        // Arrange
-        var roleId = Guid.NewGuid();
-        var roleTitle = "Admin";
-        var enumIndex = (int)Enums.UserRoleEnum.ListOwner;
-
-        // Act
-        var userRole = new UserRoleGetDto(roleId, roleTitle, enumIndex);
-
-        // Assert
-        Assert.Equal(roleId, userRole.UserRoleId);
-        Assert.Equal(roleTitle, userRole.UserRoleTitle);
-        Assert.Equal(enumIndex, userRole.EnumIndex);
-    }
 }

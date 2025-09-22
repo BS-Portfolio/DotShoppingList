@@ -26,7 +26,11 @@ namespace ShoppingListApi.Controllers
         [Route("{userRoleId:guid}")]
         public async Task<ActionResult> GetUserRoleById([FromRoute] Guid userRoleId)
         {
-            var userRoleEntity = await _userRoleService.GetByIdAsync(userRoleId);
+            var ct = CancellationTokenSource
+                .CreateLinkedTokenSource(_hostApplicationLifetime.ApplicationStopping, HttpContext.RequestAborted)
+                .Token;
+            
+            var userRoleEntity = await _userRoleService.GetByIdAsync(userRoleId, ct);
 
             if (userRoleEntity is null)
                 return NotFound(new ResponseResult<Guid>(userRoleId,
@@ -125,7 +129,7 @@ namespace ShoppingListApi.Controllers
                     new ResponseResult<UserRolePatchDto>(userRolePatchDto,
                         "Failed to update the user role due to an internal server error."));
             }
-            
+
             return Ok(new ResponseResult<Guid>(userRoleId, "User role updated successfully."));
         }
     }

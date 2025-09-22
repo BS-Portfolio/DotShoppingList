@@ -98,35 +98,6 @@ public class DatabaseIntegrationTests
         Assert.True(canConnect, "The connection to the database failed!");
     }
 
-    [Fact]
-    public async Task Check_Database_UserRoles_Existence()
-    {
-        try
-        {
-            _testOutputHelper.WriteLine(nameof(Check_Database_UserRoles_Existence));
-
-            // Arrange
-            var databaseService = new DatabaseServiceObsolete(_serviceProvider);
-
-            var result = await databaseService.SqlConnectionHandlerAsync<List<UserRoleGetDto>>(
-                async (connection) => await databaseService.GetUserRolesAsync(connection));
-
-            bool hasTwo = result.Count == 2;
-
-            bool isValid = (result.Count == 2 &&
-                            result.Exists(userRole => userRole.EnumIndex == 1) &&
-                            result.Exists(userRole => userRole.EnumIndex == 2)
-                );
-            Assert.True(hasTwo, $"The amount of user roles varies from the allowed 2! Count: {result.Count}");
-            _testOutputHelper.WriteLine("Two user roles found!");
-            Assert.True(isValid, "User roles vary from the allowed values!");
-            _testOutputHelper.WriteLine("Both found user roles are valid!");
-        }
-        catch (Exception ex)
-        {
-            Assert.Fail($"Test failed:\nException Type: {ex.GetType()}\nMessage:{ex.Message}");
-        }
-    }
 
     [Fact]
     public async Task Check_Database_Method_AddUserAsync()

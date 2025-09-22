@@ -8,7 +8,10 @@ namespace ShoppingListApi.Interfaces.Services;
 
 public interface IListMembershipService
 {
-    Task<AddRecordResult<ListMembership?, ListMembership?>> AssignUserToShoppingListAsync(
+    Task<AddCollaboratorResult> AddCollaboratorToShoppingListAsListOwnerAsync(
+        Guid requestingUserId, string collaboratorEmailAddress, Guid shoppingListId, CancellationToken ct = default);
+
+    Task<AddRecordResult<ListMembership?, ListMembership?>> AssignUserToShoppingListAsAdminAsync(
         Guid userRoleId, Guid userId, Guid shoppingListId,
         CancellationToken ct = default);
 
