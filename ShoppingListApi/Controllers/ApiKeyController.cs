@@ -18,9 +18,21 @@ namespace ShoppingListApi.Controllers
 
         private readonly IHostApplicationLifetime _hostApplicationLifetime = hostApplicationLifetime;
 
+        /// <summary>
+        /// [AdminEndpoint] - Retrieves an API key by its ID for a specific user. Admin endpoint.
+        /// - Returns 200 OK with the API key if found.
+        /// - Returns 404 Not Found if the API key does not exist for the user.
+        /// - Returns 500 Internal Server Error for unexpected issues.
+        /// Use this endpoint to get an API key by its ID and user ID as an admin.
+        /// </summary>
+        /// <param name="apiKeyId">The ID of the API key to retrieve.</param>
+        /// <param name="userId">The ID of the user who owns the API key.</param>
         [HttpGet]
         [AdminEndpoint]
-        [Route("apiKeyId:guid/User/userId:guid/")]
+        [Route("{apiKeyId:guid}/User/{userId:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<object>))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<Dictionary<string, Guid>>))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
         public async Task<ActionResult> GetApiKeyById([FromRoute] Guid apiKeyId, [FromRoute] Guid userId)
         {
             var ct = CancellationTokenSource
@@ -38,9 +50,21 @@ namespace ShoppingListApi.Controllers
             return Ok(apiKeyEntity);
         }
 
+        /// <summary>
+        /// [AdminEndpoint] - Invalidates a specific API key for a user. Admin endpoint.
+        /// - Returns 200 OK if the API key was successfully invalidated.
+        /// - Returns 404 Not Found if the API key does not exist for the user.
+        /// - Returns 500 Internal Server Error for unexpected issues.
+        /// Use this endpoint to invalidate an API key by its ID and user ID as an admin.
+        /// </summary>
+        /// <param name="apiKeyId">The ID of the API key to invalidate.</param>
+        /// <param name="userId">The ID of the user who owns the API key.</param>
         [HttpPatch]
         [AdminEndpoint]
-        [Route("apiKeyId:guid/User/userId:guid/invalidate")]
+        [Route("{apiKeyId:guid}/User/{userId:guid}/invalidate")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<Dictionary<string, Guid>>))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<Dictionary<string, Guid>>))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<Dictionary<string, Guid>>))]
         public async Task<ActionResult> InvalidateApiKey([FromRoute] Guid apiKeyId, [FromRoute] Guid userId)
         {
             var ct = CancellationTokenSource
@@ -80,9 +104,20 @@ namespace ShoppingListApi.Controllers
                 "API key was successfully invalidated."));
         }
 
+        /// <summary>
+        /// [AdminEndpoint] - Invalidates all API keys for a specific user. Admin endpoint.
+        /// - Returns 200 OK if all API keys were successfully invalidated.
+        /// - Returns 204 No Content if the user does not exist or has no API keys.
+        /// - Returns 500 Internal Server Error for unexpected issues.
+        /// Use this endpoint to invalidate all API keys for a user as an admin.
+        /// </summary>
+        /// <param name="userId">The ID of the user whose API keys will be invalidated.</param>
         [HttpPatch]
         [AdminEndpoint]
-        [Route("User/userId:guid/invalidateAll")]
+        [Route("User/{userId:guid}/invalidateAll")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<Guid>))]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<Dictionary<string, Guid>>))]
         public async Task<ActionResult> InvalidateAllApiKeysForUser([FromRoute] Guid userId)
         {
             var ct = CancellationTokenSource
@@ -109,9 +144,17 @@ namespace ShoppingListApi.Controllers
             return Ok(new ResponseResult<Guid>(userId, "All API keys for the user were successfully invalidated."));
         }
 
+        /// <summary>
+        /// [AdminEndpoint] - Deletes all expired API keys. Admin endpoint.
+        /// - Returns 200 OK with the number of deleted API keys if successful.
+        /// - Returns 500 Internal Server Error for unexpected issues.
+        /// Use this endpoint to delete all expired API keys as an admin.
+        /// </summary>
         [HttpDelete]
         [AdminEndpoint]
         [Route("expired")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<int>))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
         public async Task<ActionResult> DeleteAllExpiredApiKeys()
         {
             var ct = CancellationTokenSource

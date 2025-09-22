@@ -3,6 +3,7 @@ using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Interfaces.Services;
 using ShoppingListApi.Model.DTOs.Create;
+using ShoppingListApi.Model.DTOs.Get;
 using ShoppingListApi.Model.DTOs.Patch;
 using ShoppingListApi.Model.Entity;
 using ShoppingListApi.Model.ReturnTypes;
@@ -14,6 +15,54 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
     private readonly ILogger<ListUserService> _logger = logger;
+
+    public Task<ListUser?> GetWitDetailsByEmailAddressAsync(string emailAddress,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            return _unitOfWork.ListUserRepository.GetWithDetailsByEmailAddressAsync(emailAddress, ct);
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListUserService), nameof(GetWitDetailsByEmailAddressAsync));
+            throw numberedException;
+        }
+    }
+
+    public Task<ListUser?> GetWithDetailsByIdAsync(Guid userId, CancellationToken ct = default)
+    {
+        try
+        {
+            return _unitOfWork.ListUserRepository.GetWithDetailsByIdAsync(userId, ct);
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListUserService), nameof(GetWithDetailsByIdAsync));
+            throw numberedException;
+        }
+    }
+
+    public async Task<List<ListUserMinimalGetDto>> GetAllUsersAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var users = await _unitOfWork.ListUserRepository.GetAllWithoutDetailsAsync(ct);
+            
+            return ListUserMinimalGetDto.FromListUserBatch(users);
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListUserService), nameof(GetAllUsersAsync));
+            throw numberedException;
+        }
+    }
 
     public async Task<AddRecordResult<Guid?, ListUser?>> CheckConflictAndCreateUserAsync(
         ListUserCreateDto listUserCreateDto,

@@ -23,6 +23,7 @@ public class ItemRepository(AppDbContext appDbContext) : IItemRepository
         return await _appDbContext.Items.Where(item => item.ShoppingListId == shoppingListId).ToListAsync(ct);
     }
 
+
     public async Task<Guid> CreateAsync(Guid shoppingListId, ItemPostDto itemPostDto, CancellationToken ct = default)
     {
         var newItemId = Guid.NewGuid();

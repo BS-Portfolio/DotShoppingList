@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using ShoppingListApi.Attributes;
-using ShoppingListApi.Exceptions;
 using ShoppingListApi.Interfaces.Services;
 using ShoppingListApi.Model.DTOs.Get;
 using ShoppingListApi.Model.DTOs.Patch;
@@ -18,12 +17,23 @@ namespace ShoppingListApi.Controllers
         : ControllerBase
     {
         private readonly IUserRoleService _userRoleService = userRoleService;
-        private readonly ILogger<UserRoleController> _logger = logger;
         private readonly IHostApplicationLifetime _hostApplicationLifetime = hostApplicationLifetime;
+        private readonly ILogger<UserRoleController> _logger = logger;
 
+        /// <summary>
+        /// [AdminEndpoint] - Retrieves a user role by its ID.
+        /// - Returns 200 OK with the user role if found.
+        /// - Returns 404 Not Found if the user role does not exist.
+        /// - Returns 500 Internal Server Error for unexpected issues.
+        /// Use this endpoint to get a user role by its ID as an admin.
+        /// </summary>
+        /// <param name="userRoleId">The ID of the user role to retrieve.</param>
         [HttpGet]
         [AdminEndpoint]
         [Route("{userRoleId:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserRoleGetDto))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<Guid>))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
         public async Task<ActionResult> GetUserRoleById([FromRoute] Guid userRoleId)
         {
             var ct = CancellationTokenSource
@@ -39,10 +49,19 @@ namespace ShoppingListApi.Controllers
             return Ok(UserRoleGetDto.FromUserRole(userRoleEntity));
         }
 
+        /// <summary>
+        /// [PublicEndpoint] - Retrieves all user roles.
+        /// - Returns 200 OK with a list of user roles if any exist.
+        /// - Returns 204 No Content if no user roles are found.
+        /// - Returns 500 Internal Server Error for unexpected issues.
+        /// Use this endpoint to get all user roles.
+        /// </summary>
         [HttpGet]
         [Route("all")]
         [PublicEndpoint]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserRoleGetDto>))]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
         public async Task<ActionResult> GetUserRoles()
         {
             var ct = CancellationTokenSource
@@ -62,8 +81,19 @@ namespace ShoppingListApi.Controllers
         }
 
 
+        /// <summary>
+        /// [AdminEndpoint] - Creates a new user role.
+        /// - Returns 201 Created with the new user role ID if successful.
+        /// - Returns 409 Conflict if a user role with the same data exists.
+        /// - Returns 500 Internal Server Error for unexpected issues.
+        /// Use this endpoint to create a new user role as an admin.
+        /// </summary>
+        /// <param name="userRolePostDto">The user role details.</param>
         [HttpPost]
         [AdminEndpoint]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ResponseResult<Guid>))]
+        [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ResponseResult<UserRoleGetDto>))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<UserRolePostDto>))]
         public async Task<ActionResult> CreateUserRole([FromBody] UserRolePostDto userRolePostDto)
         {
             var ct = CancellationTokenSource
@@ -91,9 +121,25 @@ namespace ShoppingListApi.Controllers
         }
 
 
+        /// <summary>
+        /// [AdminEndpoint] - Updates an existing user role by its ID.
+        /// - Returns 200 OK if the user role was updated successfully.
+        /// - Returns 400 Bad Request if no fields to update are provided.
+        /// - Returns 404 Not Found if the user role does not exist.
+        /// - Returns 409 Conflict if the update would cause a conflict.
+        /// - Returns 500 Internal Server Error for unexpected issues.
+        /// Use this endpoint to update a user role by its ID as an admin.
+        /// </summary>
+        /// <param name="userRoleId">The ID of the user role to update.</param>
+        /// <param name="userRolePatchDto">The new user role details.</param>
         [HttpPatch]
         [AdminEndpoint]
         [Route("{userRoleId:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<Guid>))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ResponseResult<Guid>))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<Guid>))]
+        [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ResponseResult<UserRoleGetDto>))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<UserRolePatchDto>))]
         public async Task<ActionResult> UpdateUserRole([FromRoute] Guid userRoleId,
             [FromBody] UserRolePatchDto userRolePatchDto)
         {
