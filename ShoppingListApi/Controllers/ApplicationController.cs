@@ -278,7 +278,8 @@ namespace ShoppingListApi.Controllers
                         "Due to an internal error your request could not be processed."));
             }
 
-            return Ok(result.ItemId);
+            return StatusCode(StatusCodes.Status201Created,
+                new ResponseResult<Guid>(result.ItemId.Value, "Item was successfully added to the shopping list."));
         }
 
         /// <summary>
@@ -544,7 +545,7 @@ namespace ShoppingListApi.Controllers
             }
 
             return Ok(new ResponseResult<int>(result.RecordsAffected,
-                $"Shopping list was successfully deleted. Amount of deleted records is attached."));
+                "Shopping list was successfully deleted. Amount of deleted records is attached."));
         }
 
         /// <summary>
@@ -601,7 +602,8 @@ namespace ShoppingListApi.Controllers
                         "Due to an internal error your request could not be processed."));
             }
 
-            return Ok("Successfully removed!");
+            return Ok(new ResponseResult<int>(result.RecordsAffected,
+                "Item was successfully deleted from the shopping list. Amount of deleted records is attached."));
         }
 
         /// <summary>
@@ -660,7 +662,7 @@ namespace ShoppingListApi.Controllers
             }
 
             return Ok(new ResponseResult<int>(result.RecordsAffected,
-                $"Successfully removed! Amount of deleted records is attached."));
+                "Successfully removed! Amount of deleted records is attached."));
         }
 
         /// <summary>

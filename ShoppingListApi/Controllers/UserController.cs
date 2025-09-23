@@ -71,7 +71,7 @@ namespace ShoppingListApi.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(AuthenticationErrorResponse))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<Guid>))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
-        [Route("User/{userId:Guid}")]
+        [Route("{userId:Guid}")]
         public async Task<ActionResult> ModifyUserDetails([FromRoute] Guid userId,
             [FromBody] ListUserPatchDto listUserPatchDto, [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
         {
@@ -176,7 +176,7 @@ namespace ShoppingListApi.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<ListUser>))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<string>))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
-        [Route("EmailAddress/{emailAddress}")]
+        [Route("{emailAddress}")]
         public async Task<ActionResult> GetUserByEmail([FromRoute] string emailAddress)
         {
             var ct = CancellationTokenSource
@@ -206,7 +206,7 @@ namespace ShoppingListApi.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<ListUser>))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<Guid>))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
-        [Route("{userId:Guid}/leave")]
+        [Route("{userId:Guid}")]
         public async Task<ActionResult> GetUserById(Guid userId)
         {
             var ct = CancellationTokenSource
@@ -235,7 +235,7 @@ namespace ShoppingListApi.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<List<ListUserMinimalGetDto>>))]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
-        [Route("User/all")]
+        [Route("all")]
         public async Task<ActionResult> GetAllUsers()
         {
             var ct = CancellationTokenSource

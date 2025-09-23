@@ -44,7 +44,7 @@ namespace ShoppingListApi.Controllers
             if (apiKeyEntity is null)
                 return NotFound(new ResponseResult<Dictionary<string, Guid>>(
                     new Dictionary<string, Guid>
-                        { { nameof(apiKeyId), apiKeyId }, { nameof(userId), apiKeyEntity!.UserId } },
+                        { { nameof(apiKeyId), apiKeyId }, { nameof(userId), userId } },
                     "API key for the provided ids was not found."));
 
             return Ok(apiKeyEntity);
@@ -64,7 +64,8 @@ namespace ShoppingListApi.Controllers
         [Route("{apiKeyId:guid}/User/{userId:guid}/invalidate")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<Dictionary<string, Guid>>))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<Dictionary<string, Guid>>))]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<Dictionary<string, Guid>>))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError,
+            Type = typeof(ResponseResult<Dictionary<string, Guid>>))]
         public async Task<ActionResult> InvalidateApiKey([FromRoute] Guid apiKeyId, [FromRoute] Guid userId)
         {
             var ct = CancellationTokenSource
@@ -117,7 +118,8 @@ namespace ShoppingListApi.Controllers
         [Route("User/{userId:guid}/invalidateAll")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<Guid>))]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<Dictionary<string, Guid>>))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError,
+            Type = typeof(ResponseResult<Dictionary<string, Guid>>))]
         public async Task<ActionResult> InvalidateAllApiKeysForUser([FromRoute] Guid userId)
         {
             var ct = CancellationTokenSource
