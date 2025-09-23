@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using ShoppingListApi.Configs;
-using ShoppingListApi.Controllers;
 using ShoppingListApi.Exceptions;
 
 namespace ShoppingListApi.ExceptionHandlers;

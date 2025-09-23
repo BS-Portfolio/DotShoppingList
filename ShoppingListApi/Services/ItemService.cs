@@ -1,7 +1,6 @@
 using ShoppingListApi.Configs;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Interfaces.Services;
-using ShoppingListApi.Model.DTOs.Get;
 using ShoppingListApi.Model.DTOs.Patch;
 using ShoppingListApi.Model.DTOs.Post;
 using ShoppingListApi.Model.ReturnTypes;

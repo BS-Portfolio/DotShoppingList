@@ -1,7 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text;
-using BCrypt.Net;
-using Newtonsoft.Json;
 using ShoppingListApi.Model.DTOs.Post;
 
 namespace ShoppingListApi.Model.DTOs.Create

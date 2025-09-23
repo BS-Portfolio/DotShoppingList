@@ -1,7 +1,6 @@
 using ShoppingListApi.Configs;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
-using ShoppingListApi.Interfaces.Repositories;
 using ShoppingListApi.Interfaces.Services;
 using ShoppingListApi.Model.Entity;
 using ShoppingListApi.Model.ReturnTypes;

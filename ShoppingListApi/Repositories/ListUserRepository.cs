@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using NuGet.ProjectModel;
 using ShoppingListApi.Data.Contexts;
 using ShoppingListApi.Interfaces.Repositories;
 using ShoppingListApi.Model.DTOs.Create;

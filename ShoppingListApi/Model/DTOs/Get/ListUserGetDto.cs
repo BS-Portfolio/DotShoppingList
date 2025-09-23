@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using ShoppingListApi.Model.Entity;
+﻿using ShoppingListApi.Model.Entity;
 
 namespace ShoppingListApi.Model.DTOs.Get;
 

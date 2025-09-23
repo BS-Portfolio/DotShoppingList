@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using ShoppingListApi.Attributes;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Interfaces.Services;
 using ShoppingListApi.Model.DTOs.Get;
@@ -101,14 +100,15 @@ namespace ShoppingListApi.Controllers
                 if (logoutResult.ApiKeyFound is not true)
                     return NotFound(new ResponseResult<object?>(null, "API key not found!"));
 
-                if (logoutResult.UserOwnsApikey is false)
+                if (logoutResult.UserOwnsApiKey is false)
                 {
                     if (logoutResult.InvalidationSuccessful is not true)
                         _logger.LogError(
                             "Failed to invalidate API key {ApiKey} to avoid misuse. This might indicate a problem with the database.",
                             apiKey);
 
-                    return StatusCode(403, new AuthenticationErrorResponse(AuthorizationErrorEnum.IdAndKeyNotMatching));
+                    return StatusCode(403,
+                        new AuthenticationErrorResponse(AuthorizationErrorEnum.IdAndKeyNotMatching));
                 }
 
                 return StatusCode(500, new ResponseResult<Guid>(userId,

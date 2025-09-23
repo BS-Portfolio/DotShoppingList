@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ShoppingListApi.Model.Entity;
 
-public class ShoppingList()
+public class ShoppingList
 {
     [Key]
     public Guid ShoppingListId { get; set; }

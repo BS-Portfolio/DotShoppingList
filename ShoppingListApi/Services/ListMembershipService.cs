@@ -55,7 +55,7 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
             if (collaboratorRoleEntity is null)
                 return new(false, true, true, true, false, true);
 
-            var newMembership = await _unitOfWork.ListMembershipRepository
+            await _unitOfWork.ListMembershipRepository
                 .AssignUserToShoppingListByUserRoleIdAsync(collaboratorUser.UserId, shoppingListId,
                     collaboratorRoleEntity.UserRoleId, ct);
 
