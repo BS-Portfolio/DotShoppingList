@@ -1,3 +1,13 @@
+# Dienstag, 23.09.25
+
+## Tasks:
+- Weiterarbeit an der Präsentation
+- Sanity testing
+- Dokumentation
+
+## Blocker:
+-
+
 # Montag, 22.09.25
 
 ## Tasks:
