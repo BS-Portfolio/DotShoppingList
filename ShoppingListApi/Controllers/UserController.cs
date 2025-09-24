@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ShoppingListApi.Attributes;
+using ShoppingListApi.Configs;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Interfaces.Services;
 using ShoppingListApi.Model.DTOs.Create;
@@ -25,16 +26,21 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [PublicEndpoint] - Registers a new user account.
-        /// Use this endpoint to create a new user by providing the required registration details.
+        /// Use this endpoint to create a new user by providing the required registration details in base64 format.
         /// </summary>
         [HttpPost]
         [PublicEndpoint]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ResponseResult<Guid?>))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ResponseResult<string>))]
         [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ResponseResult<string?>))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
         public async Task<ActionResult> Register([FromBody] ListUserPostDto listUserPostDto)
         {
             var listUserCreateDto = new ListUserCreateDto(listUserPostDto);
+
+            if (!listUserCreateDto.EmailAddress.IsEmail())
+                return BadRequest(new ResponseResult<string>(listUserCreateDto.EmailAddress,
+                    "Your input does not fulfill the necessary pattern of an email address."));
 
             var result = await _listUserService.CheckConflictAndCreateUserAsync(listUserCreateDto);
 
@@ -59,30 +65,29 @@ namespace ShoppingListApi.Controllers
         /// </summary>
         [HttpPatch]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<ListUserPatchDto>))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ResponseResult<string?>))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ResponseResult<object?>))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(AuthenticationErrorResponse))]
         [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(AuthenticationErrorResponse))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<Guid>))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
-        [Route("{userId:Guid}")]
-        public async Task<ActionResult> ModifyUserDetails([FromRoute] Guid userId,
-            [FromBody] ListUserPatchDto listUserPatchDto, [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
+        public async Task<ActionResult> ModifyUserDetails([FromBody] ListUserPatchDto listUserPatchDto)
         {
-            if (requestingUserId is null)
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
+            var checkAccessResult = this.CheckAccess();
 
-            if (!userId.Equals(requestingUserId))
-                return StatusCode(StatusCodes.Status403Forbidden,
-                    new AuthenticationErrorResponse(AuthorizationErrorEnum.ActionNotAllowed));
+            if (checkAccessResult.ActionResult is not null)
+                return checkAccessResult.ActionResult;
+
+            var requestingUserId = checkAccessResult.RequestingUserId!;
 
             if (listUserPatchDto.FirstName is null && listUserPatchDto.LastName is null)
-                return BadRequest("Nothing to update!");
+                return BadRequest(new ResponseResult<object?>(null, "No fields to update were provided."));
 
             var ct = CancellationTokenSource
                 .CreateLinkedTokenSource(HttpContext.RequestAborted, _hostApplicationLifetime.ApplicationStopping)
                 .Token;
 
             var result =
-                await _listUserService.CheckAccessAndUpdateNameAsync(requestingUserId.Value, userId, listUserPatchDto,
+                await _listUserService.CheckAccessAndUpdateNameAsync(requestingUserId.Value, listUserPatchDto,
                     ct);
 
             if (result.Success is not true)
@@ -92,7 +97,7 @@ namespace ShoppingListApi.Controllers
                         new AuthenticationErrorResponse(AuthorizationErrorEnum.ActionNotAllowed));
 
                 if (result.TargetExists is not true)
-                    return NotFound(new ResponseResult<Guid>(userId,
+                    return NotFound(new ResponseResult<Guid>(requestingUserId.Value,
                         "User with the provided user id was not found."));
 
                 return StatusCode(StatusCodes.Status500InternalServerError,
@@ -107,30 +112,26 @@ namespace ShoppingListApi.Controllers
         /// [UserEndpoint] - Deletes the user account for the specified user ID.
         /// Use this endpoint to delete your own user account.
         /// </summary>
-        /// <param name="userId">The ID of the user to delete.</param>
-        /// <param name="requestingUserId">The ID of the user making the request (from header).</param>
         [HttpDelete]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<int>))]
         [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(AuthenticationErrorResponse))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<Guid>))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(AuthenticationErrorResponse))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
-        [Route("{userId:guid}")]
-        public async Task<ActionResult> DeleteAccount([FromRoute] Guid userId,
-            [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
+        public async Task<ActionResult> DeleteAccount()
         {
-            if (requestingUserId is null)
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
+            var checkAccessResult = this.CheckAccess();
 
-            if (!requestingUserId.Equals(userId))
-                return StatusCode(StatusCodes.Status403Forbidden,
-                    new AuthenticationErrorResponse(AuthorizationErrorEnum.ActionNotAllowed));
+            if (checkAccessResult.ActionResult is not null)
+                return checkAccessResult.ActionResult;
+
+            var requestingUserId = checkAccessResult.RequestingUserId!;
 
             var ct = CancellationTokenSource
                 .CreateLinkedTokenSource(HttpContext.RequestAborted, _hostApplicationLifetime.ApplicationStopping)
                 .Token;
 
-            var result = await _listUserService.CheckAccessAndDeleteUserAsync(requestingUserId.Value, userId, ct);
+            var result = await _listUserService.CheckAccessAndDeleteUserAsync(requestingUserId.Value, ct);
 
             if (result.Success is not true)
             {
@@ -139,7 +140,7 @@ namespace ShoppingListApi.Controllers
                         new AuthenticationErrorResponse(AuthorizationErrorEnum.ActionNotAllowed));
 
                 if (result.TargetExists is false)
-                    return NotFound(new ResponseResult<Guid>(userId,
+                    return NotFound(new ResponseResult<Guid>(requestingUserId.Value,
                         "User with the provided user id was not found."));
 
                 return StatusCode(StatusCodes.Status500InternalServerError,

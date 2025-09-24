@@ -7,6 +7,14 @@ using ShoppingListApi.Services;
 
 namespace ShoppingListApi.Authentication;
 
+/// <summary>
+/// Middleware for handling authentication in the application.
+/// - Allows public endpoints to bypass authentication.
+/// - Validates admin endpoints using an API key from the request header.
+/// - Validates user endpoints using USER-ID and USER-KEY headers.
+/// - Returns appropriate HTTP status codes and error responses for authentication failures.
+/// - Logs exceptions and handles error responses for unexpected failures.
+/// </summary>
 public class AppAuthenticationMiddleware(
     RequestDelegate next,
     IServiceProvider serviceProvider,

@@ -1,5 +1,11 @@
 namespace ShoppingListApi.Exceptions;
 
+/// <summary>
+/// Custom exception that generates a unique error number and timestamp for each instance.
+/// - Stores the error number and UTC date/time of the exception.
+/// - Error number is based on the Unix timestamp and milliseconds for uniqueness.
+/// - Supports standard exception constructors for message and inner exception.
+/// </summary>
 public class NumberedException : Exception
 {
     public string ErrorNumber { get; }

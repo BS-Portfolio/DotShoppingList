@@ -15,6 +15,10 @@ public class ItemService(IUnitOfWork unitOfWork, IConfiguration configuration, I
     private readonly ILogger<ItemService> _logger = logger;
 
     
+    /// <summary>
+    /// Finds a shopping list by ID and adds a new item for the user, checking for role and item count limits.
+    /// Returns an AddItemResult with state flags and the new item ID.
+    /// </summary>
     public async Task<AddItemResult> FindShoppingListAndAddItemAsync(Guid userId, Guid shoppingListId,
         ItemPostDto itemPostDto, CancellationToken ct = default)
     {
@@ -56,6 +60,10 @@ public class ItemService(IUnitOfWork unitOfWork, IConfiguration configuration, I
         }
     }
 
+    /// <summary>
+    /// Finds an item by ID in a shopping list and updates it using the provided patch DTO, checking user role.
+    /// Returns an UpdateRestrictedRecordResult with state flags.
+    /// </summary>
     public async Task<UpdateRestrictedRecordResult<object?>> FindItemAndUpdateAsync(
         Guid requestingUserId, Guid shoppingListId, Guid itemId, ItemPatchDto itemPatchDto,
         CancellationToken ct = default)
@@ -92,6 +100,10 @@ public class ItemService(IUnitOfWork unitOfWork, IConfiguration configuration, I
         }
     }
 
+    /// <summary>
+    /// Finds and deletes an item by ID in a shopping list, checking user role.
+    /// Returns a RemoveRestrictedRecordResult with state flags and affected records count.
+    /// </summary>
     public async Task<RemoveRestrictedRecordResult> FindItemAndDeleteAsync(Guid requestingUserId, Guid shoppingListId,
         Guid itemId, CancellationToken ct = default)
     {
@@ -126,6 +138,10 @@ public class ItemService(IUnitOfWork unitOfWork, IConfiguration configuration, I
         }
     }
 
+    /// <summary>
+    /// Deletes all items in a shopping list for the requesting user, checking user role.
+    /// Returns a RemoveRestrictedRecordResult with state flags and affected records count.
+    /// </summary>
     public async Task<RemoveRestrictedRecordResult> DeleteAllItemsInShoppingListAsync(Guid requestingUserId,
         Guid shoppingListId,
         CancellationToken ct = default)
