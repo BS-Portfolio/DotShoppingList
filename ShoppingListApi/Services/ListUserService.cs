@@ -52,7 +52,7 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
         try
         {
             var users = await _unitOfWork.ListUserRepository.GetAllWithoutDetailsAsync(ct);
-            
+
             return ListUserMinimalGetDto.FromListUserBatch(users);
         }
         catch (Exception e)
@@ -96,14 +96,11 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
     }
 
     public async Task<UpdateRestrictedRecordResult<ListUser?>> CheckAccessAndUpdateNameAsync(
-        Guid requestingUserId, Guid listUserId, ListUserPatchDto listUserPatchDto, CancellationToken ct = default)
+        Guid requestingUserId, ListUserPatchDto listUserPatchDto, CancellationToken ct = default)
     {
         try
         {
-            if (requestingUserId != listUserId)
-                return new(null, false, false, null, null);
-
-            var listUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(listUserId, ct);
+            var listUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(requestingUserId, ct);
 
             if (listUser is null)
                 return new(false, false, true, null, null);
@@ -127,15 +124,11 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
     }
 
     public async Task<UpdateRestrictedRecordResult<ListUser?>> CheckAccessAndUpdatePasswordAsync(Guid requestingUserId,
-        Guid listUserId,
         string newPasswordHash, CancellationToken ct = default)
     {
         try
         {
-            if (requestingUserId != listUserId)
-                return new(null, false, false, null, null);
-
-            var listUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(listUserId, ct);
+            var listUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(requestingUserId, ct);
 
             if (listUser is null)
                 return new(false, false, true, null, null);
@@ -160,14 +153,11 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
     }
 
     public async Task<RemoveRestrictedRecordResult> CheckAccessAndDeleteUserAsync(Guid requestingUserId,
-        Guid listUserId, CancellationToken ct = default)
+        CancellationToken ct = default)
     {
         try
         {
-            if (requestingUserId != listUserId)
-                return new(null, false, false, 0);
-
-            var listUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(listUserId, ct);
+            var listUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(requestingUserId, ct);
 
             if (listUser is null)
                 return new(false, true, false, 0);

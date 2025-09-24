@@ -1,3 +1,8 @@
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Mvc;
+using ShoppingListApi.Enums;
+using ShoppingListApi.Model.ReturnTypes;
+
 namespace ShoppingListApi.Configs;
 
 using Microsoft.Extensions.Logging;
@@ -23,5 +28,42 @@ public static class LoggerExtensions
             default:
                 return;
         }
+    }
+}
+
+public static class ControllerExtensions
+{
+    public static (ActionResult? ActionResult, Guid? RequestingUserId, string? ApiKey) CheckAccess(this ControllerBase controllerBase)
+    {
+        var requestingUserIdStr = controllerBase.Request.Headers["USER-ID"].FirstOrDefault();
+        var apiKey = controllerBase.Request.Headers["USER-KEY"].FirstOrDefault();
+
+        if (string.IsNullOrEmpty(requestingUserIdStr) || string.IsNullOrWhiteSpace(apiKey))
+            return (
+                controllerBase.Unauthorized(
+                    new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing)),
+                null, null);
+
+        var parseSuccessful = Guid.TryParse(requestingUserIdStr, out var requestingUserId);
+
+        if (parseSuccessful is not true)
+            return (
+                controllerBase.BadRequest(new ResponseResult<object?>(null,
+                    "The user Id is provided in an invalid format!")),
+                null, null);
+
+        return (null, requestingUserId, apiKey);
+    }
+}
+
+public static class StringExtensions
+{
+    public static bool IsEmail(this string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return false;
+
+        var emailPattern = @"^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,}$";
+        return Regex.IsMatch(input.Trim(), emailPattern, RegexOptions.IgnoreCase);
     }
 }

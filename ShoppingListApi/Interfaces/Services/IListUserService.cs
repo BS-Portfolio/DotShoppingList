@@ -17,17 +17,19 @@ public interface IListUserService
     Task<AddRecordResult<Guid?, ListUser?>> CheckConflictAndCreateUserAsync(ListUserCreateDto listUserCreateDto,
         CancellationToken ct = default);
 
-    Task<UpdateRestrictedRecordResult<ListUser?>> CheckAccessAndUpdateNameAsync(Guid requestingUserId, Guid listUserId,
+    Task<UpdateRestrictedRecordResult<ListUser?>> CheckAccessAndUpdateNameAsync(Guid requestingUserId,
         ListUserPatchDto listUserPatchDto,
         CancellationToken ct = default);
 
     Task<UpdateRestrictedRecordResult<ListUser?>> CheckAccessAndUpdatePasswordAsync(
-        Guid requestingUserId, Guid listUserId, string newPasswordHash,
+        Guid requestingUserId, string newPasswordHash,
         CancellationToken ct = default);
 
-    Task<RemoveRestrictedRecordResult> CheckAccessAndDeleteUserAsync(Guid requestingUserId, Guid listUserId,
+    Task<RemoveRestrictedRecordResult> CheckAccessAndDeleteUserAsync(Guid requestingUserId,
         CancellationToken ct = default);
 
     Task<RemoveRecordResult>
         CheckExistenceAndDeleteUserAsAppAdminAsync(Guid listUserId, CancellationToken ct = default);
+
+    Task<UpdateRecordResult<object?>> CheckExistenceAndExpireUserAsAdminAsync(Guid userId);
 }

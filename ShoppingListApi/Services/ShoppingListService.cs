@@ -19,18 +19,15 @@ public class ShoppingListService(
     private readonly IConfiguration _configuration = configuration;
 
     public async Task<FetchRestrictedRecordResult<List<ShoppingListGetDto>?>> CheckAccessAndGetAllShoppingListsForUser(
-        Guid requestingUserId,
-        Guid userId, CancellationToken ct = default)
+        Guid requestingUserId, CancellationToken ct = default)
     {
         List<ShoppingListGetDto> result = [];
-
-        if (userId != requestingUserId)
-            return new(null, false);
 
         try
         {
             var userShoppingListMemberships =
-                await _unitOfWork.ListMembershipRepository.GetAllMembershipsWithCascadingInfoByUserIdAsync(userId, ct);
+                await _unitOfWork.ListMembershipRepository.GetAllMembershipsWithCascadingInfoByUserIdAsync(
+                    requestingUserId, ct);
 
             if (userShoppingListMemberships.Count == 0)
                 return new(result, true, false);
@@ -103,17 +100,13 @@ public class ShoppingListService(
     }
 
     public async Task<FetchRestrictedRecordResult<ShoppingListGetDto?>> CheckAccessAndGetShoppingListByIdAsync(
-        Guid requestingUserId, Guid userId, Guid shoppingListId,
-        CancellationToken ct = default)
+        Guid requestingUserId, Guid shoppingListId, CancellationToken ct = default)
     {
         try
         {
-            // check access
-            if (userId != requestingUserId)
-                return new(null, false);
-
             var userRole =
-                await _unitOfWork.ListMembershipRepository.GetUserRoleObjInShoppingListAsync(userId, shoppingListId,
+                await _unitOfWork.ListMembershipRepository.GetUserRoleObjInShoppingListAsync(requestingUserId,
+                    shoppingListId,
                     ct);
 
             if (userRole is null)
@@ -183,21 +176,14 @@ public class ShoppingListService(
     /// Don't forget the authorization check before calling the function!
     /// </summary>
     /// <param name="requestingUserId"></param>
-    /// <param name="userId"></param>
     /// <param name="shoppingListPostDto"></param>
     /// <param name="ct"></param>
     /// <returns></returns>
     public async Task<ShoppingListAdditionResult> CheckConflictAndCreateShoppingListAsync(
-        Guid requestingUserId,
-        Guid userId,
-        ShoppingListPostDto shoppingListPostDto,
-        CancellationToken ct = default)
+        Guid requestingUserId, ShoppingListPostDto shoppingListPostDto, CancellationToken ct = default)
     {
         try
         {
-            if (userId != requestingUserId)
-                return new(false, null, null, null, null, false);
-
             var maxShoppingListsPerUser =
                 _configuration.GetValue<int>("ShoppingLists_MaxAmount");
 
@@ -205,7 +191,7 @@ public class ShoppingListService(
                 maxShoppingListsPerUser = 5;
 
             var ownerListMemberships =
-                await _unitOfWork.ListMembershipRepository.GetAllListMembershipsWithDetailsForOwnerByUserAsync(userId,
+                await _unitOfWork.ListMembershipRepository.GetAllListMembershipsWithDetailsForOwnerByUserAsync(requestingUserId,
                     ct);
 
             if (ownerListMemberships.Count >= maxShoppingListsPerUser)
@@ -234,7 +220,7 @@ public class ShoppingListService(
                 return new(false, null, false, null, false, true);
             }
 
-            await _unitOfWork.ListMembershipRepository.AssignUserToShoppingListByUserRoleIdAsync(userId,
+            await _unitOfWork.ListMembershipRepository.AssignUserToShoppingListByUserRoleIdAsync(requestingUserId,
                 newShoppingListId, ownerUserRole.UserRoleId, ct);
 
             var checkListMembershipAddResult = await _unitOfWork.SaveChangesAsync(ct);
