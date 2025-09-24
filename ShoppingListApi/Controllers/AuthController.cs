@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using ShoppingListApi.Attributes;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Interfaces.Services;
 using ShoppingListApi.Model.DTOs.Get;
@@ -23,14 +24,12 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [PublicEndpoint] - Authenticates a user and returns user details if successful.
-        /// - Returns 200 OK with user details if login is successful.
-        /// - Returns 401 Unauthorized if the credentials are invalid.
-        /// - Returns 500 Internal Server Error for unexpected issues.
-        /// Use this endpoint to log in with email and password.
+        /// Use this endpoint to log in with email and password in base64 format.
         /// </summary>
         /// <param name="loginDataDto">The login credentials (email and password).</param>
         [HttpPost]
         [Route("login")]
+        [PublicEndpoint]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<ListUserGetDto>))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(AuthenticationErrorResponse))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<string>))]
@@ -63,15 +62,8 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [UserEndpoint] - Logs out a user by invalidating their API key.
-        /// - Returns 200 OK if logout is successful.
-        /// - Returns 400 Bad Request if credentials are missing.
-        /// - Returns 403 Forbidden if the API key does not belong to the user.
-        /// - Returns 404 Not Found if the API key is not found.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to log out by providing your user ID and API key.
         /// </summary>
-        /// <param name="requestingUserId">The ID of the user making the request (from header).</param>
-        /// <param name="apiKey">The API key to invalidate (from header).</param>
         [HttpPost]
         [Route("logout")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<Guid>))]
@@ -79,21 +71,24 @@ namespace ShoppingListApi.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(AuthenticationErrorResponse))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<object?>))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<Guid>))]
-        public async Task<ActionResult> Logout([FromHeader(Name = "USER-ID")] Guid? requestingUserId, [FromHeader(Name =
-                "USER-KEY")]
-            string? apiKey)
+        public async Task<ActionResult> Logout()
         {
-            if (requestingUserId is null || requestingUserId == Guid.Empty || string.IsNullOrWhiteSpace(apiKey))
-                return BadRequest(new ResponseResult<object?>(null, "Logout credentials missing!"));
+            var requestingUserIdStr = Request.Headers["USER-ID"].FirstOrDefault();
+            var apiKey = Request.Headers["USER-KEY"].FirstOrDefault();
+
+            if (string.IsNullOrEmpty(requestingUserIdStr) || string.IsNullOrWhiteSpace(apiKey))
+                return BadRequest(new ResponseResult<object?>(null, "User credentials missing!"));
+
+            var parseSuccessful = Guid.TryParse(requestingUserIdStr, out var requestingUserId);
+
+            if (parseSuccessful is not true)
+                return BadRequest(new ResponseResult<object?>(null, "The user Id is provided in an invalid format!"));
 
             var ct = CancellationTokenSource
                 .CreateLinkedTokenSource(_hostApplicationLifetime.ApplicationStopping, HttpContext.RequestAborted)
                 .Token;
 
-            var userId = requestingUserId.Value;
-
-            // expire API key
-            var logoutResult = await _appAuthenticationService.LogOut(userId, apiKey, ct);
+            var logoutResult = await _appAuthenticationService.LogOut(requestingUserId, apiKey, ct);
 
             if (logoutResult.Success is not true)
             {
@@ -111,11 +106,11 @@ namespace ShoppingListApi.Controllers
                         new AuthenticationErrorResponse(AuthorizationErrorEnum.IdAndKeyNotMatching));
                 }
 
-                return StatusCode(500, new ResponseResult<Guid>(userId,
+                return StatusCode(500, new ResponseResult<Guid>(requestingUserId,
                     "An internal server error occurred logging you out. Please try again later."));
             }
 
-            return Ok(new ResponseResult<Guid>(userId, "Logout successful."));
+            return Ok(new ResponseResult<Guid>(requestingUserId, "Logout successful."));
         }
     }
 }

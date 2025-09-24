@@ -12,7 +12,6 @@ namespace ShoppingListApi.Controllers
     [Route("[controller]")]
     [ApiController]
     public class ApplicationController(
-        IListUserService listUserService,
         IShoppingListService shoppingListService,
         IItemService itemService,
         IListMembershipService listMembershipService,
@@ -20,7 +19,6 @@ namespace ShoppingListApi.Controllers
         IHostApplicationLifetime hostApplicationLifetime,
         ILogger<ApplicationController> logger) : ControllerBase
     {
-        private readonly IListUserService _listUserService = listUserService;
         private readonly IShoppingListService _shoppingListService = shoppingListService;
         private readonly IItemService _itemService = itemService;
         private readonly IListMembershipService _listMembershipService = listMembershipService;
@@ -30,14 +28,9 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [UserEndpoint] - Retrieves all shopping lists for a user (list owner).
-        /// - Returns 200 OK with a list of shopping lists if any exist.
-        /// - Returns 204 No Content if no shopping lists are found.
-        /// - Returns 401 Unauthorized if the user credentials are missing or access is not granted.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to get all shopping lists for a user by their user ID.
         /// </summary>
         /// <param name="userId">The ID of the list owner.</param>
-        /// <param name="requestingUserId">The ID of the user making the request (from header).</param>
         /// <returns></returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -45,21 +38,21 @@ namespace ShoppingListApi.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(AuthenticationErrorResponse))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
         [Route("User/{userId:Guid}/ShoppingList/all")]
-        public async Task<ActionResult> GetShoppingListsForUser([FromRoute] Guid userId,
-            [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
+        public async Task<ActionResult> GetShoppingListsForUser([FromRoute] Guid userId)
         {
-            if (requestingUserId is null)
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
+            var checkAccessResult = CheckAccess(Request, userId);
 
-            if (!requestingUserId.Equals(userId))
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
+            if (checkAccessResult.ActionResult is not null)
+                return checkAccessResult.ActionResult;
+
+            var requestingUserId = checkAccessResult.RequestingUserId!.Value;
 
             var ct = CancellationTokenSource
                 .CreateLinkedTokenSource(_hostApplicationLifetime.ApplicationStopping, HttpContext.RequestAborted)
                 .Token;
 
             var result =
-                await _shoppingListService.CheckAccessAndGetAllShoppingListsForUser(requestingUserId.Value, userId,
+                await _shoppingListService.CheckAccessAndGetAllShoppingListsForUser(requestingUserId, userId,
                     ct);
 
             if (result.AccessGranted is false)
@@ -74,15 +67,10 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [UserEndpoint] - Retrieves a single shopping list by its ID for a user (list owner).
-        /// - Returns 200 OK with the shopping list if found.
-        /// - Returns 404 Not Found if the shopping list does not exist.
-        /// - Returns 401 Unauthorized if the user credentials are missing or access is not granted.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to get a shopping list by its ID and user ID.
         /// </summary>
         /// <param name="userId">The ID of the list owner.</param>
         /// <param name="shoppingListId">The ID of the shopping list.</param>
-        /// <param name="requestingUserId">The ID of the user making the request (from header).</param>
         /// <returns></returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<Dictionary<string, Guid>>))]
@@ -90,21 +78,21 @@ namespace ShoppingListApi.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<ShoppingListGetDto>))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
         [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}")]
-        public async Task<ActionResult> GetShoppingListForUser([FromRoute] Guid userId, [FromRoute] Guid shoppingListId,
-            [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
+        public async Task<ActionResult> GetShoppingListForUser([FromRoute] Guid userId, [FromRoute] Guid shoppingListId)
         {
-            if (requestingUserId is null)
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
+            var checkAccessResult = CheckAccess(Request, userId);
 
-            if (!requestingUserId.Equals(userId))
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
+            if (checkAccessResult.ActionResult is not null)
+                return checkAccessResult.ActionResult;
+
+            var requestingUserId = checkAccessResult.RequestingUserId!.Value;
 
             var ct = CancellationTokenSource
                 .CreateLinkedTokenSource(_hostApplicationLifetime.ApplicationStopping, HttpContext.RequestAborted)
                 .Token;
 
             var result =
-                await _shoppingListService.CheckAccessAndGetShoppingListByIdAsync(requestingUserId.Value, userId,
+                await _shoppingListService.CheckAccessAndGetShoppingListByIdAsync(requestingUserId, userId,
                     shoppingListId, ct);
 
             if (result.AccessGranted is false)
@@ -130,16 +118,10 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [UserEndpoint] - Adds a new shopping list for a user (list owner).
-        /// - Returns 201 Created with the new shopping list ID if successful.
-        /// - Returns 400 Bad Request if the maximum number of lists is reached.
-        /// - Returns 403 Forbidden if access is not granted.
-        /// - Returns 409 Conflict if a list with the same name exists.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to add a new shopping list for a user by their user ID.
         /// </summary>
         /// <param name="userId">The ID of the list owner.</param>
         /// <param name="shoppingListPostDto">The shopping list details.</param>
-        /// <param name="requestingUserId">The ID of the user making the request (from header).</param>
         /// <returns></returns>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ResponseResult<Guid>))]
@@ -150,14 +132,14 @@ namespace ShoppingListApi.Controllers
             Type = typeof(ResponseResult<ShoppingListPostDto>))]
         [Route("User/{userId:Guid}/ShoppingList")]
         public async Task<ActionResult> AddShoppingListForUser([FromRoute] Guid userId,
-            [FromBody] ShoppingListPostDto shoppingListPostDto,
-            [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
+            [FromBody] ShoppingListPostDto shoppingListPostDto)
         {
-            if (requestingUserId is null)
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
+            var checkAccessResult = CheckAccess(Request, userId);
 
-            if (!requestingUserId.Equals(userId))
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
+            if (checkAccessResult.ActionResult is not null)
+                return checkAccessResult.ActionResult;
+
+            var requestingUserId = checkAccessResult.RequestingUserId!.Value;
 
             var ct = CancellationTokenSource
                 .CreateLinkedTokenSource(_hostApplicationLifetime.ApplicationStopping, HttpContext.RequestAborted)
@@ -170,7 +152,7 @@ namespace ShoppingListApi.Controllers
                 maxNumberOfListsPerUser = 5;
 
             var result =
-                await _shoppingListService.CheckConflictAndCreateShoppingListAsync(requestingUserId.Value, userId,
+                await _shoppingListService.CheckConflictAndCreateShoppingListAsync(requestingUserId, userId,
                     shoppingListPostDto, ct);
 
             if (result.AccessGranted is not true)
@@ -216,17 +198,11 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [UserEndpoint] - Adds a new item to a shopping list.
-        /// - Returns 200 OK with the new item ID if successful.
-        /// - Returns 400 Bad Request if the maximum number of items is reached.
-        /// - Returns 403 Forbidden if access is not granted.
-        /// - Returns 404 Not Found if the shopping list does not exist.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to add a new item to a shopping list by its ID.
         /// </summary>
         /// <param name="userId">The ID of the list owner.</param>
         /// <param name="shoppingListId">The ID of the shopping list.</param>
         /// <param name="itemPostDto">The item details.</param>
-        /// <param name="requestingUserId">The ID of the user making the request (from header).</param>
         /// <returns></returns>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<Guid>))]
@@ -236,13 +212,14 @@ namespace ShoppingListApi.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
         [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}/Item")]
         public async Task<ActionResult> AddItemToShoppingList([FromRoute] Guid userId, [FromRoute] Guid shoppingListId,
-            [FromBody] ItemPostDto itemPostDto, [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
+            [FromBody] ItemPostDto itemPostDto)
         {
-            if (requestingUserId is null)
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
+            var checkAccessResult = CheckAccess(Request, userId);
 
-            if (!requestingUserId.Equals(userId))
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
+            if (checkAccessResult.ActionResult is not null)
+                return checkAccessResult.ActionResult;
+
+            var requestingUserId = checkAccessResult.RequestingUserId!.Value;
 
             var ct = CancellationTokenSource
                 .CreateLinkedTokenSource(_hostApplicationLifetime.ApplicationStopping, HttpContext.RequestAborted)
@@ -252,7 +229,7 @@ namespace ShoppingListApi.Controllers
 
             if (maxItemsAmount <= 0) maxItemsAmount = 20;
 
-            var result = await _itemService.FindShoppingListAndAddItemAsync(requestingUserId.Value,
+            var result = await _itemService.FindShoppingListAndAddItemAsync(requestingUserId,
                 shoppingListId, itemPostDto, ct);
 
             if (result.Success is not true || result.ItemId is null)
@@ -284,15 +261,8 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [UserEndpoint] - Adds a collaborator to a shopping list by the list owner.
-        /// - Returns 201 Created if the collaborator was added successfully.
-        /// - Returns 400 Bad Request if the collaborator is not found.
-        /// - Returns 401 Unauthorized if the user credentials are missing or access is not granted.
-        /// - Returns 404 Not Found if the shopping list or collaborator does not exist.
-        /// - Returns 409 Conflict if the collaborator is already added.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to add a collaborator to a shopping list by the list owner's user ID.
         /// </summary>
-        /// <param name="requestingUserId">The ID of the user making the request (from header).</param>
         /// <param name="userId">The ID of the list owner.</param>
         /// <param name="shoppingListId">The ID of the shopping list.</param>
         /// <param name="collaboratorEmailAddress">The email address of the collaborator to add.</param>
@@ -306,21 +276,21 @@ namespace ShoppingListApi.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
         [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}/Collaborator/{collaboratorEmailAddress}")]
         public async Task<ActionResult> AddCollaboratorToShoppingList(
-            [FromHeader(Name = "USER-ID")] Guid? requestingUserId,
             Guid userId, Guid shoppingListId, string collaboratorEmailAddress)
         {
-            if (requestingUserId is null)
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
+            var checkAccessResult = CheckAccess(Request, userId);
 
-            if (requestingUserId != userId)
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
+            if (checkAccessResult.ActionResult is not null)
+                return checkAccessResult.ActionResult;
+
+            var requestingUserId = checkAccessResult.RequestingUserId!.Value;
 
             var ct = CancellationTokenSource
                 .CreateLinkedTokenSource(_hostApplicationLifetime.ApplicationStopping, HttpContext.RequestAborted)
                 .Token;
 
             var result =
-                await _listMembershipService.AddCollaboratorToShoppingListAsListOwnerAsync(requestingUserId.Value,
+                await _listMembershipService.AddCollaboratorToShoppingListAsListOwnerAsync(requestingUserId,
                     collaboratorEmailAddress, shoppingListId, ct);
 
             if (result.Success is not true)
@@ -371,17 +341,11 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [UserEndpoint] - Modifies the name of a shopping list by the list owner.
-        /// - Returns 200 OK if the name was updated successfully.
-        /// - Returns 403 Forbidden if access is not granted.
-        /// - Returns 404 Not Found if the shopping list does not exist.
-        /// - Returns 409 Conflict if the new name would cause a conflict.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to update the name of a shopping list by its ID.
         /// </summary>
         /// <param name="userId">The ID of the list owner.</param>
         /// <param name="shoppingListId">The ID of the shopping list.</param>
         /// <param name="shoppingListPostDto">The new shopping list details.</param>
-        /// <param name="requestingUserId">The ID of the user making the request (from header).</param>
         /// <returns></returns>
         [HttpPatch]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<string>))]
@@ -392,19 +356,20 @@ namespace ShoppingListApi.Controllers
             Type = typeof(ResponseResult<ShoppingListPostDto>))]
         [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}")]
         public async Task<ActionResult> ModifyShoppingListName([FromRoute] Guid userId, [FromRoute] Guid shoppingListId,
-            [FromBody] ShoppingListPostDto shoppingListPostDto, [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
+            [FromBody] ShoppingListPostDto shoppingListPostDto)
         {
-            if (requestingUserId is null)
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
+            var checkAccessResult = CheckAccess(Request, userId);
 
-            if (!userId.Equals(requestingUserId))
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
+            if (checkAccessResult.ActionResult is not null)
+                return checkAccessResult.ActionResult;
+
+            var requestingUserId = checkAccessResult.RequestingUserId!.Value;
 
             var ct = CancellationTokenSource
                 .CreateLinkedTokenSource(_hostApplicationLifetime.ApplicationStopping, HttpContext.RequestAborted)
                 .Token;
 
-            var result = await _shoppingListService.CheckAccessAndUpdateShoppingListNameAsync(requestingUserId.Value,
+            var result = await _shoppingListService.CheckAccessAndUpdateShoppingListNameAsync(requestingUserId,
                 shoppingListId, shoppingListPostDto, ct);
 
             if (result.Success is not true)
@@ -431,18 +396,12 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [UserEndpoint] - Modifies the details of an item in a shopping list.
-        /// - Returns 200 OK if the item was updated successfully.
-        /// - Returns 400 Bad Request if no valid fields to update were provided.
-        /// - Returns 403 Forbidden if access is not granted.
-        /// - Returns 404 Not Found if the item or shopping list does not exist.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to update the details of an item in a shopping list by its ID.
         /// </summary>
         /// <param name="userId">The ID of the list owner.</param>
         /// <param name="shoppingListId">The ID of the shopping list.</param>
         /// <param name="itemId">The ID of the item to update.</param>
         /// <param name="itemPatchDto">The new item details.</param>
-        /// <param name="requestingUserId">The ID of the user making the request (from header).</param>
         /// <returns></returns>
         [HttpPatch]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<ItemPatchDto>))]
@@ -452,13 +411,14 @@ namespace ShoppingListApi.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
         [Route("User/{userId:Guid}/ShoppingList/{shoppingListId}/Item/{itemId:Guid}")]
         public async Task<ActionResult> ModifyItemDetails(Guid userId, Guid shoppingListId, Guid itemId,
-            ItemPatchDto itemPatchDto, [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
+            ItemPatchDto itemPatchDto)
         {
-            if (requestingUserId is null)
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
+            var checkAccessResult = CheckAccess(Request, userId);
 
-            if (!userId.Equals(requestingUserId.Value))
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
+            if (checkAccessResult.ActionResult is not null)
+                return checkAccessResult.ActionResult;
+
+            var requestingUserId = checkAccessResult.RequestingUserId!.Value;
 
             if (itemPatchDto.ItemName is null && itemPatchDto.ItemAmount is null)
                 return BadRequest(
@@ -469,7 +429,7 @@ namespace ShoppingListApi.Controllers
                 .Token;
 
             var result =
-                await _itemService.FindItemAndUpdateAsync(requestingUserId.Value, shoppingListId, itemId, itemPatchDto,
+                await _itemService.FindItemAndUpdateAsync(requestingUserId, shoppingListId, itemId, itemPatchDto,
                     ct);
 
             if (result.Success is not true)
@@ -496,15 +456,10 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [UserEndpoint] - Removes a shopping list for the list owner.
-        /// - Returns 200 OK if the shopping list was deleted successfully.
-        /// - Returns 403 Forbidden if access is not granted.
-        /// - Returns 404 Not Found if the shopping list does not exist.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to delete a shopping list by its ID.
         /// </summary>
         /// <param name="userId">The ID of the list owner.</param>
         /// <param name="shoppingListId">The ID of the shopping list to delete.</param>
-        /// <param name="requestingUserId">The ID of the user making the request (from header).</param>
         /// <returns></returns>
         [HttpDelete]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<int>))]
@@ -512,21 +467,21 @@ namespace ShoppingListApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<Guid>))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
         [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}")]
-        public async Task<ActionResult> RemoveShoppingList([FromRoute] Guid userId, [FromRoute] Guid shoppingListId,
-            [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
+        public async Task<ActionResult> RemoveShoppingList([FromRoute] Guid userId, [FromRoute] Guid shoppingListId)
         {
-            if (requestingUserId is null)
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
+            var checkAccessResult = CheckAccess(Request, userId);
 
-            if (!requestingUserId.Equals(userId))
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
+            if (checkAccessResult.ActionResult is not null)
+                return checkAccessResult.ActionResult;
+
+            var requestingUserId = checkAccessResult.RequestingUserId!.Value;
 
             var ct = CancellationTokenSource
                 .CreateLinkedTokenSource(_hostApplicationLifetime.ApplicationStopping, HttpContext.RequestAborted)
                 .Token;
 
             var result = await _shoppingListService.CheckAccessAndDeleteShoppingListAsync(
-                requestingUserId.Value, shoppingListId, ct);
+                requestingUserId, shoppingListId, ct);
 
             if (result.Success is not true)
             {
@@ -550,16 +505,11 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [UserEndpoint] - Removes an item from a shopping list.
-        /// - Returns 200 OK if the item was deleted successfully.
-        /// - Returns 403 Forbidden if access is not granted.
-        /// - Returns 404 Not Found if the item or shopping list does not exist.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to delete an item from a shopping list by its ID.
         /// </summary>
         /// <param name="userId">The ID of the list owner.</param>
         /// <param name="shoppingListId">The ID of the shopping list.</param>
         /// <param name="itemId">The ID of the item to delete.</param>
-        /// <param name="requestingUserId">The ID of the user making the request (from header).</param>
         /// <returns></returns>
         [HttpDelete]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<string>))]
@@ -568,20 +518,20 @@ namespace ShoppingListApi.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
         [Route(("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}/Item/{itemId:Guid}"))]
         public async Task<ActionResult> RemoveItemFromShoppingList([FromRoute] Guid userId,
-            [FromRoute] Guid shoppingListId, [FromRoute] Guid itemId,
-            [FromHeader(Name = "USER-ID")] Guid? requestingUserId)
+            [FromRoute] Guid shoppingListId, [FromRoute] Guid itemId)
         {
-            if (requestingUserId is null)
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
+            var checkAccessResult = CheckAccess(Request, userId);
 
-            if (!requestingUserId.Equals(userId))
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
+            if (checkAccessResult.ActionResult is not null)
+                return checkAccessResult.ActionResult;
+
+            var requestingUserId = checkAccessResult.RequestingUserId!.Value;
 
             var ct = CancellationTokenSource
                 .CreateLinkedTokenSource(_hostApplicationLifetime.ApplicationStopping, HttpContext.RequestAborted)
                 .Token;
 
-            var result = await _itemService.FindItemAndDeleteAsync(requestingUserId.Value, shoppingListId, itemId, ct);
+            var result = await _itemService.FindItemAndDeleteAsync(requestingUserId, shoppingListId, itemId, ct);
 
             if (result.Success is not true)
             {
@@ -608,14 +558,8 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [UserEndpoint] - Removes a collaborator from a shopping list. Either the list owner removes a collaborator or a collaborator leaves the list.
-        /// - Returns 200 OK if the collaborator was removed successfully.
-        /// - Returns 400 Bad Request if the collaborator is not found.
-        /// - Returns 403 Forbidden if access is not granted.
-        /// - Returns 404 Not Found if the shopping list or collaborator does not exist.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to remove a collaborator from a shopping list by the list owner's user ID.
         /// </summary>
-        /// <param name="requestingUserId">The ID of the user making the request (from header).</param>
         /// <param name="userId">The ID of the list owner.</param>
         /// <param name="shoppingListId">The ID of the shopping list.</param>
         /// <param name="collaboratorId">The ID of the collaborator to remove.</param>
@@ -627,15 +571,15 @@ namespace ShoppingListApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<Guid>))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
         [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}/Collaborator/{collaboratorId:Guid}/kick")]
-        public async Task<ActionResult> KickCollaboratorFromShoppingList(
-            [FromHeader(Name = "USER-ID")] Guid? requestingUserId, [FromRoute] Guid userId,
+        public async Task<ActionResult> KickCollaboratorFromShoppingList([FromRoute] Guid userId,
             [FromRoute] Guid shoppingListId, [FromRoute] Guid collaboratorId)
         {
-            if (requestingUserId is null)
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
+            var checkAccessResult = CheckAccess(Request, userId);
 
-            if (!requestingUserId.Equals(userId))
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
+            if (checkAccessResult.ActionResult is not null)
+                return checkAccessResult.ActionResult;
+
+            var requestingUserId = checkAccessResult.RequestingUserId!.Value;
 
             var ct = CancellationTokenSource
                 .CreateLinkedTokenSource(_hostApplicationLifetime.ApplicationStopping, HttpContext.RequestAborted)
@@ -643,7 +587,7 @@ namespace ShoppingListApi.Controllers
 
             var result =
                 await _listMembershipService.RemoveCollaboratorFromShoppingListAsListOwnerAsync(
-                    requestingUserId.Value, collaboratorId, shoppingListId, ct);
+                    requestingUserId, collaboratorId, shoppingListId, ct);
 
 
             if (result.Success is not true)
@@ -667,14 +611,8 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [UserEndpoint] - Removes a collaborator from a shopping list. Either the list owner kicks a collaborator or a collaborator leaves the list.
-        /// - Returns 200 OK if the collaborator was removed successfully.
-        /// - Returns 400 Bad Request if the collaborator is not found.
-        /// - Returns 403 Forbidden if access is not granted.
-        /// - Returns 404 Not Found if the shopping list or collaborator does not exist.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to remove a collaborator from a shopping list by the list owner's user ID.
         /// </summary>
-        /// <param name="requestingUserId">The ID of the user making the request (from header).</param>
         /// <param name="userId">The ID of the list owner.</param>
         /// <param name="shoppingListId">The ID of the shopping list.</param>
         /// <param name="collaboratorId">The ID of the collaborator to remove.</param>
@@ -686,22 +624,22 @@ namespace ShoppingListApi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<Guid>))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<object?>))]
         [Route("User/{userId:Guid}/ShoppingList/{shoppingListId:Guid}/Collaborator/{collaboratorId:Guid}/leave")]
-        public async Task<ActionResult> LeaveShoppingListAsCollaborator(
-            [FromHeader(Name = "USER-ID")] Guid? requestingUserId,
-            [FromRoute] Guid userId, [FromRoute] Guid shoppingListId, [FromRoute] Guid collaboratorId)
+        public async Task<ActionResult> LeaveShoppingListAsCollaborator([FromRoute] Guid userId,
+            [FromRoute] Guid shoppingListId, [FromRoute] Guid collaboratorId)
         {
-            if (requestingUserId is null)
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing));
+            var checkAccessResult = CheckAccess(Request, userId);
 
-            if (!requestingUserId.Equals(collaboratorId))
-                return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted));
+            if (checkAccessResult.ActionResult is not null)
+                return checkAccessResult.ActionResult;
+
+            var requestingUserId = checkAccessResult.RequestingUserId!.Value;
 
             var ct = CancellationTokenSource
                 .CreateLinkedTokenSource(_hostApplicationLifetime.ApplicationStopping, HttpContext.RequestAborted)
                 .Token;
 
             var result =
-                await _listMembershipService.LeaveShoppingListAsCollaboratorAsync(requestingUserId.Value,
+                await _listMembershipService.LeaveShoppingListAsCollaboratorAsync(requestingUserId,
                     shoppingListId, collaboratorId, ct);
 
             if (result.Success is not true)
@@ -721,6 +659,28 @@ namespace ShoppingListApi.Controllers
 
             return Ok(new ResponseResult<int>(result.RecordsAffected,
                 "Successfully removed! Amount of deleted records is attached."));
+        }
+
+        private (ActionResult? ActionResult, Guid? RequestingUserId) CheckAccess(HttpRequest request, Guid userId)
+        {
+            var requestingUserIdStr = request.Headers["USER-ID"].FirstOrDefault();
+            var apiKey = request.Headers["USER-KEY"].FirstOrDefault();
+
+            if (string.IsNullOrEmpty(requestingUserIdStr) || string.IsNullOrWhiteSpace(apiKey))
+                return (Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.UserCredentialsMissing)),
+                    null);
+
+            var parseSuccessful = Guid.TryParse(requestingUserIdStr, out var requestingUserId);
+
+            if (parseSuccessful is not true)
+                return (BadRequest(new ResponseResult<object?>(null, "The user Id is provided in an invalid format!")),
+                    null);
+
+            if (!requestingUserId.Equals(userId))
+                return (Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.ListAccessNotGranted)),
+                    null);
+
+            return (null, requestingUserId);
         }
     }
 }

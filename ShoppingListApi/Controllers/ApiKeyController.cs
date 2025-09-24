@@ -20,9 +20,6 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [AdminEndpoint] - Retrieves an API key by its ID for a specific user. Admin endpoint.
-        /// - Returns 200 OK with the API key if found.
-        /// - Returns 404 Not Found if the API key does not exist for the user.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to get an API key by its ID and user ID as an admin.
         /// </summary>
         /// <param name="apiKeyId">The ID of the API key to retrieve.</param>
@@ -52,9 +49,6 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [AdminEndpoint] - Invalidates a specific API key for a user. Admin endpoint.
-        /// - Returns 200 OK if the API key was successfully invalidated.
-        /// - Returns 404 Not Found if the API key does not exist for the user.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to invalidate an API key by its ID and user ID as an admin.
         /// </summary>
         /// <param name="apiKeyId">The ID of the API key to invalidate.</param>
@@ -107,9 +101,6 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [AdminEndpoint] - Invalidates all API keys for a specific user. Admin endpoint.
-        /// - Returns 200 OK if all API keys were successfully invalidated.
-        /// - Returns 204 No Content if the user does not exist or has no API keys.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to invalidate all API keys for a user as an admin.
         /// </summary>
         /// <param name="userId">The ID of the user whose API keys will be invalidated.</param>
@@ -148,8 +139,6 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [AdminEndpoint] - Deletes all expired API keys. Admin endpoint.
-        /// - Returns 200 OK with the number of deleted API keys if successful.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to delete all expired API keys as an admin.
         /// </summary>
         [HttpDelete]

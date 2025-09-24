@@ -25,9 +25,6 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [PublicEndpoint] - Registers a new user account.
-        /// - Returns 201 Created with the new user ID if registration is successful.  
-        /// - Returns 409 Conflict if the email address is already registered.  
-        /// - Returns 500 Internal Server Error for unexpected issues.  
         /// Use this endpoint to create a new user by providing the required registration details.
         /// </summary>
         [HttpPost]
@@ -58,11 +55,6 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [UserEndpoint] - Modifies the first and/or last name of a user.
-        /// - Returns 200 OK if the update is successful.
-        /// - Returns 400 Bad Request if no fields are provided to update.
-        /// - Returns 403 Forbidden if the user is not authorized to modify the details.
-        /// - Returns 404 Not Found if the user does not exist.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to update your first and/or last name by providing the required details.
         /// </summary>
         [HttpPatch]
@@ -113,10 +105,6 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [UserEndpoint] - Deletes the user account for the specified user ID.
-        /// - Returns 200 OK with the number of records deleted if successful.
-        /// - Returns 403 Forbidden if the user is not authorized to delete the account.
-        /// - Returns 404 Not Found if the user does not exist.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to delete your own user account.
         /// </summary>
         /// <param name="userId">The ID of the user to delete.</param>
@@ -165,9 +153,6 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [AdminEndpoint] - Retrieves user details by email address. Admin endpoint.
-        /// - Returns 200 OK with user details if found.
-        /// - Returns 404 Not Found if the user does not exist.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to get user details by email address as an admin.
         /// </summary>
         /// <param name="emailAddress">The email address of the user to retrieve.</param>
@@ -195,9 +180,6 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [AdminEndpoint] - Retrieves user details by user ID. Admin endpoint.
-        /// - Returns 200 OK with user details if found.
-        /// - Returns 404 Not Found if the user does not exist.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to get user details by user ID as an admin.
         /// </summary>
         /// <param name="userId">The ID of the user to retrieve.</param>
@@ -225,9 +207,6 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [AdminEndpoint] - Retrieves a list of all registered users with minimal data. Admin endpoint.
-        /// - Returns 200 OK with a list of users if any exist.
-        /// - Returns 204 No Content if no users are found.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to get a list of all users as an admin.
         /// </summary>
         [HttpGet]
@@ -254,9 +233,6 @@ namespace ShoppingListApi.Controllers
 
         /// <summary>
         /// [AdminEndpoint] - Removes all data of a user from the database by their user ID. Admin endpoint.
-        /// - Returns 200 OK with the number of records deleted if successful.
-        /// - Returns 404 Not Found if the user does not exist.
-        /// - Returns 500 Internal Server Error for unexpected issues.
         /// Use this endpoint to delete a user as an admin.
         /// </summary>
         /// <param name="userId">The ID of the user to delete.</param>

@@ -4,8 +4,8 @@ namespace ShoppingListApi.Model.DTOs.Post;
 
 public record LoginDataDto
 {
-    public string EmailAddress;
-    public string Password;
+    public string EmailAddress { get; set; }
+    public string Password { get; set; }
 
     public LoginDataDto(string emailAddress, string password)
     {
