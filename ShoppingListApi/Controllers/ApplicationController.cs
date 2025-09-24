@@ -76,7 +76,7 @@ namespace ShoppingListApi.Controllers
         /// <returns></returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ResponseResult<object?>))]
-        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ResponseResult<object?>))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(Dictionary<string, Guid>))]
         [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(AuthenticationErrorResponse))]
         [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(AuthenticationErrorResponse))]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ResponseResult<ShoppingListGetDto>))]
