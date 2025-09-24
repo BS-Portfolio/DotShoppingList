@@ -10,6 +10,10 @@ using System;
 
 public static class LoggerExtensions
 {
+    /// <summary>
+    /// Logs an exception with the specified log level, error number, message, class name, and method name.
+    /// Supports Error and Critical log levels. Includes stack trace in the log output.
+    /// </summary>
     public static void LogWithLevel<T>(this ILogger<T> log, LogLevel logLevel, Exception ex, string errorNumber,
         string message, string className, string methodName)
     {
@@ -33,6 +37,10 @@ public static class LoggerExtensions
 
 public static class ControllerExtensions
 {
+    /// <summary>
+    /// Checks the request headers for USER-ID and USER-KEY, validates the user ID format, and returns an appropriate ActionResult for unauthorized or bad requests.
+    /// Returns the parsed user ID and API key if valid, otherwise returns an error ActionResult.
+    /// </summary>
     public static (ActionResult? ActionResult, Guid? RequestingUserId, string? ApiKey) CheckAccess(this ControllerBase controllerBase)
     {
         var requestingUserIdStr = controllerBase.Request.Headers["USER-ID"].FirstOrDefault();
@@ -58,6 +66,10 @@ public static class ControllerExtensions
 
 public static class StringExtensions
 {
+    /// <summary>
+    /// Determines if the input string is a valid email address using a regular expression.
+    /// Returns true if the input matches the email pattern, otherwise false.
+    /// </summary>
     public static bool IsEmail(this string input)
     {
         if (string.IsNullOrWhiteSpace(input))

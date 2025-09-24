@@ -15,6 +15,10 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
     private readonly ILogger<ListMembershipService> _logger = logger;
 
 
+    /// <summary>
+    /// Adds a collaborator to a shopping list as the list owner, checking for user existence, role, and conflicts.
+    /// Returns an AddCollaboratorResult with state flags.
+    /// </summary>
     public async Task<AddCollaboratorResult> AddCollaboratorToShoppingListAsListOwnerAsync(
         Guid requestingUserId, string collaboratorEmailAddress, Guid shoppingListId, CancellationToken ct = default)
     {
@@ -75,6 +79,10 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
         }
     }
 
+    /// <summary>
+    /// Assigns a user to a shopping list as an admin, checking for existing membership conflicts.
+    /// Returns an AddRecordResult with state flags and the new or conflicting membership.
+    /// </summary>
     public async Task<AddRecordResult<ListMembership?, ListMembership?>> AssignUserToShoppingListAsAdminAsync(
         Guid userRoleId, Guid userId, Guid shoppingListId, CancellationToken ct = default)
     {
@@ -109,12 +117,9 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
     }
 
     /// <summary>
-    /// Make sure the dependencies are removed first (e.g. items assigned to the user in the shopping list)
+    /// Removes a user from a shopping list as an application admin, after ensuring dependencies are removed.
+    /// Returns a RemoveRecordResult with state flags and affected records count.
     /// </summary>
-    /// <param name="userId"></param>
-    /// <param name="shoppingListId"></param>
-    /// <param name="ct"></param>
-    /// <returns></returns>
     public async Task<RemoveRecordResult> RemoveUserFromShoppingListAsApplicationAdminAsync(Guid userId,
         Guid shoppingListId,
         CancellationToken ct = default)
@@ -146,13 +151,9 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
     }
 
     /// <summary>
-    /// Check if the owner user wants to delete themselves. If so, reject the operation.
+    /// Removes a collaborator from a shopping list as the list owner, checking for owner self-removal and user role.
+    /// Returns a RemoveRestrictedRecordResult with state flags and affected records count.
     /// </summary>
-    /// <param name="requestingUserId"></param>
-    /// <param name="collaboratorUserId"></param>
-    /// <param name="shoppingListId"></param>
-    /// <param name="ct"></param>
-    /// <returns></returns>
     public async Task<RemoveRestrictedRecordResult> RemoveCollaboratorFromShoppingListAsListOwnerAsync(
         Guid requestingUserId, Guid collaboratorUserId, Guid shoppingListId, CancellationToken ct = default)
     {
@@ -192,6 +193,10 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
         }
     }
 
+    /// <summary>
+    /// Allows a collaborator to leave a shopping list, checking for user role and membership existence.
+    /// Returns a RemoveRestrictedRecordResult with state flags and affected records count.
+    /// </summary>
     public async Task<RemoveRestrictedRecordResult> LeaveShoppingListAsCollaboratorAsync(Guid requestingUserId,
         Guid collaboratorUserId, Guid shoppingListId, CancellationToken ct = default)
     {

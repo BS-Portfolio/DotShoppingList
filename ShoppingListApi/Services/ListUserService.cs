@@ -16,6 +16,10 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
 
     private readonly ILogger<ListUserService> _logger = logger;
 
+    /// <summary>
+    /// Retrieves a ListUser with all related details by email address.
+    /// Returns null if not found.
+    /// </summary>
     public Task<ListUser?> GetWitDetailsByEmailAddressAsync(string emailAddress,
         CancellationToken ct = default)
     {
@@ -32,6 +36,10 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
         }
     }
 
+    /// <summary>
+    /// Retrieves a ListUser with all related details by user ID.
+    /// Returns null if not found.
+    /// </summary>
     public Task<ListUser?> GetWithDetailsByIdAsync(Guid userId, CancellationToken ct = default)
     {
         try
@@ -47,6 +55,9 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
         }
     }
 
+    /// <summary>
+    /// Retrieves all users as minimal DTOs.
+    /// </summary>
     public async Task<List<ListUserMinimalGetDto>> GetAllUsersAsync(CancellationToken ct = default)
     {
         try
@@ -64,6 +75,10 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
         }
     }
 
+    /// <summary>
+    /// Creates a new ListUser, checking for email conflicts.
+    /// Returns the result including the new user ID or conflicting user if one exists.
+    /// </summary>
     public async Task<AddRecordResult<Guid?, ListUser?>> CheckConflictAndCreateUserAsync(
         ListUserCreateDto listUserCreateDto,
         CancellationToken ct = default)
@@ -95,6 +110,10 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
         }
     }
 
+    /// <summary>
+    /// Updates the name of a ListUser, checking access and existence.
+    /// Returns an UpdateRestrictedRecordResult with state flags.
+    /// </summary>
     public async Task<UpdateRestrictedRecordResult<ListUser?>> CheckAccessAndUpdateNameAsync(
         Guid requestingUserId, ListUserPatchDto listUserPatchDto, CancellationToken ct = default)
     {
@@ -123,6 +142,10 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
         }
     }
 
+    /// <summary>
+    /// Updates the password of a ListUser, checking access and existence.
+    /// Returns an UpdateRestrictedRecordResult with state flags.
+    /// </summary>
     public async Task<UpdateRestrictedRecordResult<ListUser?>> CheckAccessAndUpdatePasswordAsync(Guid requestingUserId,
         string newPasswordHash, CancellationToken ct = default)
     {
@@ -152,6 +175,10 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
         }
     }
 
+    /// <summary>
+    /// Deletes a ListUser, checking access and existence. Involves a transaction for cascading deletes.
+    /// Returns a RemoveRestrictedRecordResult with state flags and affected records count.
+    /// </summary>
     public async Task<RemoveRestrictedRecordResult> CheckAccessAndDeleteUserAsync(Guid requestingUserId,
         CancellationToken ct = default)
     {
@@ -179,6 +206,39 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
         }
     }
 
+    /// <summary>
+    /// Deletes a ListUser as an app admin, checking existence. Involves a transaction for cascading deletes.
+    /// Returns a RemoveRecordResult with state flags and affected records count.
+    /// </summary>
+    public async Task<RemoveRecordResult> CheckExistenceAndDeleteUserAsAppAdminAsync(Guid listUserId,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var listUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(listUserId, ct);
+
+            if (listUser is null)
+                return new(false, true, 0);
+
+            return await DeleteUserAndCascadeAsync(listUser, ct);
+        }
+        catch (NumberedException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListUserService), nameof(CheckExistenceAndDeleteUserAsAppAdminAsync));
+            throw numberedException;
+        }
+    }
+
+    /// <summary>
+    /// Expires a ListUser as an admin, checking existence.
+    /// Returns an UpdateRecordResult with state flags.
+    /// </summary>
     public async Task<UpdateRecordResult<object?>> CheckExistenceAndExpireUserAsAdminAsync(Guid userId)
     {
         try
@@ -206,31 +266,10 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
         }
     }
 
-    public async Task<RemoveRecordResult> CheckExistenceAndDeleteUserAsAppAdminAsync(Guid listUserId,
-        CancellationToken ct = default)
-    {
-        try
-        {
-            var listUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(listUserId, ct);
-
-            if (listUser is null)
-                return new(false, true, 0);
-
-            return await DeleteUserAndCascadeAsync(listUser, ct);
-        }
-        catch (NumberedException)
-        {
-            throw;
-        }
-        catch (Exception e)
-        {
-            var numberedException = new NumberedException(e);
-            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ListUserService), nameof(CheckExistenceAndDeleteUserAsAppAdminAsync));
-            throw numberedException;
-        }
-    }
-
+    /// <summary>
+    /// Deletes a ListUser and all related entities (cascading delete). Involves a transaction to ensure atomicity and data integrity.
+    /// Returns a RemoveRecordResult with state flags and affected records count.
+    /// </summary>
     private async Task<RemoveRecordResult> DeleteUserAndCascadeAsync(ListUser listUser, CancellationToken ct = default)
     {
         try

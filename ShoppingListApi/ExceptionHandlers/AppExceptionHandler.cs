@@ -4,6 +4,14 @@ using ShoppingListApi.Exceptions;
 
 namespace ShoppingListApi.ExceptionHandlers;
 
+/// <summary>
+/// Handles exceptions thrown during request processing and generates appropriate ProblemDetails responses.
+/// - Logs the exception type and handler name.
+/// - Returns custom status codes and messages for client cancellations (499), server shutdowns (503), and format errors (400).
+/// - For other exceptions, returns a generic internal error (500).
+/// - Adds error numbers for NumberedException types to the response.
+/// - Uses IProblemDetailsService to write the response, or falls back to manual JSON response if needed.
+/// </summary>
 public sealed class AppExceptionHandler(
     ILogger<AppExceptionHandler> logger,
     IProblemDetailsService problemDetailsService) : IExceptionHandler
@@ -15,7 +23,7 @@ public sealed class AppExceptionHandler(
         Exception exception,
         CancellationToken cancellationToken)
     {
-        _logger.LogWarning("Handling exception of type {ExceptionType} in {HandlerName}",
+        _logger.LogError("Handling exception of type {ExceptionType} in {HandlerName}",
             exception is NumberedException
                 ? exception.InnerException?.GetType().FullName
                 : exception.GetType().FullName,
