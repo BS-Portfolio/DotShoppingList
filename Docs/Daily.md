@@ -1,3 +1,13 @@
+# Mittwoch, 24.09.25
+
+## Tasks:
+- Vorbereitung für das Fachgespräch
+- Letztes Refactoring
+- Peer Gespräch Sprint 4
+
+## Blocker:
+-
+
 # Dienstag, 23.09.25
 
 ## Tasks:
