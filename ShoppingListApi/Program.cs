@@ -128,7 +128,7 @@ app.UseCors("AllowSpecificOrigins");
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options => { options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None); });
 }
 
 app.UseHttpsRedirection();
