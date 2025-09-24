@@ -25,6 +25,9 @@ public class ListUser
 
     public DateTimeOffset CreationDateTime { get; set; }
 
+    public DateTimeOffset? ExpirationDateTime { get; set; } = null;
+
+
     public virtual ICollection<ApiKey> ApiKeys { get; set; } = [];
 
     public virtual ICollection<EmailConfirmationToken> EmailConfirmationTokens { get; set; } =

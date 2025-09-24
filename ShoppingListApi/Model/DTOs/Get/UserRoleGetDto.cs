@@ -1,15 +1,16 @@
-﻿namespace ShoppingListApi.Model.DTOs.Get;
+﻿using ShoppingListApi.Model.Entity;
 
-public class UserRoleGetDto
+namespace ShoppingListApi.Model.DTOs.Get;
+
+public record UserRoleGetDto(Guid UserRoleId, string UserRoleTitle)
 {
-    public Guid UserRoleId { get; set; }
-    public string UserRoleTitle { get; set; }
-    public int EnumIndex { get; set; }
-
-    public UserRoleGetDto(Guid userRoleId, string userRoleTitle, int enumIndex)
+    public static UserRoleGetDto FromUserRole(UserRole userRole)
     {
-        UserRoleId = userRoleId;
-        UserRoleTitle = userRoleTitle;
-        EnumIndex = enumIndex;
+        return new UserRoleGetDto(userRole.UserRoleId, userRole.UserRoleTitle);
+    }
+
+    public static List<UserRoleGetDto> FromUserRoleList(List<UserRole> userRoles)
+    {
+        return userRoles.Select(FromUserRole).ToList();
     }
 }

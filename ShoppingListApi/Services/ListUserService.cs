@@ -3,6 +3,7 @@ using ShoppingListApi.Enums;
 using ShoppingListApi.Exceptions;
 using ShoppingListApi.Interfaces.Services;
 using ShoppingListApi.Model.DTOs.Create;
+using ShoppingListApi.Model.DTOs.Get;
 using ShoppingListApi.Model.DTOs.Patch;
 using ShoppingListApi.Model.Entity;
 using ShoppingListApi.Model.ReturnTypes;
@@ -14,6 +15,54 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
 
     private readonly ILogger<ListUserService> _logger = logger;
+
+    public Task<ListUser?> GetWitDetailsByEmailAddressAsync(string emailAddress,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            return _unitOfWork.ListUserRepository.GetWithDetailsByEmailAddressAsync(emailAddress, ct);
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListUserService), nameof(GetWitDetailsByEmailAddressAsync));
+            throw numberedException;
+        }
+    }
+
+    public Task<ListUser?> GetWithDetailsByIdAsync(Guid userId, CancellationToken ct = default)
+    {
+        try
+        {
+            return _unitOfWork.ListUserRepository.GetWithDetailsByIdAsync(userId, ct);
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListUserService), nameof(GetWithDetailsByIdAsync));
+            throw numberedException;
+        }
+    }
+
+    public async Task<List<ListUserMinimalGetDto>> GetAllUsersAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var users = await _unitOfWork.ListUserRepository.GetAllWithoutDetailsAsync(ct);
+            
+            return ListUserMinimalGetDto.FromListUserBatch(users);
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListUserService), nameof(GetAllUsersAsync));
+            throw numberedException;
+        }
+    }
 
     public async Task<AddRecordResult<Guid?, ListUser?>> CheckConflictAndCreateUserAsync(
         ListUserCreateDto listUserCreateDto,
@@ -42,7 +91,7 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListUserService), nameof(CheckConflictAndCreateUserAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -73,7 +122,7 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListUserService), nameof(CheckAccessAndUpdateNameAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -106,7 +155,7 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListUserService), nameof(CheckAccessAndUpdatePasswordAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -136,7 +185,34 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListUserService), nameof(CheckAccessAndDeleteUserAsync));
-            throw;
+            throw numberedException;
+        }
+    }
+
+    public async Task<UpdateRecordResult<object?>> CheckExistenceAndExpireUserAsAdminAsync(Guid userId)
+    {
+        try
+        {
+            var targetUser = await _unitOfWork.ListUserRepository.GetWithoutDetailsByIdAsync(userId);
+
+            if (targetUser is null)
+                return new(false, false, false, null);
+
+            _unitOfWork.ListUserRepository.SetExpirationDateTime(targetUser, DateTimeOffset.UtcNow);
+
+            var checkResult = await _unitOfWork.SaveChangesAsync();
+
+            if (checkResult != 1)
+                return new(true, false, true, null);
+
+            return new(true, true, true, null);
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListUserService), nameof(CheckExistenceAndExpireUserAsAdminAsync));
+            throw numberedException;
         }
     }
 
@@ -161,7 +237,7 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListUserService), nameof(CheckExistenceAndDeleteUserAsAppAdminAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -207,8 +283,9 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
 
                 // delete its memberships
                 var memberships =
-                    await _unitOfWork.ListMembershipRepository.GetAllMembershipsWithoutCascadingInfoByShoppingListIdAsync(
-                        targetShoppingList.ShoppingListId, ct);
+                    await _unitOfWork.ListMembershipRepository
+                        .GetAllMembershipsWithoutCascadingInfoByShoppingListIdAsync(
+                            targetShoppingList.ShoppingListId, ct);
                 recordsToBeRemoved += memberships.Count;
 
                 _unitOfWork.ListMembershipRepository.DeleteBatch(memberships);
@@ -254,7 +331,7 @@ public class ListUserService(IUnitOfWork unitOfWork, ILogger<ListUserService> lo
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListUserService), nameof(DeleteUserAndCascadeAsync));
-            throw;
+            throw numberedException;
         }
     }
 }

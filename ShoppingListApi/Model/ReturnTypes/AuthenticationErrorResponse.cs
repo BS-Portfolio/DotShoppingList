@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel;
 using ShoppingListApi.Enums;
-using System.Reflection;
 
 namespace ShoppingListApi.Model.ReturnTypes;
 
@@ -17,8 +16,9 @@ namespace ShoppingListApi.Model.ReturnTypes;
 /// 8: You are not part of this list!
 /// 9: You are not allowed to execute the requested action!
 /// 10: Login failure!
+/// 11: User ID and API Key do not match!
 /// </summary>
-public class AuthenticationErrorResponse
+public record AuthenticationErrorResponse
 {
     public int AuthenticationErrorCode { get; }
     public string Message { get; }

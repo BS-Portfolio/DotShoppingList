@@ -15,7 +15,67 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
     private readonly ILogger<ListMembershipService> _logger = logger;
 
 
-    public async Task<AddRecordResult<ListMembership?, ListMembership?>> AssignUserToShoppingListAsync(
+    public async Task<AddCollaboratorResult> AddCollaboratorToShoppingListAsListOwnerAsync(
+        Guid requestingUserId, string collaboratorEmailAddress, Guid shoppingListId, CancellationToken ct = default)
+    {
+        try
+        {
+            var shoppingListExists =
+                await _unitOfWork.ShoppingListRepository.GetWithoutItemsByIdAsync(shoppingListId, ct);
+
+            if (shoppingListExists is null)
+                return new(false, false);
+
+            var requestingUserRole =
+                await _unitOfWork.ListMembershipRepository.GetUserRoleEnumInShoppingListAsync(requestingUserId,
+                    shoppingListId, ct);
+
+            if (requestingUserRole is not UserRoleEnum.ListOwner)
+                return new(false, true, false);
+
+            var collaboratorUser =
+                await _unitOfWork.ListUserRepository.GetWithoutDetailsByEmailAddressAsync(collaboratorEmailAddress, ct);
+
+            if (collaboratorUser is null)
+                return new(false, true, true, false);
+
+            if (collaboratorUser.UserId == requestingUserId)
+                return new(false);
+
+            var collaboratorUserRole =
+                await _unitOfWork.ListMembershipRepository.GetUserRoleEnumInShoppingListAsync(collaboratorUser.UserId,
+                    shoppingListId, ct);
+
+            if (collaboratorUserRole is UserRoleEnum.Collaborator)
+                return new(false, true, true, true, true);
+
+            var collaboratorRoleEntity = await _unitOfWork.UserRoleRepository
+                .GetByEnumAsync(UserRoleEnum.Collaborator, ct);
+
+            if (collaboratorRoleEntity is null)
+                return new(false, true, true, true, false, true);
+
+            await _unitOfWork.ListMembershipRepository
+                .AssignUserToShoppingListByUserRoleIdAsync(collaboratorUser.UserId, shoppingListId,
+                    collaboratorRoleEntity.UserRoleId, ct);
+
+            var checkResult = await _unitOfWork.SaveChangesAsync(ct);
+
+            if (checkResult != 1)
+                return new(false, true, true, true, false, false);
+
+            return new(true);
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ListMembershipService), nameof(AddCollaboratorToShoppingListAsListOwnerAsync));
+            throw numberedException;
+        }
+    }
+
+    public async Task<AddRecordResult<ListMembership?, ListMembership?>> AssignUserToShoppingListAsAdminAsync(
         Guid userRoleId, Guid userId, Guid shoppingListId, CancellationToken ct = default)
     {
         try
@@ -43,8 +103,8 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
         {
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
-                nameof(ListMembershipService), nameof(AssignUserToShoppingListAsync));
-            throw;
+                nameof(ListMembershipService), nameof(AssignUserToShoppingListAsAdminAsync));
+            throw numberedException;
         }
     }
 
@@ -81,7 +141,7 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListMembershipService), nameof(RemoveUserFromShoppingListAsApplicationAdminAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -128,7 +188,7 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListMembershipService), nameof(RemoveCollaboratorFromShoppingListAsListOwnerAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -167,7 +227,7 @@ public class ListMembershipService(IUnitOfWork unitOfWork, ILogger<ListMembershi
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ListMembershipService), nameof(LeaveShoppingListAsCollaboratorAsync));
-            throw;
+            throw numberedException;
         }
     }
 }

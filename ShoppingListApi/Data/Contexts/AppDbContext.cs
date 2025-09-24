@@ -3,7 +3,8 @@ using ShoppingListApi.Model.Entity;
 
 namespace ShoppingListApi.Data.Contexts;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public class 
+    AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<ListUser> ListUsers => Set<ListUser>();
 

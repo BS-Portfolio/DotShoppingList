@@ -1,26 +1,41 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using ShoppingListApi.Model.Entity;
 
 namespace ShoppingListApi.Model.DTOs.Get;
 
-public class ListUserGetDto
+public record ListUserGetDto
 {
-    public Guid UserID { get; set; }
-    public string FirstName { get; }
-    public string LastName { get; }
-    public string EmailAddress { get; }
-    public DateTimeOffset CreationDateTime { get; }
-    public string ApiKey { get; }
-    public DateTimeOffset ApiKeyExpirationDateTime { get; }
-
-    public ListUserGetDto(Guid userId, string firstName, string lastName, string emailAddress, DateTimeOffset creationDateTime,
-        string apiKey, DateTimeOffset apiKeyExpirationDateTime)
+    public ListUserGetDto(Guid userId, string firstName, string lastName, string emailAddress,
+        DateTimeOffset creationDateTime, string apiKey, DateTimeOffset apiKeyExpirationDateTime,
+        DateTimeOffset? expirationDateTime = null)
     {
-        UserID = userId;
+        UserId = userId;
         FirstName = firstName;
         LastName = lastName;
         EmailAddress = emailAddress;
         CreationDateTime = creationDateTime;
         ApiKey = apiKey;
         ApiKeyExpirationDateTime = apiKeyExpirationDateTime;
+        ExpirationDateTime = expirationDateTime;
     }
+
+    public ListUserGetDto(ListUser user, ApiKey apiKey)
+    {
+        UserId = user.UserId;
+        FirstName = user.FirstName;
+        LastName = user.LastName;
+        EmailAddress = user.EmailAddress;
+        CreationDateTime = user.CreationDateTime;
+        ExpirationDateTime = user.ExpirationDateTime;
+        ApiKey = apiKey.Key;
+        ApiKeyExpirationDateTime = apiKey.ExpirationDateTime;
+    }
+
+    public Guid UserId { get; set; }
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public string EmailAddress { get; set; }
+    public DateTimeOffset CreationDateTime { get; set; }
+    public string ApiKey { get; set; }
+    public DateTimeOffset ApiKeyExpirationDateTime { get; set; }
+    public DateTimeOffset? ExpirationDateTime { get; set; } = null;
 }

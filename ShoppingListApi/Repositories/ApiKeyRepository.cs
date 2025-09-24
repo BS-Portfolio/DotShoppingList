@@ -51,9 +51,14 @@ public class ApiKeyRepository(AppDbContext dbContext) : IApiKeyRepository
         return await query.ToListAsync(ct);
     }
 
-    public async Task<ApiKey?> GetByKeyAsync(Guid userId, string apiKey, CancellationToken ct = default)
+    public async Task<ApiKey?> GetByKeyForUserAsync(Guid userId, string apiKey, CancellationToken ct = default)
     {
         return await _dbContext.ApiKeys.FirstOrDefaultAsync(ak => ak.Key == apiKey && ak.UserId == userId, ct);
+    }
+    
+    public async Task<ApiKey?> GetByKeyAsync(string apiKey, CancellationToken ct = default)
+    {
+        return await _dbContext.ApiKeys.FirstOrDefaultAsync(ak => ak.Key == apiKey, ct);
     }
 
     public async Task<ApiKey> CreateAsync(Guid userId, string newKey,
@@ -66,7 +71,7 @@ public class ApiKeyRepository(AppDbContext dbContext) : IApiKeyRepository
             UserId = userId,
             Key = newKey,
             CreationDateTime = DateTimeOffset.UtcNow,
-            ExpirationDateTime = DateTimeOffset.UtcNow.AddMinutes(45),
+            ExpirationDateTime = DateTimeOffset.UtcNow.AddHours(3),
             IsValid = true
         };
 

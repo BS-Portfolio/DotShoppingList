@@ -5,6 +5,7 @@ namespace ShoppingListApi.Interfaces.Services;
 
 public interface IApiKeyService
 {
+    Task<ApiKey?> GetWithoutDetailsByIdAsync(Guid userId, Guid apiKeyId, CancellationToken ct = default);
     Task<AddRecordResult<ApiKey?, ApiKey?>> CreateAsync(Guid userId, CancellationToken ct = default);
 
     Task<UpdateRecordResult<ApiKey?>> FindAndInvalidateAsync(

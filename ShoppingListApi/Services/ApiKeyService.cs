@@ -11,12 +11,28 @@ public class ApiKeyService(IUnitOfWork unitOfWork, ILogger<ApiKeyService> logger
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly ILogger<ApiKeyService> _logger = logger;
 
+    public async Task<ApiKey?> GetWithoutDetailsByIdAsync(Guid userId, Guid apiKeyId, CancellationToken ct = default)
+    {
+        try
+        {
+            var apiKey = await _unitOfWork.ApiKeyRepository.GetWithoutDetailsByIdAsync(userId, apiKeyId, ct);
+            return apiKey;
+        }
+        catch (Exception e)
+        {
+            var numberedException = new NumberedException(e);
+            _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
+                nameof(ApiKeyService), nameof(GetWithoutDetailsByIdAsync));
+            throw numberedException;
+        }
+    }
+    
     public async Task<AddRecordResult<ApiKey?, ApiKey?>> CreateAsync(Guid userId, CancellationToken ct = default)
     {
         try
         {
             var newKey = ApiKey.GenerateKey();
-            var conflictingKey = await _unitOfWork.ApiKeyRepository.GetByKeyAsync(userId, newKey, ct);
+            var conflictingKey = await _unitOfWork.ApiKeyRepository.GetByKeyForUserAsync(userId, newKey, ct);
 
             if (conflictingKey is not null)
                 return new(false, null, true, conflictingKey);
@@ -39,7 +55,7 @@ public class ApiKeyService(IUnitOfWork unitOfWork, ILogger<ApiKeyService> logger
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ApiKeyService), nameof(CreateAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -70,7 +86,7 @@ public class ApiKeyService(IUnitOfWork unitOfWork, ILogger<ApiKeyService> logger
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ApiKeyService), nameof(FindAndInvalidateAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -97,7 +113,7 @@ public class ApiKeyService(IUnitOfWork unitOfWork, ILogger<ApiKeyService> logger
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ApiKeyService), nameof(FindUserAndInvalidateAllByUserIdAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -124,7 +140,7 @@ public class ApiKeyService(IUnitOfWork unitOfWork, ILogger<ApiKeyService> logger
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ApiKeyService), nameof(FindAndDeleteAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -151,7 +167,7 @@ public class ApiKeyService(IUnitOfWork unitOfWork, ILogger<ApiKeyService> logger
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ApiKeyService), nameof(DeleteExpiredAsync));
-            throw;
+            throw numberedException;
         }
     }
 }

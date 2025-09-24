@@ -14,6 +14,7 @@ public class ItemService(IUnitOfWork unitOfWork, IConfiguration configuration, I
     private readonly IConfiguration _configuration = configuration;
     private readonly ILogger<ItemService> _logger = logger;
 
+    
     public async Task<AddItemResult> FindShoppingListAndAddItemAsync(Guid userId, Guid shoppingListId,
         ItemPostDto itemPostDto, CancellationToken ct = default)
     {
@@ -51,7 +52,7 @@ public class ItemService(IUnitOfWork unitOfWork, IConfiguration configuration, I
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ItemService), nameof(FindShoppingListAndAddItemAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -87,7 +88,7 @@ public class ItemService(IUnitOfWork unitOfWork, IConfiguration configuration, I
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ItemService), nameof(FindItemAndUpdateAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -121,7 +122,7 @@ public class ItemService(IUnitOfWork unitOfWork, IConfiguration configuration, I
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ItemService), nameof(FindItemAndDeleteAsync));
-            throw;
+            throw numberedException;
         }
     }
 
@@ -162,7 +163,7 @@ public class ItemService(IUnitOfWork unitOfWork, IConfiguration configuration, I
             var numberedException = new NumberedException(e);
             _logger.LogWithLevel(LogLevel.Error, e, numberedException.ErrorNumber, numberedException.Message,
                 nameof(ItemService), nameof(DeleteAllItemsInShoppingListAsync));
-            throw;
+            throw numberedException;
         }
     }
 }

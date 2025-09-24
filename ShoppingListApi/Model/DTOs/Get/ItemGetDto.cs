@@ -2,24 +2,14 @@
 
 namespace ShoppingListApi.Model.DTOs.Get;
 
-public record ItemGetDto
+public record ItemGetDto(Guid ItemId, string ItemName, string ItemAmount)
 {
-    public Guid ItemId { get; set; }
-    public string ItemName { get; set; }
-    public string ItemAmount { get; set; }
+    public Guid ItemId { get; set; } = ItemId;
+    public string ItemName { get; set; } = ItemName;
+    public string ItemAmount { get; set; } = ItemAmount;
 
-    public ItemGetDto(Guid itemId, string itemName, string itemAmount)
+    public ItemGetDto(Item item) : this(item.ItemId, item.ItemName, item.ItemAmount)
     {
-        ItemId = itemId;
-        ItemName = itemName;
-        ItemAmount = itemAmount;
-    }
-
-    public ItemGetDto(Item item)
-    {
-        ItemId = item.ItemId;
-        ItemName = item.ItemName;
-        ItemAmount = item.ItemAmount;
     }
 
     public static List<ItemGetDto> FromItemBatch(List<Item> items)

@@ -1,8 +1,8 @@
 ﻿using ShoppingListApi.Model.DTOs.Get;
-using ShoppingListApi.Model.DTOs.PatchObsolete;
 using ShoppingListApi.Configs;
+using ShoppingListApi.Model.Entity;
 
-namespace ShoppingListApi.Tests;
+namespace ShoppingListApi.Test;
 
 public class UnitTests
 {
@@ -34,26 +34,12 @@ public class UnitTests
         Assert.Contains(items[1], shoppingList.Items);
     }
 
-    [Fact]
-    public void ItemPatch_Constructor_SetsOnlySpecifiedProperties()
-    {
-        // Arrange
-        var newName = "New Item Name";
-        var newAmount = "New Amount";
-
-        // Act
-        var itemPatch = new ItemPatchDtoObsolete(newName, newAmount);
-
-        // Assert
-        Assert.Equal(newName, itemPatch.NewItemName);
-        Assert.Equal(newAmount, itemPatch.NewItemAmount);
-    }
 
     [Fact]
     public void GenerateApiKey_ReturnsNonEmptyString()
     {
         // Act
-        var apiKey = HelperMethods.GenerateApiKey();
+        var apiKey = ApiKey.GenerateKey();
 
         // Assert
         Assert.NotNull(apiKey);
@@ -65,9 +51,9 @@ public class UnitTests
     public void GenerateApiKey_ReturnsDifferentKeysOnMultipleCalls()
     {
         // Act
-        var key1 = HelperMethods.GenerateApiKey();
-        var key2 = HelperMethods.GenerateApiKey();
-        var key3 = HelperMethods.GenerateApiKey();
+        var key1 = ApiKey.GenerateKey();
+        var key2 = ApiKey.GenerateKey();
+        var key3 = ApiKey.GenerateKey();
 
         // Assert
         Assert.NotEqual(key1, key2);
@@ -83,20 +69,4 @@ public class UnitTests
         Assert.Equal(2, (int)Enums.UserRoleEnum.Collaborator);
     }
 
-    [Fact]
-    public void UserRole_Constructor_SetsEnumIndex()
-    {
-        // Arrange
-        var roleId = Guid.NewGuid();
-        var roleTitle = "Admin";
-        var enumIndex = (int)Enums.UserRoleEnum.ListOwner;
-
-        // Act
-        var userRole = new UserRoleGetDto(roleId, roleTitle, enumIndex);
-
-        // Assert
-        Assert.Equal(roleId, userRole.UserRoleId);
-        Assert.Equal(roleTitle, userRole.UserRoleTitle);
-        Assert.Equal(enumIndex, userRole.EnumIndex);
-    }
 }
