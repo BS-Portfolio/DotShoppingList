@@ -1,3 +1,11 @@
+# Donnerstag, 25.09.25
+
+## Tasks:
+- Fachgespräch
+
+## Blocker:
+-
+
 # Mittwoch, 24.09.25
 
 ## Tasks:
