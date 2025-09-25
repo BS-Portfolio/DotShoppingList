@@ -17,6 +17,10 @@ public class AppAuthenticationService(IUnitOfWork unitOfWork, ILogger<AppAuthent
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly ILogger<AppAuthenticationService> _logger = logger;
 
+    /// <summary>
+    /// Authenticates an API key for a user, checking validity and expiration.
+    /// Returns an ApiKeyAuthenticationResult with detailed state flags.
+    /// </summary>
     public async Task<ApiKeyAuthenticationResult> AuthenticateApiKeyAsync(Guid userId, string apiKey,
         CancellationToken cancellationToken = default)
     {
@@ -50,6 +54,10 @@ public class AppAuthenticationService(IUnitOfWork unitOfWork, ILogger<AppAuthent
         }
     }
 
+    /// <summary>
+    /// Attempts to log in a user with the provided credentials, creates a new API key if successful.
+    /// Returns a LoginResult with state flags and user data.
+    /// </summary>
     public async Task<LoginResult> LogIn(LoginDataDto loginDataDto,
         CancellationToken ct = default)
     {
@@ -94,7 +102,10 @@ public class AppAuthenticationService(IUnitOfWork unitOfWork, ILogger<AppAuthent
         }
     }
 
-
+    /// <summary>
+    /// Logs out a user by invalidating the provided API key.
+    /// Returns a LogoutResult with state flags.
+    /// </summary>
     public async Task<LogoutResult> LogOut(Guid requestingUserId, string providedApiKey, CancellationToken ct = default)
     {
         try
@@ -122,6 +133,10 @@ public class AppAuthenticationService(IUnitOfWork unitOfWork, ILogger<AppAuthent
         }
     }
 
+    /// <summary>
+    /// Writes an authentication error response to the HTTP context with the specified status code and error enum.
+    /// Used internally for custom authentication error handling.
+    /// </summary>
     internal static async Task HandleAuthenticationResponseAsync(int httpResponseCode, AuthorizationErrorEnum authEnum,
         HttpContext context)
     {

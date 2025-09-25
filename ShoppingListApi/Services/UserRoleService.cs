@@ -14,7 +14,9 @@ public class UserRoleService(IUnitOfWork unitOfWork, ILogger<UserRoleService> lo
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly ILogger<UserRoleService> _logger = logger;
 
-
+    /// <summary>
+    /// Retrieves the user role entity for the list owner.
+    /// </summary>
     public async Task<UserRole?> GetOwnerUserRole(CancellationToken ct = default)
     {
         try
@@ -30,6 +32,9 @@ public class UserRoleService(IUnitOfWork unitOfWork, ILogger<UserRoleService> lo
         }
     }
 
+    /// <summary>
+    /// Retrieves the user role entity for a collaborator.
+    /// </summary>
     public async Task<UserRole?> GetCollaboratorUserRole(CancellationToken ct = default)
     {
         try
@@ -45,6 +50,9 @@ public class UserRoleService(IUnitOfWork unitOfWork, ILogger<UserRoleService> lo
         }
     }
 
+    /// <summary>
+    /// Retrieves a user role entity by its unique identifier.
+    /// </summary>
     public async Task<UserRole?> GetByIdAsync(Guid userRoleId, CancellationToken ct = default)
     {
         try
@@ -60,6 +68,9 @@ public class UserRoleService(IUnitOfWork unitOfWork, ILogger<UserRoleService> lo
         }
     }
 
+    /// <summary>
+    /// Retrieves all user role entities.
+    /// </summary>
     public async Task<List<UserRole>> GetAllAsync(CancellationToken ct = default)
     {
         try
@@ -75,6 +86,9 @@ public class UserRoleService(IUnitOfWork unitOfWork, ILogger<UserRoleService> lo
         }
     }
 
+    /// <summary>
+    /// Adds a new user role if no conflict exists; returns conflict info if a role with the same enum or title exists.
+    /// </summary>
     public async Task<AddRecordResult<Guid?, UserRole?>> CheckConflictAndAddUserRoleAsync(
         UserRolePostDto userRolePostDto, CancellationToken ct = default)
     {
@@ -108,6 +122,9 @@ public class UserRoleService(IUnitOfWork unitOfWork, ILogger<UserRoleService> lo
         }
     }
 
+    /// <summary>
+    /// Updates an existing user role if no conflict exists; returns conflict info if a role with the same enum or title exists.
+    /// </summary>
     public async Task<UpdateRecordResult<UserRole?>> CheckConflictAndUpdateUserRoleAsync(
         Guid userRoleId, UserRolePatchDto userRolePatchDto, CancellationToken ct = default)
     {

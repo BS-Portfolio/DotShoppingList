@@ -11,6 +11,10 @@ public class ListMembershipRepository(AppDbContext appDbContext)
 {
     private readonly AppDbContext _appDbContext = appDbContext;
 
+    /// <summary>
+    /// Retrieves the UserRole object for a user in a specific shopping list.
+    /// Returns null if no membership is found.
+    /// </summary>
     public async Task<UserRole?> GetUserRoleObjInShoppingListAsync(Guid listUserId, Guid shoppingListId,
         CancellationToken ct = default)
     {
@@ -23,6 +27,10 @@ public class ListMembershipRepository(AppDbContext appDbContext)
         return targetMembership.UserRole;
     }
 
+    /// <summary>
+    /// Retrieves the UserRoleEnum for a user in a specific shopping list.
+    /// Returns null if no membership or role is found.
+    /// </summary>
     public async Task<UserRoleEnum?> GetUserRoleEnumInShoppingListAsync(Guid listUserId, Guid shoppingListId,
         CancellationToken ct = default)
     {
@@ -37,12 +45,19 @@ public class ListMembershipRepository(AppDbContext appDbContext)
         return targetEnum;
     }
 
+    /// <summary>
+    /// Retrieves a ListMembership by its composite primary key (shoppingListId, listUserId).
+    /// Returns null if not found.
+    /// </summary>
     public async Task<ListMembership?> GetListMembershipByCompositePkAsync(Guid shoppingListId, Guid listUserId,
         CancellationToken ct = default)
     {
         return await _appDbContext.ListMemberships.FindAsync([shoppingListId, listUserId], ct);
     }
 
+    /// <summary>
+    /// Retrieves all shopping list IDs for a given user.
+    /// </summary>
     public async Task<List<Guid>> GetAllShoppingListIdsForUserAsync(Guid listUserId,
         CancellationToken ct = default)
     {
@@ -52,6 +67,9 @@ public class ListMembershipRepository(AppDbContext appDbContext)
             .ToListAsync(ct);
     }
 
+    /// <summary>
+    /// Retrieves all ListMemberships for a user where the user is the list owner, including ShoppingList and UserRole details.
+    /// </summary>
     public async Task<List<ListMembership>> GetAllListMembershipsWithDetailsForOwnerByUserAsync(Guid listUserId,
         CancellationToken ct = default)
     {
@@ -62,6 +80,9 @@ public class ListMembershipRepository(AppDbContext appDbContext)
             .ToListAsync(ct);
     }
 
+    /// <summary>
+    /// Retrieves all ListMemberships for a user where the user is not the list owner, including ShoppingList and UserRole details.
+    /// </summary>
     public async Task<List<ListMembership>> GetAllListMembershipsWithDetailsForNotOwnerByUserAsync(Guid listUserId,
         CancellationToken ct = default)
     {
@@ -72,6 +93,9 @@ public class ListMembershipRepository(AppDbContext appDbContext)
             .ToListAsync(ct);
     }
 
+    /// <summary>
+    /// Retrieves all ListMemberships for a shopping list without including UserRole, ShoppingList, or ListUser details.
+    /// </summary>
     public async Task<List<ListMembership>> GetAllMembershipsWithoutCascadingInfoByShoppingListIdAsync(
         Guid shoppingListId,
         CancellationToken ct = default)
@@ -81,6 +105,9 @@ public class ListMembershipRepository(AppDbContext appDbContext)
             .ToListAsync(ct);
     }
 
+    /// <summary>
+    /// Retrieves all ListMemberships for a shopping list, including User and UserRole details.
+    /// </summary>
     public async Task<List<ListMembership>> GetAllMembershipsWithCascadingInfoByShoppingListIdAsync(Guid shoppingListId,
         CancellationToken ct = default)
     {
@@ -91,6 +118,9 @@ public class ListMembershipRepository(AppDbContext appDbContext)
             .ToListAsync(ct);
     }
 
+    /// <summary>
+    /// Retrieves all ListMemberships for multiple shopping lists, including User and UserRole details.
+    /// </summary>
     public async Task<List<ListMembership>> GetAllMembershipsWithCascadingInfoByShoppingListIdsAsync(
         List<Guid> shoppingListIds,
         CancellationToken ct = default)
@@ -102,6 +132,9 @@ public class ListMembershipRepository(AppDbContext appDbContext)
             .ToListAsync(ct);
     }
 
+    /// <summary>
+    /// Retrieves all ListMemberships for a user, including ShoppingList (with Items), UserRole, and User details.
+    /// </summary>
     public async Task<List<ListMembership>> GetAllMembershipsWithCascadingInfoByUserIdAsync(Guid listUserId,
         CancellationToken ct = default)
     {
@@ -113,6 +146,9 @@ public class ListMembershipRepository(AppDbContext appDbContext)
             .ToListAsync(ct);
     }
 
+    /// <summary>
+    /// Retrieves all shopping lists where the user is a collaborator.
+    /// </summary>
     public async Task<List<ShoppingList>> GetAllCollaboratingShoppingListsForUserAsync(Guid listUserId,
         CancellationToken ct = default)
     {
@@ -124,6 +160,9 @@ public class ListMembershipRepository(AppDbContext appDbContext)
             .ToListAsync(ct);
     }
 
+    /// <summary>
+    /// Retrieves all users in a shopping list, including UserRole and User details.
+    /// </summary>
     public async Task<List<ListMembership>> GetAllUsersInShoppingListAsync(Guid shoppingListId,
         CancellationToken ct = default)
     {
@@ -134,6 +173,10 @@ public class ListMembershipRepository(AppDbContext appDbContext)
             .ToListAsync(ct);
     }
 
+    /// <summary>
+    /// Retrieves the owner (ListUser) of a shopping list. Throws an exception if multiple owners are found.
+    /// Returns null if no owner is found.
+    /// </summary>
     public async Task<ListUser?> GetShoppingListOwner(Guid shoppingListId, CancellationToken ct = default)
     {
         var ownerMembership = await _appDbContext.ListMemberships
@@ -157,6 +200,9 @@ public class ListMembershipRepository(AppDbContext appDbContext)
         return ownerMembership.User;
     }
 
+    /// <summary>
+    /// Retrieves all collaborators (ListUser) in a shopping list.
+    /// </summary>
     public async Task<List<ListUser>> GetShoppingListCollaborators(Guid shoppingListId,
         CancellationToken ct = default)
     {
@@ -169,6 +215,10 @@ public class ListMembershipRepository(AppDbContext appDbContext)
             .ToListAsync(ct);
     }
 
+    /// <summary>
+    /// Checks if a user owns a shopping list with a given name, optionally excluding a specific list ID.
+    /// Returns the ShoppingList if found, otherwise null.
+    /// </summary>
     public Task<ShoppingList?> OwnsShoppingListWithNameAsync(Guid userId, string listName, Guid? excludeListId,
         CancellationToken ct = default)
     {
@@ -185,6 +235,10 @@ public class ListMembershipRepository(AppDbContext appDbContext)
         return query.FirstOrDefaultAsync(ct);
     }
 
+    /// <summary>
+    /// Assigns a user to a shopping list with a specific user role ID. Does not save changes to the database.
+    /// Returns the new ListMembership.
+    /// </summary>
     public async Task<ListMembership> AssignUserToShoppingListByUserRoleIdAsync(Guid listUserId, Guid shoppingListId,
         Guid userRoleId, CancellationToken ct = default)
     {
@@ -200,11 +254,17 @@ public class ListMembershipRepository(AppDbContext appDbContext)
         return newMembership;
     }
 
+    /// <summary>
+    /// Removes the specified ListMembership from the database context. Does not save changes.
+    /// </summary>
     public void Delete(ListMembership listMembership)
     {
         _appDbContext.ListMemberships.Remove(listMembership);
     }
 
+    /// <summary>
+    /// Removes a batch of ListMemberships from the database context. Does not save changes.
+    /// </summary>
     public void DeleteBatch(List<ListMembership> listMembership)
     {
         _appDbContext.ListMemberships.RemoveRange(listMembership);

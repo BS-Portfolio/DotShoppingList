@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ShoppingListApi.Attributes;
+using ShoppingListApi.Configs;
 using ShoppingListApi.Enums;
 using ShoppingListApi.Interfaces.Services;
 using ShoppingListApi.Model.DTOs.Get;
@@ -46,11 +47,9 @@ namespace ShoppingListApi.Controllers
                     return Unauthorized(new AuthenticationErrorResponse(AuthorizationErrorEnum.LoginFailure));
 
                 if (loginResult.ApiKeyGenerationSuccessful is not true)
-                {
                     _logger.LogError(
                         "Failed to generate API key for user {EmailAddress} during login. This might indicate a problem with the database.",
                         loginDataDto.EmailAddress);
-                }
 
                 return StatusCode(StatusCodes.Status500InternalServerError, new ResponseResult<string>(
                     loginDataDto.EmailAddress,
@@ -73,22 +72,17 @@ namespace ShoppingListApi.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ResponseResult<Guid>))]
         public async Task<ActionResult> Logout()
         {
-            var requestingUserIdStr = Request.Headers["USER-ID"].FirstOrDefault();
-            var apiKey = Request.Headers["USER-KEY"].FirstOrDefault();
+            var checkAccessResult = this.CheckAccess();
 
-            if (string.IsNullOrEmpty(requestingUserIdStr) || string.IsNullOrWhiteSpace(apiKey))
-                return BadRequest(new ResponseResult<object?>(null, "User credentials missing!"));
-
-            var parseSuccessful = Guid.TryParse(requestingUserIdStr, out var requestingUserId);
-
-            if (parseSuccessful is not true)
-                return BadRequest(new ResponseResult<object?>(null, "The user Id is provided in an invalid format!"));
+            if (checkAccessResult.ActionResult is not null)
+                return checkAccessResult.ActionResult;
 
             var ct = CancellationTokenSource
                 .CreateLinkedTokenSource(_hostApplicationLifetime.ApplicationStopping, HttpContext.RequestAborted)
                 .Token;
 
-            var logoutResult = await _appAuthenticationService.LogOut(requestingUserId, apiKey, ct);
+            var logoutResult = await _appAuthenticationService.LogOut(checkAccessResult.RequestingUserId!.Value,
+                checkAccessResult.ApiKey!, ct);
 
             if (logoutResult.Success is not true)
             {
@@ -100,17 +94,17 @@ namespace ShoppingListApi.Controllers
                     if (logoutResult.InvalidationSuccessful is not true)
                         _logger.LogError(
                             "Failed to invalidate API key {ApiKey} to avoid misuse. This might indicate a problem with the database.",
-                            apiKey);
+                            checkAccessResult.ApiKey);
 
                     return StatusCode(403,
                         new AuthenticationErrorResponse(AuthorizationErrorEnum.IdAndKeyNotMatching));
                 }
 
-                return StatusCode(500, new ResponseResult<Guid>(requestingUserId,
+                return StatusCode(500, new ResponseResult<Guid>(checkAccessResult.RequestingUserId.Value,
                     "An internal server error occurred logging you out. Please try again later."));
             }
 
-            return Ok(new ResponseResult<Guid>(requestingUserId, "Logout successful."));
+            return Ok(new ResponseResult<Guid>(checkAccessResult.RequestingUserId.Value, "Logout successful."));
         }
     }
 }
